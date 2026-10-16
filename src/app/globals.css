@@ -42,3 +42,23 @@ body {
   font-family: var(--font-sans);
   word-break: keep-all;
 }
+
+/* 교역자 회의 자료 인쇄 (A4) */
+@media print {
+  :root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --foreground: #000000;
+  }
+  [data-print-hide] {
+    display: none !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}

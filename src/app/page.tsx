@@ -68,6 +68,15 @@ async function HomeContent() {
         </Card>
       ) : null}
 
+      {profile.is_admin || [...roleByGroup.values()].includes("reviewer") ? (
+        <Card className="mb-4">
+          <Link href="/meeting" className="flex items-center justify-between font-medium">
+            <span>교역자 회의 자료</span>
+            <span className="text-muted">›</span>
+          </Link>
+        </Card>
+      ) : null}
+
       {reportGroups.length ? (
         <Card className="mb-4">
           <h2 className="mb-2 text-sm font-medium text-muted">보고 작성</h2>

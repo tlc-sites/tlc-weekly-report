@@ -18,6 +18,7 @@ import {
 } from "@/lib/report-forms";
 import { formatDate, weekOf } from "@/lib/week";
 import { deleteDraft, saveReport } from "./actions";
+import { Comments, ReviewPanel } from "./review";
 import { CampusForm } from "./campus-form";
 import { EducationForm, type RosterMember } from "./education-form";
 import type { Issue, Messages } from "./form-parts";
@@ -30,6 +31,7 @@ const MESSAGES: Record<string, string> = {
   forbidden: "이 보고를 수정할 권한이 없습니다. 이미 확인 처리된 보고일 수 있습니다.",
   save: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   delete: "임시저장 상태인 내 보고만 삭제할 수 있습니다.",
+  comment: "코멘트를 등록하지 못했습니다. 내용을 확인해 주세요.",
 };
 
 type ReportRow = {
@@ -57,7 +59,7 @@ export default function ReportPage({ params, searchParams }: PageProps<"/reports
 
 async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { supabase, profile } = await requireActive();
-  const [{ id }, { error, saved, existing }] = await Promise.all([params, searchParams]);
+  const [{ id }, { error, saved, existing, edit, reviewed }] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const { data: report } = await supabase
@@ -71,14 +73,20 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const group = report.group;
 
   const isAuthor = report.author_id === profile.id;
-  const [canEditRes, messagesRes, prayerRes] = await Promise.all([
+  const [canEditRes, canReviewRes, messagesRes, prayerRes] = await Promise.all([
     supabase.rpc("can_edit_report", { rid: id }),
-    isAuthor ? supabase.from("report_messages").select("recipient, body").eq("report_id", id) : Promise.resolve({ data: [] }),
+    supabase.rpc("can_review_report", { rid: id }),
+    // 작성자에게는 자기가 쓴 글 전부, 받는 분에게는 자기에게 온 글만 돌아온다 (RLS)
+    supabase.from("report_messages").select("recipient, body").eq("report_id", id),
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
   ]);
   const canEdit = Boolean(canEditRes.data);
+  const canReview = Boolean(canReviewRes.data);
+  // 검토자는 기본으로 읽기 화면을 보고, 필요할 때만 수정 화면으로 들어간다
+  const editMode = canEdit && (isAuthor || edit === "1");
   const messages: Messages = { ...emptyMessages() };
   for (const m of messagesRes.data ?? []) messages[m.recipient as keyof Messages] = m.body;
+  const messagesToMe = isAuthor ? [] : (messagesRes.data ?? []);
   const title = report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "보고";
   const message = pickMessage(MESSAGES, error);
   const d = report.details;
@@ -110,7 +118,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       prayer: prayerRes.data?.body ?? "",
       messages,
     };
-    body = canEdit ? (
+    body = editMode ? (
       <EducationForm
         key={report.updated_at}
         action={saveReport}
@@ -124,6 +132,13 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       <ReadOnly
         rows={[
           ["출석", `${roster.filter((m) => att.get(m.id)?.present).length}명 / ${roster.length}명`],
+          [
+            "결석",
+            roster
+              .filter((m) => att.has(m.id) && !att.get(m.id)!.present)
+              .map((m) => `${m.name}${att.get(m.id)!.absence_reason ? ` (${att.get(m.id)!.absence_reason})` : ""}${att.get(m.id)!.contacted ? " · 연락함" : ""}`)
+              .join("\n"),
+          ],
           ["설교 본문", str("sermon_passage")],
           ["설교자", str("preacher")],
           ["공과·활동", str("activity")],
@@ -140,7 +155,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       .eq("report_id", id)
       .order("created_at");
     const issues = (issueRows ?? []).map((i) => ({ ...i, action: i.action ?? "" })) as Issue[];
-    if (canEdit && group.type === "worship") {
+    if (editMode && group.type === "worship") {
       const result = str("result") as WorshipPayload["details"]["result"];
       body = (
         <WorshipForm
@@ -151,7 +166,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           showMessages={isAuthor}
         />
       );
-    } else if (canEdit) {
+    } else if (editMode) {
       const initial: OtherPayload = { details: { notes: str("notes"), requests }, issues, messages };
       body = <OtherForm key={report.updated_at} action={saveReport} reportId={id} initial={initial} showMessages={isAuthor} />;
     } else {
@@ -186,7 +201,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       messages,
     };
     const dd = initial.details;
-    body = canEdit ? (
+    body = editMode ? (
       <CampusForm
         key={report.updated_at}
         action={saveReport}
@@ -230,12 +245,30 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
             {saved === "submit" ? "제출했습니다. 확인 처리 전까지는 수정할 수 있습니다." : "임시저장했습니다."}
           </p>
         ) : null}
+        {reviewed ? (
+          <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+            {reviewed === "true" ? "확인 처리했습니다." : "확인을 취소했습니다. 작성자가 다시 수정할 수 있습니다."}
+          </p>
+        ) : null}
         {!canEdit && report.status === "reviewed" ? (
           <p className="rounded-lg bg-border/60 px-3 py-2 text-sm text-muted">검토자가 확인한 보고라 수정할 수 없습니다.</p>
         ) : null}
       </div>
 
+      {canReview && report.status !== "draft" ? (
+        <ReviewPanel reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
+      ) : null}
+
+      {messagesToMe.map((m) => (
+        <Card key={m.recipient} className="mb-4 border-accent/40">
+          <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임목사님께 드리는 글" : "사모님께 드리는 글"}</p>
+          <p className="whitespace-pre-wrap text-sm">{m.body}</p>
+        </Card>
+      ))}
+
       {body}
+
+      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isAdmin={profile.is_admin} /> : null}
 
       {isAuthor && report.status === "draft" ? (
         <form action={deleteDraft} className="mt-6 flex justify-center">

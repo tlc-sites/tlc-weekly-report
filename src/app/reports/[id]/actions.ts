@@ -1,5 +1,6 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActive } from "@/lib/auth";
@@ -57,4 +58,49 @@ export async function deleteDraft(formData: FormData) {
   const { data: deleted, error } = await supabase.from("reports").delete().eq("id", reportId.data).eq("status", "draft").select("id");
   if (error || !deleted?.length || !data) redirect(`/reports/${reportId.data}?error=delete`);
   redirect(`/groups/${data.group_id}?week=${weekOf(data.meeting_date)}`);
+}
+
+// 검토자의 확인 처리 / 확인 취소 (확인자와 시각은 DB 트리거가 기록)
+export async function setReviewStatus(formData: FormData) {
+  const { supabase } = await requireActive();
+  const parsed = z
+    .object({ reportId: z.uuid(), reviewed: z.enum(["true", "false"]) })
+    .safeParse({ reportId: formData.get("reportId"), reviewed: formData.get("reviewed") });
+  if (!parsed.success) redirect("/");
+  const back = `/reports/${parsed.data.reportId}`;
+
+  const { data, error } = await supabase
+    .from("reports")
+    .update({ status: parsed.data.reviewed === "true" ? "reviewed" : "submitted" })
+    .eq("id", parsed.data.reportId)
+    .neq("status", "draft")
+    .select("id");
+  if (error || !data?.length) redirect(`${back}?error=forbidden`);
+  redirect(`${back}?reviewed=${parsed.data.reviewed}`);
+}
+
+export async function addComment(formData: FormData) {
+  const { supabase, profile } = await requireActive();
+  const parsed = z
+    .object({ reportId: z.uuid(), body: z.string().trim().min(1).max(1000) })
+    .safeParse({ reportId: formData.get("reportId"), body: formData.get("body") });
+  if (!parsed.success) redirect(`/reports/${formData.get("reportId")}?error=comment`);
+
+  const { error } = await supabase
+    .from("report_comments")
+    .insert({ report_id: parsed.data.reportId, author_id: profile.id, body: parsed.data.body });
+  if (error) redirect(`/reports/${parsed.data.reportId}?error=comment`);
+  // 같은 주소로 이동하면 해시만 바뀌어 화면이 갱신되지 않으므로 현재 화면을 새로 그린다
+  refresh();
+}
+
+export async function deleteComment(formData: FormData) {
+  const { supabase } = await requireActive();
+  const parsed = z
+    .object({ reportId: z.uuid(), commentId: z.uuid() })
+    .safeParse({ reportId: formData.get("reportId"), commentId: formData.get("commentId") });
+  if (!parsed.success) redirect("/");
+
+  await supabase.from("report_comments").delete().eq("id", parsed.data.commentId);
+  refresh();
 }
