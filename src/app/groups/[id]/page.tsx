@@ -1,0 +1,225 @@
+import { Suspense } from "react";
+import Link from "next/link";
+import {
+  BackLink,
+  Badge,
+  Card,
+  ErrorText,
+  Field,
+  Loading,
+  PageTitle,
+  buttonClass,
+  inputClass,
+  pickMessage,
+  secondaryButtonClass,
+} from "@/components/ui";
+import { getGroupAccess } from "@/lib/access";
+import { requireActive } from "@/lib/auth";
+import { getGroup, listGroupsOrdered } from "@/lib/groups";
+import { REPORT_STATUS_LABEL, type ReportStatus } from "@/lib/report-forms";
+import { addDays, dateInWeek, formatDate, formatWeek, isIsoDate, latestWeekday, todayKST, weekOf } from "@/lib/week";
+import { createReport, setNoMeeting } from "./actions";
+import { NewReportFields } from "./new-report-fields";
+
+const MESSAGES: Record<string, string> = {
+  invalid: "입력값이 올바르지 않습니다.",
+  label: "행사 이름을 입력해 주세요.",
+  save: "저장하지 못했습니다. 권한이 있는지 확인하고 다시 시도해 주세요.",
+};
+
+type ReportRow = {
+  id: string;
+  meeting_date: string;
+  meeting_label: string | null;
+  status: ReportStatus;
+  submitted_at: string | null;
+  author: { real_name: string | null } | null;
+  service: { name: string } | null;
+  meeting: { name: string } | null;
+};
+
+export default function GroupPage({ params, searchParams }: PageProps<"/groups/[id]">) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <GroupContent params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">) {
+  const { supabase } = await requireActive();
+  const [{ id }, { week: weekParam, error }] = await Promise.all([params, searchParams]);
+  const { group, canWrite, isLeaf } = await getGroupAccess(supabase, id);
+  const today = todayKST();
+  const week = isIsoDate(weekParam) ? weekOf(weekParam) : weekOf(today);
+
+  // 상위 그룹이면 하위 그룹 목록만 보여 준다
+  if (!isLeaf) {
+    const children = (await listGroupsOrdered(supabase)).filter((g) => g.parent_id === id);
+    return (
+      <>
+        <BackLink href="/">홈</BackLink>
+        <PageTitle>{group.name}</PageTitle>
+        <Card>
+          <ul className="flex flex-col divide-y divide-border">
+            {children.map((g) => (
+              <li key={g.id}>
+                <Link href={`/groups/${g.id}`} className="flex justify-between py-3">
+                  {g.name}
+                  <span className="text-muted">›</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </>
+    );
+  }
+
+  const [parent, reportsRes, weekStatus, services, meetingTypes] = await Promise.all([
+    group.parent_id ? getGroup(supabase, group.parent_id) : Promise.resolve(null),
+    supabase
+      .from("reports")
+      .select(
+        "id, meeting_date, meeting_label, status, submitted_at, author:profiles!reports_author_id_fkey(real_name), service:service_types(name), meeting:group_meeting_types(name)",
+      )
+      .eq("group_id", id)
+      .eq("week", week)
+      .order("meeting_date")
+      .returns<ReportRow[]>(),
+    supabase.from("week_status").select("no_meeting, reason").eq("group_id", id).eq("week", week).maybeSingle(),
+    supabase
+      .from("group_service_types")
+      .select("service:service_types(id, name, weekday, sort_order, is_active)")
+      .eq("group_id", id)
+      .then((r) =>
+        (r.data ?? [])
+          .map((x) => x.service as unknown as { id: string; name: string; weekday: number | null; sort_order: number; is_active: boolean })
+          .filter((s) => s && s.is_active)
+          .sort((a, b) => a.sort_order - b.sort_order),
+      ),
+    supabase
+      .from("group_meeting_types")
+      .select("id, name, weekday")
+      .eq("group_id", id)
+      .eq("is_active", true)
+      .order("sort_order")
+      .then((r) => r.data ?? []),
+  ]);
+  if (reportsRes.error) throw reportsRes.error;
+  const reports = reportsRes.data ?? [];
+  const noMeeting = weekStatus.data?.no_meeting ?? false;
+  const message = pickMessage(MESSAGES, error);
+  const isCurrentWeek = week === weekOf(today);
+
+  // 지금 주를 보고 있으면 오늘까지 중 가장 가까운 요일, 지난 주면 그 주의 요일로 기본 날짜를 정한다
+  const defaultDate = (weekday: number | null) =>
+    weekday === null ? (isCurrentWeek ? today : week) : isCurrentWeek ? latestWeekday(today, weekday) : dateInWeek(week, weekday);
+  const options = [
+    ...services.map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday) })),
+    ...meetingTypes.map((m) => ({ value: `meeting:${m.id}`, label: m.name, date: defaultDate(m.weekday) })),
+  ];
+
+  return (
+    <>
+      <BackLink href="/">홈</BackLink>
+      <PageTitle sub={parent ? parent.name : undefined}>{group.name}</PageTitle>
+      {message ? (
+        <div className="mb-4">
+          <ErrorText>{message}</ErrorText>
+        </div>
+      ) : null}
+
+      <nav className="mb-4 flex items-center justify-between text-sm">
+        <Link href={`/groups/${id}?week=${addDays(week, -7)}`} className="px-2 py-1 text-muted">
+          ← 지난주
+        </Link>
+        <span className="font-semibold">{formatWeek(week)}</span>
+        {isCurrentWeek ? (
+          <span className="px-2 py-1 text-muted/40">다음 주 →</span>
+        ) : (
+          <Link href={`/groups/${id}?week=${addDays(week, 7)}`} className="px-2 py-1 text-muted">
+            다음 주 →
+          </Link>
+        )}
+      </nav>
+
+      <Card className="mb-4">
+        <h2 className="mb-2 text-sm font-medium text-muted">이번 주 보고 {reports.length}건</h2>
+        {reports.length ? (
+          <ul className="flex flex-col divide-y divide-border">
+            {reports.map((r) => (
+              <li key={r.id}>
+                <Link href={`/reports/${r.id}`} className="flex items-center justify-between gap-2 py-3">
+                  <span>
+                    <span className="font-medium">{r.service?.name ?? r.meeting?.name ?? r.meeting_label}</span>
+                    <span className="ml-2 text-xs text-muted">
+                      {formatDate(r.meeting_date)} · {r.author?.real_name}
+                    </span>
+                  </span>
+                  <Badge tone={r.status === "draft" ? "danger" : r.status === "reviewed" ? "accent" : "muted"}>
+                    {REPORT_STATUS_LABEL[r.status]}
+                  </Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">{noMeeting ? "이번 주는 모임 없음으로 표시되어 있습니다." : "아직 보고가 없습니다."}</p>
+        )}
+      </Card>
+
+      {canWrite ? (
+        <>
+          <h2 className="mb-2 text-sm font-semibold">새 보고 작성</h2>
+          <Card className="mb-4">
+            <form action={createReport} className="flex flex-col gap-3">
+              <input type="hidden" name="groupId" value={id} />
+              {group.type === "campus" ? (
+                <>
+                  <input type="hidden" name="meeting" value="campus" />
+                  <Field label="판교 출발 날짜">
+                    <input name="meetingDate" type="date" required defaultValue={isCurrentWeek ? today : week} className={inputClass} />
+                  </Field>
+                </>
+              ) : (
+                <NewReportFields options={options} fallbackDate={defaultDate(null)} />
+              )}
+              <button type="submit" className={buttonClass}>
+                작성 시작
+              </button>
+            </form>
+          </Card>
+
+          {group.schedule === "weekly" ? (
+            <Card>
+              <form action={setNoMeeting} className="flex flex-col gap-2">
+                <input type="hidden" name="groupId" value={id} />
+                <input type="hidden" name="week" value={week} />
+                <input type="hidden" name="on" value={String(!noMeeting)} />
+                {noMeeting ? (
+                  <p className="text-sm">
+                    이번 주는 <strong>모임 없음</strong>으로 표시되어 있습니다.
+                    {weekStatus.data?.reason ? <span className="text-muted"> ({weekStatus.data.reason})</span> : null}
+                  </p>
+                ) : (
+                  <input name="reason" maxLength={100} placeholder="사유 (선택, 예: 연합예배)" className={inputClass} />
+                )}
+                <button type="submit" className={secondaryButtonClass}>
+                  {noMeeting ? "모임 없음 해제" : "이번 주 모임 없음"}
+                </button>
+              </form>
+            </Card>
+          ) : null}
+        </>
+      ) : null}
+
+      {group.type === "education" ? (
+        <Link href={`/groups/${id}/members`} className="mt-6 text-sm text-accent underline underline-offset-4">
+          {group.name} 명단 →
+        </Link>
+      ) : null}
+    </>
+  );
+}
+
