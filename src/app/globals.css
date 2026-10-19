@@ -1,27 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f7f5;
+  color-scheme: light;
+  --background: #f3f5f9;
   --surface: #ffffff;
-  --foreground: #1c1c1a;
-  --muted: #6b6b66;
-  --border: #e4e4df;
-  --accent: #2f5d50;
+  --foreground: #1a2436;
+  --muted: #586378;
+  --border: #d8dee9;
+  --accent: #20365b;
+  --accent-soft: #e6ebf3;
+  --focus: #8ea3c6;
   --accent-foreground: #ffffff;
-  --danger: #b4372f;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #141413;
-    --surface: #1e1e1c;
-    --foreground: #ededea;
-    --muted: #a3a39d;
-    --border: #33332f;
-    --accent: #7fb5a3;
-    --accent-foreground: #10201b;
-    --danger: #e57b72;
-  }
+  --danger: #a0372a;
 }
 
 @theme inline {
@@ -41,6 +31,28 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   word-break: keep-all;
+}
+
+button, summary, select {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:where(a, button, summary, input, select, textarea):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+input, select, textarea {
+  accent-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
 }
 
 /* 교역자 회의 자료 인쇄 (A4) */

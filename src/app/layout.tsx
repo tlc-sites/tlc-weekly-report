@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   description: "교육부서, 예배팀, 캠퍼스 보고 시스템",
   // 아이폰은 홈 화면에 추가해야 알림을 받을 수 있다
   appleWebApp: { capable: true, title: "교회 보고", statusBarStyle: "default" },
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  icons: { icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }], apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#2f5d50",
+  themeColor: "#20365b",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

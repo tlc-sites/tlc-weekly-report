@@ -15,7 +15,7 @@ export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?
     accent: "bg-accent/15 text-accent",
     danger: "bg-danger/10 text-danger",
   }[tone];
-  return <span className={`inline-flex shrink-0 rounded px-1.5 py-0.5 text-xs ${toneClass}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>{children}</span>;
 }
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
@@ -34,7 +34,7 @@ export function pickMessage(messages: Record<string, string>, code: string | str
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-xl border border-border bg-surface p-4 ${className}`}>{children}</section>;
+  return <section className={`rounded-2xl border border-border bg-surface p-4 sm:p-5 ${className}`}>{children}</section>;
 }
 
 export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
@@ -55,14 +55,14 @@ export function Loading() {
 }
 
 export const buttonClass =
-  "inline-flex h-11 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-12 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const secondaryButtonClass =
-  "inline-flex h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/50 bg-surface px-4 py-2 text-sm font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const smallButtonClass =
-  "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
-  "h-11 w-full rounded-lg border border-border bg-surface px-3 text-base outline-none focus:border-accent";
+  "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =
-  "h-11 w-full rounded-lg border border-border bg-surface px-2 text-base outline-none focus:border-accent";
+  "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const textareaClass =
-  "min-h-28 w-full rounded-lg border border-border bg-surface px-3 py-2 text-base outline-none focus:border-accent";
+  "min-h-28 w-full rounded-xl border border-border bg-surface px-3 py-3 text-base transition focus:border-accent";
