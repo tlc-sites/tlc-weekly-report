@@ -540,3 +540,25 @@ test("보고 저장: 검토자가 저장해도 작성자의 글은 건드리지 
   const messages = await db.query("select body from report.report_messages where report_id = $1 and recipient = 'pastor'", [ids.eduReport]);
   assert.equal(messages.rows[0].body, "목사님께 드리는 글");
 });
+
+// ───────────── 5차: 웹 푸시 ─────────────
+
+test("푸시 구독: 같은 기기를 다른 사람이 구독하면 그 사람 것으로 바뀌고, 남의 구독은 볼 수 없다", async () => {
+  const sub = (user, endpoint) =>
+    as(user, "select report.save_push_subscription($1, 'p256dh-key', 'auth-key', 'Chrome')", [endpoint]);
+  await sub(ids.teacherC, "https://push.example.com/device-1");
+  await sub(ids.techWriter, "https://push.example.com/device-1");
+
+  const { rows } = await db.query("select user_id from report.push_subscriptions where endpoint = 'https://push.example.com/device-1'");
+  assert.deepEqual(rows.map((r) => r.user_id), [ids.techWriter]);
+  assert.equal((await as(ids.teacherC, "select id from report.push_subscriptions")).rows.length, 0);
+
+  await rejects(sub(ids.pending, "https://push.example.com/device-2"), /forbidden/);
+  await rejects(sub(ids.teacherC, "http://not-https.example.com"), /invalid subscription/);
+});
+
+test("알림 설정 현황: 관리자에게만 보인다", async () => {
+  const admin = await as(ids.admin, "select real_name, devices from report.push_status() where user_id = $1", [ids.techWriter]);
+  assert.deepEqual(admin.rows[0], { real_name: "음향팀원", devices: 1 });
+  assert.equal((await as(ids.teacherC, "select * from report.push_status()")).rows.length, 0);
+});

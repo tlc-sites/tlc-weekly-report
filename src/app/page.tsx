@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { Card, Loading, PageTitle } from "@/components/ui";
+import { PushBanner } from "@/components/push-banner";
 import { SignOutButton } from "@/components/signout-button";
 import { requireActive } from "@/lib/auth";
 import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
@@ -41,6 +42,7 @@ async function HomeContent() {
   return (
     <>
       <PageTitle>{profile.real_name}님, 안녕하세요</PageTitle>
+      <PushBanner />
 
       {profile.is_admin ? (
         <Card className="mb-4">
@@ -127,7 +129,10 @@ async function HomeContent() {
         </Card>
       ) : null}
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto flex items-center justify-between pt-8">
+        <Link href="/settings" className="text-sm text-muted underline underline-offset-4">
+          알림 설정
+        </Link>
         <SignOutButton />
       </div>
     </>

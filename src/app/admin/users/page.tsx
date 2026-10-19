@@ -34,7 +34,7 @@ export default function AdminUsersPage({ searchParams }: PageProps<"/admin/users
 async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "searchParams">) {
   const { supabase, profile: me } = await requireAdmin();
 
-  const [{ error: errorCode }, groups, { data: users, error }] = await Promise.all([
+  const [{ error: errorCode }, groups, { data: users, error }, { data: pushStatus }] = await Promise.all([
     searchParams,
     listGroupsOrdered(supabase),
     supabase
@@ -42,6 +42,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
       .select("id, real_name, email, status, is_admin, requested_group_ids, created_at, memberships(group_id, role)")
       .order("created_at")
       .returns<UserRow[]>(),
+    supabase.rpc("push_status"),
   ]);
   if (error) throw error;
 
@@ -50,6 +51,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
   const pending = (users ?? []).filter((u) => u.status === "pending");
   const active = (users ?? []).filter((u) => u.status === "active");
   const disabled = (users ?? []).filter((u) => u.status === "disabled");
+  const noPush = ((pushStatus ?? []) as { user_id: string; real_name: string | null; devices: number }[]).filter((p) => p.devices === 0);
 
   return (
     <>
@@ -142,6 +144,20 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
             </li>
           ))}
         </ul>
+      </Card>
+
+      <h2 className="mb-2 text-sm font-semibold">알림 미설정 {noPush.length}명</h2>
+      <Card className="mb-8">
+        {noPush.length ? (
+          <p className="text-sm leading-relaxed">
+            {noPush.map((p) => p.real_name).join(", ")}
+            <span className="mt-2 block text-xs text-muted">
+              알림을 켠 기기가 없는 사람입니다. 단톡방으로 &quot;홈 → 알림 설정에서 알림 켜기&quot;를 안내해 주세요.
+            </span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted">모두 알림을 켰습니다.</p>
+        )}
       </Card>
 
       {disabled.length ? (

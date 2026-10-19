@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## 작업 전에 읽을 것
+
+작업을 시작하기 전에 `docs/HANDOFF.md`(현재 상태, 구조, 권한 규칙, 남은 일, 작업 규칙)를 먼저 읽는다.
