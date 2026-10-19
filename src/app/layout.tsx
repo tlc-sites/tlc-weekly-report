@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "교회 보고",
+  title: "TLC 교회 보고서",
   description: "교육부서, 예배팀, 캠퍼스 보고 시스템",
   // 아이폰은 홈 화면에 추가해야 알림을 받을 수 있다
-  appleWebApp: { capable: true, title: "교회 보고", statusBarStyle: "default" },
-  icons: { icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }], apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "TLC 교회 보고서", statusBarStyle: "default" },
+  icons: { icon: [{ url: "/icons/favicon-32.png?v=weekly-report-1", sizes: "32x32", type: "image/png" }], apple: "/icons/apple-touch-icon.png?v=weekly-report-1" },
 };
 
 export const viewport: Viewport = {

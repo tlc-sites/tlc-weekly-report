@@ -36,7 +36,7 @@ async function LoginContent({ searchParams }: Pick<PageProps<"/login">, "searchP
   return (
     <div className="flex flex-1 flex-col justify-center gap-6">
       <header className="text-center">
-        <h1 className="text-2xl font-semibold">교회 보고</h1>
+        <h1 className="text-2xl font-semibold">TLC 교회 보고서</h1>
         <p className="mt-2 text-sm text-muted">교육부서 · 예배팀 · 캠퍼스 보고</p>
       </header>
 

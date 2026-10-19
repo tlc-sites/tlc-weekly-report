@@ -5,12 +5,12 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "교회 보고", body: event.data.text() };
+    data = { title: "TLC 교회 보고서", body: event.data.text() };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "교회 보고", {
+    self.registration.showNotification(data.title || "TLC 교회 보고서", {
       body: data.body || "",
-      icon: "/icons/icon-192.png",
+      icon: "/icons/icon-192.png?v=weekly-report-1",
       badge: "/icons/badge-96.png",
       tag: data.tag,
       data: { url: data.url || "/" },
