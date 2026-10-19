@@ -97,7 +97,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   if (group.type === "education") {
     const [{ data: members }, { data: attendance }] = await Promise.all([
-      supabase.from("members").select("id, name, kind, class_name, status").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
+      supabase.from("members").select("id, name, kind, class_name, status, photo_data, birth_date").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
       supabase.from("attendance").select("member_id, present, absence_reason, contacted, guardian_present").eq("report_id", id),
     ]);
     const roster = (members ?? []) as RosterMember[];

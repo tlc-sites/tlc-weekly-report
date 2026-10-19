@@ -1,3 +1,5 @@
+import { PhotoInput } from "@/components/photo-input";
+import { MemberPhoto } from "@/components/member-photo";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import {
@@ -89,6 +91,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
           <form action={updateMember} className="flex flex-col gap-3">
             <input type="hidden" name="id" value={member.id} />
             <input type="hidden" name="groupId" value={id} />
+            <PhotoInput initial={member.photo_data} name={member.name} />
+            <Field label="생년월일"><input name="birthDate" type="date" min="1900-01-01" max="2100-12-31" defaultValue={member.birth_date ?? ""} className={inputClass} /></Field>
             <Field label="이름">
               <input name="name" required maxLength={30} defaultValue={member.name} className={inputClass} />
             </Field>
@@ -145,6 +149,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
         </Card>
       ) : (
         <Card className="mb-6 text-sm">
+          <MemberPhoto name={member.name} photo={member.photo_data} large />
+          <p className="my-3">생년월일 {member.birth_date ?? (member.birth_year ? member.birth_year + "년" : "미등록")}</p>
           <dl className="grid grid-cols-[5rem_1fr] gap-y-2">
             <dt className="text-muted">반</dt>
             <dd>{member.class_name ?? "-"}</dd>

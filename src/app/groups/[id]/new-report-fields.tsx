@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Field, inputClass, selectClass } from "@/components/ui";
 
-type Option = { value: string; label: string; date: string };
+type Option = { value: string; label: string; date: string; fixedDate?: boolean };
 
 // 예배를 고르면 그 요일에 맞춰 날짜가 자동으로 바뀐다 (직접 고친 날짜는 다음에 예배를 바꿀 때까지 유지)
 export function NewReportFields({ options, fallbackDate }: { options: Option[]; fallbackDate: string }) {
@@ -35,9 +35,9 @@ export function NewReportFields({ options, fallbackDate }: { options: Option[]; 
           <input name="customLabel" required maxLength={50} placeholder="예: 성탄예배, 수련회" className={inputClass} />
         </Field>
       ) : null}
-      <Field label="날짜">
+      {options.find(o => o.value === meeting)?.fixedDate ? <p className="text-sm text-muted">예배일 {date} · 선택한 주차에 자동으로 맞춰집니다.<input type="hidden" name="meetingDate" value={date} /></p> : <Field label="날짜">
         <input name="meetingDate" type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
-      </Field>
+      </Field>}
     </>
   );
 }

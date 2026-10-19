@@ -100,4 +100,23 @@ test("운영 DB 업그레이드: 3차 마이그레이션이 기존 데이터를 
     services.rows.map((s) => s.name),
     ["1부 예배", "2부 예배", "3부 예배", "라이프라인 수요예배", "라이프라인 금요예배"],
   );
+
+  // 최신 구조에서도 기존 보고·출석·소속의 ID가 보존되어야 한다.
+  const soundBefore = (await db.query("select id from report.groups where name='음향'")).rows[0].id;
+  const parentBefore = (await db.query("select id from report.groups where name='예배팀' and parent_id is null")).rows[0].id;
+  const user = (await db.query("insert into auth.users(id,email) values (gen_random_uuid(),'upgrade@example.com') returning id")).rows[0].id;
+  await db.query("insert into report.profiles(id,email,status,is_admin) values ($1,'upgrade@example.com','active',true)",[user]);
+  await db.query("insert into report.memberships(user_id,group_id,role) values ($1,$2,'reviewer')",[user,parentBefore]);
+  const legacyService = (await db.query("select id from report.service_types where name='라이프라인 금요예배'")).rows[0].id;
+  const reportId = (await db.query("insert into report.reports(group_id,author_id,meeting_date,service_type_id) values ($1,$2,'2026-10-16',$3) returning id",[soundBefore,user,legacyService])).rows[0].id;
+  await db.exec(read("20261019000000_save_report.sql"));
+  await db.exec(read("20261020000000_push.sql"));
+  await db.exec(read("20261021000000_roster_services.sql"));
+  assert.equal((await db.query("select name from report.groups where id=$1",[soundBefore])).rows[0].name,'음향팀');
+  assert.equal((await db.query("select name from report.groups where id=$1",[parentBefore])).rows[0].name,'예배/기술팀');
+  assert.equal((await db.query("select count(*)::int n from report.memberships where user_id=$1 and group_id=$2",[user,parentBefore])).rows[0].n,1);
+  assert.equal((await db.query("select service_type_id from report.reports where id=$1",[reportId])).rows[0].service_type_id,legacyService);
+  assert.equal((await db.query("select is_active from report.service_types where id=$1",[legacyService])).rows[0].is_active,false);
+  assert.equal((await db.query("select count(*)::int n from report.service_types where is_active")).rows[0].n,9);
+  assert.equal((await db.query("select count(*)::int n from report.members where name='기존학생'")).rows[0].n,1);
 });

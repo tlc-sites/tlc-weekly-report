@@ -85,7 +85,7 @@ before(async () => {
   ids.youth = await groupId("중등부");
   ids.elem = await groupId("초등부");
   ids.edu = await groupId("교육부");
-  ids.sound = await groupId("음향");
+  ids.sound = await groupId("음향팀");
 
   const approve = (user, assignments) =>
     as(ids.admin, "select report.approve_user($1, $2::jsonb)", [user, JSON.stringify(assignments)]);
@@ -95,14 +95,14 @@ before(async () => {
   await approve(ids.techWriter, [{ group_id: ids.sound, role: "writer" }]);
 });
 
-test("시드: 중복 없이 그룹 21개(교육부서 8, 예배팀 10, 부산), 예배 5개가 생성된다", async () => {
+test("시드: 중복 없이 그룹 21개(교육부서 8, 예배팀 10, 부산), 예배 9개가 생성된다", async () => {
   const groups = await db.query("select count(*)::int as n from report.groups");
   const services = await db.query("select count(*)::int as n from report.service_types");
   const worshipLinks = await db.query("select count(*)::int as n from report.group_service_types");
   const campus = await db.query("select type from report.groups where name = '부산 캠퍼스'");
   assert.equal(groups.rows[0].n, 21);
-  assert.equal(services.rows[0].n, 5);
-  assert.equal(worshipLinks.rows[0].n, 50);
+  assert.equal(services.rows[0].n, 9);
+  assert.equal(worshipLinks.rows[0].n, 90);
   assert.equal(campus.rows[0].type, "campus");
 });
 
@@ -331,7 +331,7 @@ test("소속 일괄 변경: 관리자만, 기존 소속은 전부 교체된다",
     [ids.teacherA],
   );
   assert.deepEqual(rows, [
-    { name: "음향", role: "writer" },
+    { name: "음향팀", role: "writer" },
     { name: "중등부", role: "reviewer" },
   ]);
   await rejects(
@@ -561,4 +561,39 @@ test("알림 설정 현황: 관리자에게만 보인다", async () => {
   const admin = await as(ids.admin, "select real_name, devices from report.push_status() where user_id = $1", [ids.techWriter]);
   assert.deepEqual(admin.rows[0], { real_name: "음향팀원", devices: 1 });
   assert.equal((await as(ids.teacherC, "select * from report.push_status()")).rows.length, 0);
+});
+
+test("인물 사진·생년월일: 검토자가 저장, 다른 팀에는 비공개, 일반 교사는 활동 명단 수정 불가", async () => {
+  const inserted = await as(ids.admin, "insert into report.members(group_id,name,status) values ($1,'사진 테스트','active') returning id", [ids.youth]);
+  const mid = inserted.rows[0].id;
+  await as(ids.eduReviewer, "update report.members set photo_data='data:image/jpeg;base64,/9j/2Q==',birth_date='2012-03-04' where id=$1", [mid]);
+  const seen = await as(ids.teacherC, "select photo_data,birth_date::text from report.members where id=$1", [mid]);
+  assert.equal(seen.rows[0].birth_date, "2012-03-04");
+  assert.equal(seen.rows[0].photo_data, "data:image/jpeg;base64,/9j/2Q==");
+  assert.equal((await as(ids.techWriter, "select id from report.members where id=$1", [mid])).rows.length,0);
+  const changed = await as(ids.teacherC, "update report.members set birth_date='2012-03-05' where id=$1 returning id",[mid]);
+  assert.equal(changed.rows.length,0);
+  await rejects(as(ids.admin, "update report.members set photo_data='https://public.example.com/person.jpg' where id=$1",[mid]), /check constraint/);
+});
+
+test("그룹 삭제: 관리자만 가능하고 하위 그룹과 함께 숨기며 기존 보고·명단은 보존", async () => {
+  const gid = (await as(ids.admin, "insert into report.groups(type,name) values ('education','삭제 테스트') returning id")).rows[0].id;
+  const child = (await as(ids.admin, "insert into report.groups(type,name,parent_id) values ('education','삭제 하위',$1) returning id",[gid])).rows[0].id;
+  await as(ids.admin, "insert into report.members(group_id,name) values ($1,'보존할 학생')",[child]);
+  const rid = (await as(ids.admin, "insert into report.reports(group_id,author_id,meeting_date,meeting_label) values ($1,$2,'2026-10-18','보존할 보고') returning id",[child,ids.admin])).rows[0].id;
+  await rejects(as(ids.techWriter, "select report.archive_group($1)",[gid]),/관리자/);
+  await rejects(as(null, "select report.archive_group($1)",[gid]),/permission denied/);
+  await as(ids.admin,"select report.archive_group($1)",[gid]);
+  assert.equal((await db.query("select count(*)::int n from report.groups where (id=$1 or id=$2) and is_active",[gid,child])).rows[0].n,0);
+  assert.equal((await db.query("select id from report.reports where id=$1",[rid])).rows.length,1);
+  assert.equal((await db.query("select id from report.members where group_id=$1",[child])).rows.length,1);
+});
+
+test("팀은 10개 독립 보고 그룹이며 라이프라인은 주일, 수요와 월별 금요예배는 별개", async () => {
+  const teams = await db.query("select g.name from report.groups g join report.groups p on p.id=g.parent_id where p.name='예배/기술팀' and g.is_active order by g.sort_order");
+  assert.deepEqual(teams.rows.map(r=>r.name),['예배팀','음향팀','영상팀','조명팀','자막팀','웰컴팀','성찬팀','성찬준비팀','새가족팀','새가족케어팀']);
+  const services = await db.query("select name,weekday,month_week from report.service_types where is_active order by sort_order");
+  assert.equal(services.rows.find(r=>r.name==='라이프라인').weekday,0);
+  assert.equal(services.rows.find(r=>r.name==='수요예배').weekday,3);
+  assert.deepEqual(services.rows.filter(r=>r.weekday===5).map(r=>r.month_week),[1,2,3,-1]);
 });

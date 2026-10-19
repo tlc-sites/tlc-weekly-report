@@ -160,3 +160,12 @@ export async function toggleMeetingType(formData: FormData) {
   if (error) failTo(`/admin/groups/${parsed.data.groupId}`, error.message);
   refresh();
 }
+
+export async function archiveGroup(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) redirect("/admin/groups?error=invalid");
+  const { error } = await supabase.rpc("archive_group", { p_group: id.data });
+  if (error) redirect("/admin/groups/" + id.data + "?error=save");
+  redirect("/admin/groups");
+}

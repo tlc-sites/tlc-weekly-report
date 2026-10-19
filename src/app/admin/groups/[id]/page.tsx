@@ -1,3 +1,4 @@
+import { ArchiveGroupButton } from "@/components/archive-group-button";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,7 +19,7 @@ import {
 import { requireAdmin } from "@/lib/auth";
 import { GROUP_TYPE_LABEL, ROLE_LABEL, SCHEDULE_LABEL, getGroup } from "@/lib/groups";
 import { WEEKDAY_LABEL } from "@/lib/services";
-import { addMeetingType, setGroupServices, toggleMeetingType, updateGroup } from "../actions";
+import { archiveGroup, addMeetingType, setGroupServices, toggleMeetingType, updateGroup } from "../actions";
 import { GROUP_MESSAGES } from "../messages";
 
 export default function AdminGroupPage({ params, searchParams }: PageProps<"/admin/groups/[id]">) {
@@ -216,6 +217,7 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
         )}
       </Card>
 
+      {group.is_active ? <ArchiveGroupButton id={group.id} name={group.name} action={archiveGroup} /> : null}
       {group.type === "education" && reportsHere ? (
         <Link href={`/groups/${group.id}/members`} className="text-sm text-accent underline underline-offset-4">
           {group.name} 명단 관리 →

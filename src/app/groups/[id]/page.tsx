@@ -1,3 +1,4 @@
+import { serviceOccursOn } from "@/lib/service-schedule";
 import { Suspense } from "react";
 import Link from "next/link";
 import {
@@ -17,7 +18,7 @@ import { getGroupAccess } from "@/lib/access";
 import { requireActive } from "@/lib/auth";
 import { getGroup, listGroupsOrdered } from "@/lib/groups";
 import { REPORT_STATUS_LABEL, type ReportStatus } from "@/lib/report-forms";
-import { addDays, dateInWeek, formatDate, formatWeek, isIsoDate, latestWeekday, todayKST, weekOf } from "@/lib/week";
+import { addDays, dateInWeek, formatDate, formatWeek, isIsoDate, todayKST, weekOf } from "@/lib/week";
 import { createReport, setNoMeeting } from "./actions";
 import { NewReportFields } from "./new-report-fields";
 
@@ -90,11 +91,11 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     supabase.from("week_status").select("no_meeting, reason").eq("group_id", id).eq("week", week).maybeSingle(),
     supabase
       .from("group_service_types")
-      .select("service:service_types(id, name, weekday, sort_order, is_active)")
+      .select("service:service_types(id, name, weekday, month_week, sort_order, is_active)")
       .eq("group_id", id)
       .then((r) =>
         (r.data ?? [])
-          .map((x) => x.service as unknown as { id: string; name: string; weekday: number | null; sort_order: number; is_active: boolean })
+          .map((x) => x.service as unknown as { id: string; name: string; weekday: number | null; month_week: number | null; sort_order: number; is_active: boolean })
           .filter((s) => s && s.is_active)
           .sort((a, b) => a.sort_order - b.sort_order),
       ),
@@ -112,12 +113,12 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
   const message = pickMessage(MESSAGES, error);
   const isCurrentWeek = week === weekOf(today);
 
-  // 지금 주를 보고 있으면 오늘까지 중 가장 가까운 요일, 지난 주면 그 주의 요일로 기본 날짜를 정한다
+  // 선택한 주차 안에서 예배 요일을 자동 지정한다.
   const defaultDate = (weekday: number | null) =>
-    weekday === null ? (isCurrentWeek ? today : week) : isCurrentWeek ? latestWeekday(today, weekday) : dateInWeek(week, weekday);
+    weekday === null ? (isCurrentWeek ? today : week) : dateInWeek(week, weekday);
   const options = [
-    ...services.map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday) })),
-    ...meetingTypes.map((m) => ({ value: `meeting:${m.id}`, label: m.name, date: defaultDate(m.weekday) })),
+    ...services.filter(s => serviceOccursOn(defaultDate(s.weekday), s)).map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday), fixedDate: s.weekday !== null })),
+    ...meetingTypes.map((m) => ({ value: `meeting:${m.id}`, label: m.name, date: defaultDate(m.weekday), fixedDate: m.weekday !== null })),
   ];
 
   return (
@@ -171,10 +172,11 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
 
       {canWrite ? (
         <>
-          <h2 className="mb-2 text-sm font-semibold">새 보고 작성</h2>
+          <h2 id="new-report" className="mb-2 text-sm font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 작성" : "새 보고 작성"}</h2>
           <Card className="mb-4">
             <form action={createReport} className="flex flex-col gap-3">
               <input type="hidden" name="groupId" value={id} />
+              <input type="hidden" name="reportWeek" value={week} />
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
@@ -186,7 +188,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
                 <NewReportFields options={options} fallbackDate={defaultDate(null)} />
               )}
               <button type="submit" className={buttonClass}>
-                작성 시작
+                {group.type === "education" ? "출결 체크 시작" : "작성 시작"}
               </button>
             </form>
           </Card>
@@ -195,6 +197,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             <Card>
               <form action={setNoMeeting} className="flex flex-col gap-2">
                 <input type="hidden" name="groupId" value={id} />
+              <input type="hidden" name="reportWeek" value={week} />
                 <input type="hidden" name="week" value={week} />
                 <input type="hidden" name="on" value={String(!noMeeting)} />
                 {noMeeting ? (

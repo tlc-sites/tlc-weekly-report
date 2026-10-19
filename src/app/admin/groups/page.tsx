@@ -1,8 +1,8 @@
+import { GroupPicker } from "@/components/group-picker";
 import { Suspense } from "react";
-import Link from "next/link";
+
 import { AdminNav } from "@/components/admin-nav";
 import {
-  Badge,
   BackLink,
   Card,
   ErrorText,
@@ -45,27 +45,7 @@ async function AdminGroupsContent({ searchParams }: Pick<PageProps<"/admin/group
       ) : null}
 
       <Card className="mb-6">
-        <ul className="flex flex-col divide-y divide-border">
-          {groups.map((g) => (
-            <li key={g.id}>
-              <Link
-                href={`/admin/groups/${g.id}`}
-                className={`flex min-h-12 items-center justify-between gap-2 py-2 ${g.depth ? "pl-5" : ""}`}
-              >
-                <span className={`flex items-center gap-2 ${g.is_active ? "" : "text-muted line-through"}`}>
-                  {g.depth ? <span className="text-muted">└</span> : null}
-                  <span className={g.depth ? "" : "font-semibold"}>{g.name}</span>
-                  {g.depth === 0 ? <Badge>{GROUP_TYPE_LABEL[g.type]}</Badge> : null}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  {!g.is_active ? <Badge tone="danger">비활성</Badge> : null}
-                  {g.childCount === 0 ? <Badge>{SCHEDULE_LABEL[g.schedule]}</Badge> : null}
-                  <span className="text-muted">›</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <GroupPicker groups={groups} base="/admin/groups" />
       </Card>
 
       <h2 className="mb-2 text-sm font-semibold">그룹 추가</h2>

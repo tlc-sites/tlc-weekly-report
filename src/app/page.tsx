@@ -1,3 +1,4 @@
+import { GroupPicker } from "@/components/group-picker";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Card, Loading, PageTitle } from "@/components/ui";
@@ -82,16 +83,7 @@ async function HomeContent() {
       {reportGroups.length ? (
         <Card className="mb-4">
           <h2 className="mb-2 text-sm font-medium text-muted">보고 작성</h2>
-          <ul className="flex flex-col divide-y divide-border">
-            {reportGroups.map((g) => (
-              <li key={g.id}>
-                <Link href={`/groups/${g.id}`} className="flex items-center justify-between py-3">
-                  <span>{g.label}</span>
-                  <span className="text-muted">›</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <GroupPicker groups={reportGroups} />
         </Card>
       ) : null}
 
@@ -113,7 +105,7 @@ async function HomeContent() {
 
       {rosterGroups.length ? (
         <Card>
-          <h2 className="mb-2 text-sm font-medium text-muted">교육부서 명단</h2>
+          <h2 className="mb-2 text-sm font-medium text-muted">교육부서 출결·명단</h2>
           <ul className="flex flex-wrap gap-2">
             {rosterGroups.map((g) => (
               <li key={g.id}>

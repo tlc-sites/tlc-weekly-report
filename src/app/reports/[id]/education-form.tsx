@@ -1,5 +1,6 @@
 "use client";
 
+import { MemberPhoto } from "@/components/member-photo";
 import { useState } from "react";
 import { Badge, Field, inputClass, selectClass, smallButtonClass } from "@/components/ui";
 import { GUARDIAN_RELATIONS } from "@/lib/members";
@@ -9,6 +10,8 @@ import { MessagesEditor, ReportForm, RequestsEditor, Section, TextArea } from ".
 export type RosterMember = {
   id: string;
   name: string;
+  photo_data: string | null;
+  birth_date: string | null;
   kind: "student" | "teacher";
   class_name: string | null;
   status: "newcomer" | "active" | "inactive";
@@ -63,7 +66,8 @@ export function EducationForm({
 
   return (
     <ReportForm action={action} reportId={reportId} type="education" payload={p} extraCheck={checkNewcomers}>
-      <Section title={`출석 · 학생 ${presentStudents}/${students.length + p.newcomers.length} · 교사 ${presentTeachers}/${teachers.length}`}>
+      <div id="attendance" />
+      <Section title={`출결 관리 · 학생 ${presentStudents}/${students.length + p.newcomers.length} · 교사 ${presentTeachers}/${teachers.length}`}>
         <div className="flex gap-2">
           <button type="button" onClick={() => setAll(true)} className={smallButtonClass}>
             전체 출석
@@ -96,8 +100,9 @@ export function EducationForm({
                             a.present ? "border-accent bg-accent/10 font-semibold" : "border-border text-muted"
                           }`}
                         >
+                          <MemberPhoto name={m.name} photo={m.photo_data} />
                           <span aria-hidden>{a.present ? "●" : "○"}</span>
-                          {m.name}
+                          <span>{m.name}{m.birth_date ? <span className="block text-xs font-normal text-muted">{m.birth_date}</span> : null}</span>
                           {m.class_name ? <span className="text-xs font-normal text-muted">{m.class_name}</span> : null}
                           {m.status === "newcomer" ? <Badge tone="accent">새친구</Badge> : null}
                         </button>

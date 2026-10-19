@@ -17,9 +17,9 @@ export type OrderedGroup = Group & { depth: number; label: string; childCount: n
 
 export const GROUP_TYPE_LABEL: Record<Group["type"], string> = {
   education: "교육부서",
-  worship: "예배팀",
-  other: "기타 모임",
-  campus: "캠퍼스",
+  worship: "예배/기술팀",
+  other: "학교",
+  campus: "부산캠퍼스",
 };
 
 export const SCHEDULE_LABEL: Record<Group["schedule"], string> = {

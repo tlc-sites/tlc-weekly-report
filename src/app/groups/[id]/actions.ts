@@ -1,5 +1,6 @@
 "use server";
 
+import { serviceOccursOn } from "@/lib/service-schedule";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -28,9 +29,20 @@ export async function createReport(formData: FormData) {
   const back = `/groups/${groupId}?week=${weekOf(meetingDate)}`;
 
   const group = await getGroup(supabase, groupId);
-  if (!group) redirect("/");
+  if (!group || !group.is_active) redirect("/");
 
   const [kind, id] = meeting.split(":");
+  if (kind === "service") {
+    const { data: service } = await supabase.from("service_types").select("weekday, month_week, is_active").eq("id", id).maybeSingle();
+    const { data: linked } = await supabase.from("group_service_types").select("group_id").eq("group_id", groupId).eq("service_type_id", id).maybeSingle();
+    const selectedWeek = formData.get("reportWeek");
+    if (!service?.is_active || !linked || !serviceOccursOn(meetingDate, service) ||
+      (typeof selectedWeek === "string" && weekOf(meetingDate) !== selectedWeek)) redirect(back + "&error=invalid");
+  }
+  if (kind === "meeting") {
+    const { data: groupMeeting } = await supabase.from("group_meeting_types").select("weekday,is_active").eq("id",id).eq("group_id",groupId).maybeSingle();
+    if (!groupMeeting?.is_active || !serviceOccursOn(meetingDate, groupMeeting)) redirect(back + "&error=invalid");
+  }
   const fields = {
     service_type_id: kind === "service" ? id : null,
     group_meeting_type_id: kind === "meeting" ? id : null,

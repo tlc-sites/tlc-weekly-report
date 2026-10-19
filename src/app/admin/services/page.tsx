@@ -1,3 +1,4 @@
+import { MONTH_WEEK_LABEL } from "@/lib/service-schedule";
 import { Suspense } from "react";
 import { AdminNav } from "@/components/admin-nav";
 import {
@@ -33,7 +34,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
   const { supabase } = await requireAdmin();
   const [{ error }, { data, error: loadError }] = await Promise.all([
     searchParams,
-    supabase.from("service_types").select("id, name, weekday, sort_order, is_active").order("sort_order").order("name"),
+    supabase.from("service_types").select("id, name, weekday, month_week, sort_order, is_active").order("sort_order").order("name"),
   ]);
   if (loadError) throw loadError;
   const services = (data ?? []) as ServiceType[];
@@ -69,6 +70,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
                     </option>
                   ))}
                 </select>
+                <select name="monthWeek" aria-label="월별 주차" defaultValue={s.month_week ?? ""} className={selectClass}>{Object.entries(MONTH_WEEK_LABEL).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
                 <button type="submit" className={smallButtonClass}>
                   저장
                 </button>
@@ -85,6 +87,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
               <form action={toggleService}>
                 <input type="hidden" name="id" value={s.id} />
                 <input type="hidden" name="isActive" value={String(!s.is_active)} />
+                <select name="monthWeek" aria-label="월별 주차" defaultValue={s.month_week ?? ""} className={selectClass}>{Object.entries(MONTH_WEEK_LABEL).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
                 <button type="submit" className={smallButtonClass}>
                   {s.is_active ? "사용 중지" : "다시 사용"}
                 </button>
@@ -98,7 +101,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
       <Card>
         <form action={createService} className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <input name="name" required maxLength={50} placeholder="예: 새벽예배, 라이프라인 수요예배" className={inputClass} />
+            <input name="name" required maxLength={50} placeholder="예: 새벽예배" className={inputClass} />
           </div>
           <div className="flex gap-2">
             <select name="weekday" defaultValue="" className={selectClass}>
@@ -109,6 +112,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
                 </option>
               ))}
             </select>
+            <select name="monthWeek" aria-label="월별 주차" defaultValue="" className={selectClass}>{Object.entries(MONTH_WEEK_LABEL).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
             <button type="submit" className={`${buttonClass} shrink-0`}>
               추가
             </button>

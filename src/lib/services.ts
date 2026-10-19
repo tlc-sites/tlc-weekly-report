@@ -4,6 +4,7 @@ export type ServiceType = {
   id: string;
   name: string;
   weekday: number | null;
+  month_week: number | null;
   sort_order: number;
   is_active: boolean;
 };

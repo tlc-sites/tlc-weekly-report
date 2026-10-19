@@ -7,12 +7,14 @@ import { requireAdmin } from "@/lib/auth";
 import type { ServiceType } from "@/lib/services";
 
 const fields = z.object({
+  monthWeek: z.union([z.literal(""), z.enum(["-1", "1", "2", "3", "4", "5"])]),
   name: z.string().trim().min(1).max(50),
   weekday: z.union([z.coerce.number().int().min(0).max(6), z.literal("")]),
 });
 
 function readFields(formData: FormData) {
   return fields.safeParse({
+    monthWeek: formData.get("monthWeek") ?? "",
     name: formData.get("name"),
     weekday: formData.get("weekday") ?? "",
   });
@@ -32,6 +34,7 @@ export async function createService(formData: FormData) {
   const { error } = await supabase.from("service_types").insert({
     name: parsed.data.name,
     weekday: parsed.data.weekday === "" ? null : parsed.data.weekday,
+    month_week: parsed.data.monthWeek === "" ? null : Number(parsed.data.monthWeek),
     sort_order: (last?.sort_order ?? 0) + 1,
   });
   if (error) redirect("/admin/services?error=save");
@@ -49,6 +52,7 @@ export async function updateService(formData: FormData) {
     .update({
       name: parsed.data.name,
       weekday: parsed.data.weekday === "" ? null : parsed.data.weekday,
+    month_week: parsed.data.monthWeek === "" ? null : Number(parsed.data.monthWeek),
     })
     .eq("id", id.data);
   if (error) redirect("/admin/services?error=save");

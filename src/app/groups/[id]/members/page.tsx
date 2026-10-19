@@ -1,3 +1,4 @@
+import { MemberCards } from "@/components/member-cards";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -73,6 +74,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
         ) : null}
       </div>
 
+      <Link href={`/groups/${id}#new-report`} className={`${buttonClass} mb-4`}>출결 관리 · 예배 선택</Link>
+      <MemberCards members={members} groupId={id} />
       <MemberSection title="학생" members={students} groupId={id} />
       {newcomers.length ? <MemberSection title="새친구" members={newcomers} groupId={id} showFollowUp /> : null}
       <MemberSection title="교사" members={teachers} groupId={id} />

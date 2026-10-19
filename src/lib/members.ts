@@ -6,6 +6,8 @@ export type Member = {
   class_name: string | null;
   grade: string | null;
   birth_year: number | null;
+  birth_date: string | null;
+  photo_data: string | null;
   status: "newcomer" | "active" | "inactive";
   first_visit_date: string | null;
   follow_up_status: "new" | "contacted" | "settled" | "inactive" | null;
@@ -25,7 +27,7 @@ export type Guardian = {
 };
 
 export const MEMBER_COLUMNS =
-  "id, group_id, name, kind, class_name, grade, birth_year, status, first_visit_date, follow_up_status, follow_up_note, left_at";
+  "id, group_id, name, kind, class_name, grade, birth_year, birth_date, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
 
 export const KIND_LABEL: Record<Member["kind"], string> = { student: "학생", teacher: "교사" };
 
