@@ -2,6 +2,7 @@
 // 다른 모듈을 import하지 않아 node --test로 바로 검증할 수 있다.
 
 export type RtGroup = {
+  type?: string;
   id: string;
   label: string;
   parent_id: string | null;
@@ -17,7 +18,7 @@ export function missingGroups(groups: RtGroup[], reports: RtReport[], noMeetingG
   const parents = new Set(groups.map((g) => g.parent_id).filter(Boolean));
   const submitted = new Set(reports.filter((r) => r.status !== "draft").map((r) => r.group_id));
   return groups.filter(
-    (g) => g.is_active && g.schedule === "weekly" && !parents.has(g.id) && !submitted.has(g.id) && !noMeetingGroupIds.has(g.id),
+    (g) => g.type !== "worship" && g.is_active && g.schedule === "weekly" && !parents.has(g.id) && !submitted.has(g.id) && !noMeetingGroupIds.has(g.id),
   );
 }
 

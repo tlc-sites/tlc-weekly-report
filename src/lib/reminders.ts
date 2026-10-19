@@ -28,7 +28,7 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
   const week = lastCompletedWeek(todayKST());
 
   const [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes] = await Promise.all([
-    admin.from("groups").select("id, name, parent_id, schedule, is_active"),
+    admin.from("groups").select("id, type, name, parent_id, schedule, is_active"),
     admin.from("reports").select("group_id, status").eq("week", week),
     admin.from("week_status").select("group_id, no_meeting").eq("week", week),
     admin.from("memberships").select("user_id, group_id, role"),
@@ -36,10 +36,9 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
   ]);
   for (const r of [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes]) if (r.error) throw r.error;
 
-  const nameById = new Map((groupsRes.data ?? []).map((g) => [g.id as string, g.name as string]));
   const groups: RtGroup[] = (groupsRes.data ?? []).map((g) => ({
     ...g,
-    label: g.parent_id ? `${nameById.get(g.parent_id) ?? ""} · ${g.name}` : g.name,
+    label: g.name,
   })) as RtGroup[];
   const noMeeting = new Set((weekStatusRes.data ?? []).filter((w) => w.no_meeting).map((w) => w.group_id as string));
   const missing = missingGroups(groups, (reportsRes.data ?? []) as RtReport[], noMeeting);

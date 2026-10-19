@@ -49,3 +49,9 @@ export function formatDate(iso: string) {
 export function formatWeek(sunday: string) {
   return `${formatDate(addDays(sunday, -6))} ~ ${formatDate(sunday)}`;
 }
+
+/** 미래 주말을 기본으로 잡지 않고, 가장 최근 일요일까지의 주차만 허용한다. */
+export function reportWeek(value: unknown, today: string) {
+  const latest = latestWeekday(today, 0);
+  return isIsoDate(value) ? (weekOf(value) > latest ? latest : weekOf(value)) : latest;
+}

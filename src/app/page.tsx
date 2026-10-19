@@ -18,7 +18,7 @@ export default function HomePage() {
 async function HomeContent() {
   const { supabase, profile } = await requireActive();
 
-  const [{ data: memberships }, groups, pendingCount] = await Promise.all([
+  const [{ data: memberships }, groups, pendingCount, notices] = await Promise.all([
     supabase.from("memberships").select("group_id, role").eq("user_id", profile.id),
     listGroupsOrdered(supabase),
     profile.is_admin
@@ -28,6 +28,7 @@ async function HomeContent() {
           .eq("status", "pending")
           .then((r) => r.count ?? 0)
       : Promise.resolve(0),
+    supabase.from("notices").select("id,title").order("created_at", { ascending: false }).limit(3),
   ]);
 
   const roleByGroup = new Map((memberships ?? []).map((m) => [m.group_id as string, m.role as keyof typeof ROLE_LABEL]));
@@ -44,6 +45,7 @@ async function HomeContent() {
     <>
       <PageTitle>{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
+      <Card className="mb-4"><Link href="/notices" className="flex min-h-10 items-center justify-between font-medium"><span>공지·소통</span><span aria-hidden>›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-2 text-sm text-muted">{n.title}</Link></li>)}</ul></Card>
 
       {profile.is_admin ? (
         <Card className="mb-4">

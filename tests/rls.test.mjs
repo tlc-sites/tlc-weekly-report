@@ -620,3 +620,49 @@ test("학교 보고: 두 학교가 분리되고 송리스트·설교·내용·�
   await save(writer,rid,{details,issues:[]});
   assert.equal((await as(reviewer,"select id from report.report_issues where report_id=$1",[rid])).rows.length,0);
 });
+
+test("공지·댓글: 대상 부서만 열람·댓글, 검토자는 담당 부서만 발신, 위조 작성자 거부", async () => {
+  const create = (user,target,extra={}) => as(user,"insert into report.notices(author_id,target_type,target_group_id,audience,title,body) values ($1,$2,$3,$4,'이번 주 안내','전체 모임 공지') returning id",[extra.author ?? user,target.type ?? null,target.group ?? null,extra.audience ?? 'all']);
+  const nid=(await create(ids.admin,{type:'education'})).rows[0].id;
+  assert.equal((await as(ids.teacherC,"select id from report.notices where id=$1",[nid])).rows.length,1);
+  assert.equal((await as(ids.eduReviewer,"select id from report.notices where id=$1",[nid])).rows.length,1);
+  assert.equal((await as(ids.techWriter,"select id from report.notices where id=$1",[nid])).rows.length,0);
+  assert.equal((await as(ids.pending,"select id from report.notices where id=$1",[nid])).rows.length,0);
+  await rejects(as(null,"select * from report.notices"),/permission denied/);
+  await as(ids.teacherC,"insert into report.notice_comments(notice_id,author_id,body) values ($1,$2,'확인했습니다')",[nid,ids.teacherC]);
+  assert.equal((await as(ids.eduReviewer,"select body from report.notice_comments where notice_id=$1",[nid])).rows[0].body,'확인했습니다');
+  assert.equal((await as(ids.techWriter,"select id from report.notice_comments where notice_id=$1",[nid])).rows.length,0);
+  await rejects(as(ids.techWriter,"insert into report.notice_comments(notice_id,author_id,body) values ($1,$2,'잘못된 댓글')",[nid,ids.techWriter]),/row-level security/);
+  await rejects(as(ids.teacherC,"insert into report.notice_comments(notice_id,author_id,body) values ($1,$2,'작성자 위조')",[nid,ids.admin]),/row-level security/);
+  await rejects(create(ids.teacherC,{group:ids.youth}),/row-level security/);
+  await rejects(create(ids.eduReviewer,{group:ids.sound}),/row-level security/);
+  await rejects(create(ids.eduReviewer,{type:'education'}),/row-level security/);
+  await rejects(create(ids.eduReviewer,{group:ids.youth},{author:ids.admin}),/row-level security/);
+  const privateId=(await create(ids.eduReviewer,{group:ids.youth},{audience:'reviewer'})).rows[0].id;
+  assert.equal((await as(ids.teacherC,"select id from report.notices where id=$1",[privateId])).rows.length,0);
+  assert.equal((await as(ids.admin,"select id from report.notices where id=$1",[privateId])).rows.length,1);
+  assert.equal((await as(ids.techWriter,"select * from report.notice_recipients($1)",[nid])).rows.length,0);
+  const targets=(await as(ids.admin,"select * from report.notice_recipients($1)",[nid])).rows.map(r=>r.user_id);
+  assert.ok(targets.includes(ids.teacherC));
+  assert.ok(!targets.includes(ids.techWriter));
+  assert.ok(!targets.includes(ids.pending));
+  assert.ok(!targets.includes(ids.admin));
+  await as(ids.teacherC,"update report.profiles set notify_enabled=false where id=$1",[ids.teacherC]);
+  assert.equal((await as(ids.teacherC,"select id from report.notices where id=$1",[nid])).rows.length,1);
+  assert.ok(!(await as(ids.admin,"select * from report.notice_recipients($1)",[nid])).rows.some(r=>r.user_id===ids.teacherC));
+  await as(ids.teacherC,"update report.profiles set notify_enabled=true where id=$1",[ids.teacherC]);
+});
+
+test("모임 없음: 교육·학교 사유 필수, 미래 주차·기술팀·다른 부서의 작성 거부", async () => {
+  const week=(await db.query("select ((now() at time zone 'Asia/Seoul')::date - extract(dow from now() at time zone 'Asia/Seoul')::int)::text w")).rows[0].w;
+  const set=(user,group,reason,date=week)=>as(user,"insert into report.week_status(group_id,week,no_meeting,reason,set_by) values ($1,$2,true,$3,$4)",[group,date,reason,user]);
+  await rejects(set(ids.admin,ids.youth,''),/사유/);
+  await rejects(set(ids.admin,ids.sound,'보고 유동적'),/교육부서와 학교/);
+  await rejects(set(ids.techWriter,ids.youth,'다른 부서'),/row-level security/);
+  const future=(await db.query("select ($1::date+7)::text w",[week])).rows[0].w;
+  await rejects(set(ids.admin,ids.youth,'미래',future),/미래/);
+  await set(ids.admin,ids.youth,'연합예배');
+  await set(ids.admin,await groupId('베리타스 기독초'),'방학');
+  assert.equal((await as(ids.admin,"select reason from report.week_status where group_id=$1 and week=$2",[ids.youth,week])).rows[0].reason,'연합예배');
+  await as(ids.admin,"delete from report.week_status where group_id=$1 and week=$2",[ids.youth,week]);
+});

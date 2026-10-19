@@ -55,7 +55,7 @@ export async function listGroupsOrdered(supabase: ReportClient, { includeInactiv
       childCount: children.length,
     });
     for (const child of children) {
-      ordered.push({ ...child, depth: 1, label: `${root.name} · ${child.name}`, childCount: 0 });
+      ordered.push({ ...child, depth: 1, label: child.name, childCount: 0 });
     }
   }
   return ordered;

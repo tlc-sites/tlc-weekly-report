@@ -69,3 +69,8 @@ test("그룹 이름 요약", () => {
   assert.equal(summarizeNames(["중등부", "음향"]), "중등부, 음향");
   assert.equal(summarizeNames(["중등부", "음향", "영상", "조명"]), "중등부, 음향 외 2곳");
 });
+
+test("기술팀은 주간으로 설정돼 있어도 모임 없음·미제출 독촉에서 제외한다", () => {
+  const missing = missingGroups([{id:'sound',type:'worship',label:'음향팀',parent_id:null,schedule:'weekly',is_active:true},{id:'school',type:'other',label:'학교',parent_id:null,schedule:'weekly',is_active:true}],[],new Set());
+  assert.deepEqual(missing.map(g=>g.id),['school']);
+});

@@ -55,11 +55,11 @@ export function Loading() {
 }
 
 export const buttonClass =
-  "inline-flex h-11 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground disabled:opacity-50";
+  "inline-flex h-11 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const secondaryButtonClass =
-  "inline-flex h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium disabled:opacity-50";
+  "inline-flex h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const smallButtonClass =
-  "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium disabled:opacity-50";
+  "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
   "h-11 w-full rounded-lg border border-border bg-surface px-3 text-base outline-none focus:border-accent";
 export const selectClass =

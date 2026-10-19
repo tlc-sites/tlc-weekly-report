@@ -5,7 +5,7 @@ import { requireActive } from "@/lib/auth";
 import { FOLLOW_UP_LABEL } from "@/lib/members";
 import { loadMeeting, reportTitle, type GroupStatus } from "@/lib/meeting";
 import { CAMPUS_TEXTS, ISSUE_STATUS_LABEL } from "@/lib/report-forms";
-import { addDays, formatDate, formatWeek, isIsoDate, todayKST, weekdayOf, weekOf } from "@/lib/week";
+import { addDays, formatDate, formatWeek, reportWeek, todayKST, latestWeekday } from "@/lib/week";
 import { updateIssueStatus } from "./actions";
 import { PrintButton } from "./print-button";
 
@@ -34,8 +34,8 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
   const { week: weekParam, error } = await searchParams;
   // 기본은 가장 최근에 끝난 주 (화요일 회의에서 보는 것은 지난 월~일). 일요일이면 그날로 끝나는 이번 주.
   const today = todayKST();
-  const lastWeek = weekdayOf(today) === 0 ? today : addDays(weekOf(today), -7);
-  const week = isIsoDate(weekParam) ? weekOf(weekParam) : lastWeek;
+  const lastWeek = latestWeekday(today, 0);
+  const week = reportWeek(weekParam, today);
   const data = await loadMeeting(supabase, profile, week);
   const message = pickMessage(MESSAGES, error);
   const counts = data.overview.reduce<Record<string, number>>((acc, o) => ({ ...acc, [o.status]: (acc[o.status] ?? 0) + 1 }), {});
@@ -51,9 +51,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
           ← 지난주
         </Link>
         <PrintButton />
-        <Link href={`/meeting?week=${addDays(week, 7)}`} className="px-2 py-1 text-muted">
-          다음 주 →
-        </Link>
+        {week < lastWeek ? <Link href={`/meeting?week=${addDays(week, 7)}`} className="px-2 py-1 text-muted">다음 주 →</Link> : <span className="px-2 py-1 text-muted/40">다음 주 →</span>}
       </nav>
       {message ? (
         <div className="mb-4">

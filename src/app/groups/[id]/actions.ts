@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActive } from "@/lib/auth";
 import { getGroup } from "@/lib/groups";
-import { weekOf } from "@/lib/week";
+import { weekOf, todayKST, latestWeekday } from "@/lib/week";
 
 // 새 보고 만들기. 같은 그룹·날짜·모임의 보고가 이미 있으면 새로 만들지 않고 그 보고를 연다.
 export async function createReport(formData: FormData) {
@@ -17,16 +17,19 @@ export async function createReport(formData: FormData) {
       meeting: z.string().regex(/^(service|meeting):[0-9a-f-]{36}$|^custom$|^campus$/),
       customLabel: z.string().trim().max(50),
       meetingDate: z.iso.date(),
+      reportWeek: z.iso.date(),
     })
     .safeParse({
       groupId: formData.get("groupId"),
       meeting: formData.get("meeting"),
       customLabel: formData.get("customLabel") ?? "",
       meetingDate: formData.get("meetingDate"),
+      reportWeek: formData.get("reportWeek"),
     });
   if (!parsed.success) redirect(`/groups/${formData.get("groupId")}?error=invalid`);
   const { groupId, meeting, customLabel, meetingDate } = parsed.data;
   const back = `/groups/${groupId}?week=${weekOf(meetingDate)}`;
+  if (weekOf(meetingDate) !== parsed.data.reportWeek || meetingDate > todayKST() || weekOf(meetingDate) > latestWeekday(todayKST(), 0)) redirect("/groups/" + groupId + "?error=invalid");
 
   const group = await getGroup(supabase, groupId);
   if (!group || !group.is_active) redirect("/");
@@ -69,7 +72,7 @@ export async function createReport(formData: FormData) {
 }
 
 // 그 주 모임 없음 표시 / 해제
-export async function setNoMeeting(formData: FormData) {
+export async function setNoMeeting(_previous: { error: string; saved: boolean }, formData: FormData) {
   const { supabase, profile } = await requireActive();
   const parsed = z
     .object({
@@ -84,8 +87,11 @@ export async function setNoMeeting(formData: FormData) {
       on: formData.get("on"),
       reason: formData.get("reason") ?? "",
     });
-  if (!parsed.success || weekOf(parsed.data.week) !== parsed.data.week) redirect("/");
+  if (!parsed.success || weekOf(parsed.data.week) !== parsed.data.week) return { error: "입력값을 확인해 주세요.", saved: false };
   const { groupId, week, on, reason } = parsed.data;
+  const group = await getGroup(supabase, groupId);
+  if (!group || !group.is_active || !["education", "other"].includes(group.type) || week > latestWeekday(todayKST(), 0)) return { error: "이 주차에는 모임 없음을 등록할 수 없습니다.", saved: false };
+  if (on === "true" && !reason) return { error: "모임이 없는 사유를 적어 주세요.", saved: false };
 
   const { error } =
     on === "true"
@@ -93,6 +99,7 @@ export async function setNoMeeting(formData: FormData) {
           .from("week_status")
           .upsert({ group_id: groupId, week, no_meeting: true, reason: reason || null, set_by: profile.id, updated_at: new Date().toISOString() })
       : await supabase.from("week_status").delete().eq("group_id", groupId).eq("week", week);
-  if (error) redirect(`/groups/${groupId}?week=${week}&error=save`);
+  if (error) return { error: "저장하지 못했습니다. 권한과 입력 내용을 확인해 주세요.", saved: false };
   refresh();
+  return { error: "", saved: true };
 }

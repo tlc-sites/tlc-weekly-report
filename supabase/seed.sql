@@ -86,3 +86,6 @@ insert into report.group_meeting_types(group_id, name, weekday, sort_order)
 select g.id, '학교예배', null, 0 from report.groups g
 where g.type = 'other' and g.parent_id is null and g.name in ('베리타스 기독초', '베리타스 기독국제중')
   and not exists (select 1 from report.group_meeting_types m where m.group_id = g.id and m.name = '학교예배');
+
+-- 기술팀은 필요할 때 보고하며 미제출 독촉은 하지 않는다.
+update report.groups set schedule = 'irregular' where type = 'worship';

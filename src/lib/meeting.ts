@@ -65,7 +65,7 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
     }
     if (noMeeting.has(g.id)) return "no_meeting";
     if (mine.length) return "draft";
-    return g.schedule === "weekly" ? "missing" : "none";
+    return g.type !== "worship" && g.schedule === "weekly" ? "missing" : "none";
   };
   const overview = visible.map((g) => ({ group: g, status: statusOf(g), reports: reports.filter((r) => r.group_id === g.id), reason: noMeeting.get(g.id) ?? null }));
 
