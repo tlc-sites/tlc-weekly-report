@@ -25,6 +25,7 @@ export function TextArea({
   onChange,
   placeholder,
   rows = 3,
+  maxLength = 1000,
   required = false,
 }: {
   label?: string;
@@ -32,6 +33,7 @@ export function TextArea({
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
+  maxLength?: number;
   required?: boolean;
 }) {
   return (
@@ -45,7 +47,7 @@ export function TextArea({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        maxLength={1000}
+        maxLength={maxLength}
         rows={rows}
         placeholder={placeholder}
         className={textareaClass}

@@ -203,6 +203,29 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
         )}
       </Section>
 
+      {data.schools.length ? (
+        <Section title="학교 예배·교육">
+          <div className="flex flex-col gap-5 text-sm">
+            {data.schools.map((r) => (
+              <article key={r.id} className="break-inside-avoid">
+                <Link href={`/reports/${r.id}`} className="font-semibold text-accent">
+                  {data.groupName.get(r.group_id)} · {reportTitle(r)} · {formatDate(r.meeting_date)}
+                </Link>
+                {([
+                  ["song_list", "예배 송리스트"], ["sermon_passage", "설교본문"],
+                  ["preacher", "설교자"], ["content", "예배·교육 내용"], ["notes", "특이사항"],
+                ] as const).map(([key, label]) => typeof r.details[key] === "string" && r.details[key] ? (
+                  <div key={key} className="mt-2">
+                    <p className="text-xs text-muted">{label}</p>
+                    <p className="whitespace-pre-wrap">{String(r.details[key])}</p>
+                  </div>
+                ) : null)}
+              </article>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
       {data.campus.length ? (
         <Section title="7. 부산 캠퍼스">
           {data.campus.map((r) => {

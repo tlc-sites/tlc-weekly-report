@@ -95,7 +95,15 @@ export const worshipPayload = z.object({
 });
 
 export const otherPayload = z.object({
-  details: z.object({ notes: longText, requests: z.array(requestSchema).max(20) }),
+  details: z.object({
+    // 이전에 작성한 기타 모임 보고도 그대로 열고 저장할 수 있도록 기본값을 둔다.
+    song_list: text(2000).default(""),
+    sermon_passage: text(100).default(""),
+    preacher: text(100).default(""),
+    content: text(2000).default(""),
+    notes: longText,
+    requests: z.array(requestSchema).max(20),
+  }),
   issues: z.array(issueSchema).max(30),
   messages: messagesSchema,
 });
@@ -134,10 +142,6 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   if (type === "worship") {
     const p = payload as WorshipPayload;
     return p.details.result ? [] : ["진행 결과"];
-  }
-  if (type === "other") {
-    const p = payload as OtherPayload;
-    return p.issues.length ? [] : ["이슈 1건 이상"];
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;

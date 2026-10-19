@@ -167,13 +167,21 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         />
       );
     } else if (editMode) {
-      const initial: OtherPayload = { details: { notes: str("notes"), requests }, issues, messages };
+      const initial: OtherPayload = {
+        details: { song_list: str("song_list"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests },
+        issues, messages,
+      };
       body = <OtherForm key={report.updated_at} action={saveReport} reportId={id} initial={initial} showMessages={isAuthor} />;
     } else {
       body = (
         <ReadOnly
           rows={[
-            ["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""],
+            ...(group.type === "other" ? [
+              ["예배 송리스트", str("song_list")],
+              ["설교본문", str("sermon_passage")],
+              ["설교자", str("preacher")],
+              ["예배·교육 내용", str("content")],
+            ] as [string, string][] : [["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
             ...issues.map(
               (i) => [`이슈 · ${i.category}`, `${i.content}${i.action ? `\n→ ${i.action}` : ""} (${ISSUE_STATUS_LABEL[i.status]})`] as [string, string],
             ),

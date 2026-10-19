@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Field, inputClass } from "@/components/ui";
 import { OTHER_ISSUE_CATEGORIES, RESULT_LABEL, WORSHIP_ISSUE_CATEGORIES, type OtherPayload, type WorshipPayload } from "@/lib/report-forms";
 import { IssuesEditor, MessagesEditor, ReportForm, RequestsEditor, Section, TextArea } from "./form-parts";
 
@@ -55,12 +56,31 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
   );
 }
 
-// 기타 모임: 이슈와 요청사항만
+// 학교: 출결 없이 예배·교육 내용과 이슈를 보고한다.
 export function OtherForm({ action, reportId, initial, showMessages }: Props<OtherPayload>) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
-      <Section title="이슈" hint="제출하려면 이슈를 1건 이상 적어 주세요.">
+      <Section title="학교 예배·교육">
+        <TextArea label="예배 송리스트" value={p.details.song_list} maxLength={2000}
+          placeholder="곡 제목을 순서대로 한 줄에 하나씩 적어 주세요."
+          onChange={(song_list) => setP({ ...p, details: { ...p.details, song_list } })} />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="설교본문">
+            <input className={inputClass} maxLength={100} value={p.details.sermon_passage}
+              placeholder="예: 요한복음 3:16"
+              onChange={(e) => setP({ ...p, details: { ...p.details, sermon_passage: e.target.value } })} />
+          </Field>
+          <Field label="설교자">
+            <input className={inputClass} maxLength={100} value={p.details.preacher}
+              onChange={(e) => setP({ ...p, details: { ...p.details, preacher: e.target.value } })} />
+          </Field>
+        </div>
+        <TextArea label="예배·교육 내용" value={p.details.content} rows={6} maxLength={2000}
+          placeholder="설교 요약, 교육 내용, 활동과 반응 등을 적어 주세요."
+          onChange={(content) => setP({ ...p, details: { ...p.details, content } })} />
+      </Section>
+      <Section title="이슈" hint="예배·교육 중 있었던 일과 필요한 조치를 적어 주세요. 이슈가 없으면 비워 두셔도 됩니다.">
         <IssuesEditor value={p.issues} onChange={(issues) => setP({ ...p, issues })} categories={OTHER_ISSUE_CATEGORIES} hint={personHint} />
       </Section>
       <Section title="요청사항">

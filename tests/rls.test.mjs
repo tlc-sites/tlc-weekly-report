@@ -95,12 +95,12 @@ before(async () => {
   await approve(ids.techWriter, [{ group_id: ids.sound, role: "writer" }]);
 });
 
-test("시드: 중복 없이 그룹 21개(교육부서 8, 예배팀 10, 부산), 예배 9개가 생성된다", async () => {
+test("시드: 중복 없이 그룹 23개(교육부서 8, 예배팀 10, 학교 2, 부산), 예배 9개가 생성된다", async () => {
   const groups = await db.query("select count(*)::int as n from report.groups");
   const services = await db.query("select count(*)::int as n from report.service_types");
   const worshipLinks = await db.query("select count(*)::int as n from report.group_service_types");
   const campus = await db.query("select type from report.groups where name = '부산 캠퍼스'");
-  assert.equal(groups.rows[0].n, 21);
+  assert.equal(groups.rows[0].n, 23);
   assert.equal(services.rows[0].n, 9);
   assert.equal(worshipLinks.rows[0].n, 90);
   assert.equal(campus.rows[0].type, "campus");
@@ -140,7 +140,7 @@ test("익명 사용자는 그룹 목록도 볼 수 없다", async () => {
 
 test("승인 대기자: 그룹 목록만 보이고 다른 사람 프로필과 예배 목록은 안 보인다", async () => {
   const groups = await as(ids.pending, "select id from report.groups");
-  assert.equal(groups.rows.length, 21);
+  assert.equal(groups.rows.length, 23);
   const profiles = await as(ids.pending, "select id from report.profiles");
   assert.deepEqual(profiles.rows.map((r) => r.id), [ids.pending]);
   const services = await as(ids.pending, "select id from report.service_types");
@@ -596,4 +596,27 @@ test("팀은 10개 독립 보고 그룹이며 라이프라인은 주일, 수요�
   assert.equal(services.rows.find(r=>r.name==='라이프라인').weekday,0);
   assert.equal(services.rows.find(r=>r.name==='수요예배').weekday,3);
   assert.deepEqual(services.rows.filter(r=>r.weekday===5).map(r=>r.month_week),[1,2,3,-1]);
+});
+
+test("학교 보고: 두 학교가 분리되고 송리스트·설교·내용·이슈를 출결 없이 저장한다", async () => {
+  const school = await groupId("베리타스 기독초");
+  const middle = await groupId("베리타스 기독국제중");
+  const writer = await signUp("학교 작성자");
+  const reviewer = await signUp("학교 검토자");
+  const approveSchool = (user, group, role) => as(ids.admin,"select report.approve_user($1,$2::jsonb)",[user,JSON.stringify([{group_id:group,role}])]);
+  await approveSchool(writer,school,"writer");
+  await approveSchool(reviewer,school,"reviewer");
+  const rid = (await as(writer,"insert into report.reports(group_id,author_id,meeting_date,meeting_label) values ($1,$2,'2026-10-19','학교예배') returning id",[school,writer])).rows[0].id;
+  const details = {song_list:"첫 곡\n둘째 곡",sermon_passage:"요한복음 3:16",preacher:"학교 교역자",content:"설교 요약과 교육 활동",notes:"",requests:[]};
+  await save(writer,rid,{details,issues:[{category:"진행",content:"예배 시간 조정",status:"open",action:"협의 예정"}]});
+  const report = (await as(reviewer,"select details,enrolled_snapshot,attend_snapshot from report.reports where id=$1",[rid])).rows[0];
+  assert.deepEqual(report.details,details);
+  assert.equal(report.enrolled_snapshot,null);
+  assert.equal(report.attend_snapshot,null);
+  assert.equal((await db.query("select count(*)::int n from report.attendance where report_id=$1",[rid])).rows[0].n,0);
+  assert.equal((await as(reviewer,"select content from report.report_issues where report_id=$1",[rid])).rows[0].content,"예배 시간 조정");
+  assert.equal((await as(ids.techWriter,"select id from report.reports where id=$1",[rid])).rows.length,0);
+  await rejects(as(writer,"insert into report.reports(group_id,author_id,meeting_date,meeting_label) values ($1,$2,'2026-10-19','학교예배')",[middle,writer]),/row-level security/);
+  await save(writer,rid,{details,issues:[]});
+  assert.equal((await as(reviewer,"select id from report.report_issues where report_id=$1",[rid])).rows.length,0);
 });

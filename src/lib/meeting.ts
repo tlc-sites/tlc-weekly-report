@@ -161,6 +161,7 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
     .map((m) => ({ ...m, report: sentReports.find((r) => r.id === m.report_id)! }))
     .filter((m) => m.report && m.report.author_id !== profile.id);
   const campus = sentReports.filter((r) => visible.find((g) => g.id === r.group_id)?.type === "campus");
+  const schools = sentReports.filter((r) => visible.find((g) => g.id === r.group_id)?.type === "other");
 
-  return { overview, attendance, thisWeekNewcomers, followUps, longAbsent, threshold, issues, requests, prayers, messagesToMe, campus, groupName, week };
+  return { overview, attendance, thisWeekNewcomers, followUps, longAbsent, threshold, issues, requests, prayers, messagesToMe, campus, schools, groupName, week };
 }
