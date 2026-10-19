@@ -22,15 +22,16 @@
 |---|---|---|
 | 1~3 | 이메일 OTP 로그인, 가입 신청·승인, 그룹/예배/사용자 관리, 보고 작성(교육·예배팀·기타·캠퍼스 양식), 명단·출석·보호자 | 커밋 `3b5ae2e` |
 | 4 | 검토(확인) 처리, 코멘트, 교역자 회의 자료 화면과 인쇄 | 커밋 `987f7d7` |
-| 5 | 웹 푸시 알림(구독, 미제출 알림 크론, 관리자 알림 미설정 현황, PWA 매니페스트·아이콘) | 커밋됨(2026-10-19), 운영 미반영. 아래 3절 참고 |
+| 5 | 웹 푸시 알림(구독, 미제출 알림 크론, 관리자 알림 미설정 현황, PWA 매니페스트·아이콘) | 코드 커밋됨(2026-10-19). 운영 DB 6번 마이그레이션은 2026-10-19 적용·검증 완료; Vercel 배포와 실기기 수신은 미확인 |
 
-### 2026-10-19 확인 결과 (5단계 커밋 직전 상태에서 직접 실행)
+### 2026-10-19 확인 결과 (현재 작업 트리에서 재검증 완료)
 
 - `npm run test:db` → **42개 전부 통과**
 - `npx eslint` → 경고·오류 없음
 - `npx tsc --noEmit` → 오류 없음
 - `npx next build` → 성공 (페이지 21개, `/api/cron/[slot]` 포함)
-- **확인 못 함**: 운영 Supabase에 어느 마이그레이션까지 적용됐는지, Vercel 배포 여부와 환경변수, 실제 기기에서 푸시 수신 여부. git 원격 저장소는 설정돼 있지 않다(`git remote -v` 결과 없음).
+- **운영 DB 확인 (2026-10-19)**: `mcbbhsvvzqvtrxlbdcks`에서 `report` 핵심 객체와 `save_report`가 존재하고, 6번 적용 전 푸시 함수 두 개는 없었다. 사용자 승인 후 `20261020000000_push.sql`을 적용했다. `save_push_subscription`과 `push_status` 생성, `SECURITY DEFINER`, 빈 `search_path`, `anon` 실행 거부 및 `authenticated` 실행 허용을 확인했다. 적용 이력 테이블은 없어 실제 객체로 판별했다.
+- **확인 못 함**: Vercel 배포 여부와 환경변수, 실제 기기에서 푸시 수신 여부. GitHub 원격 저장소는 `https://github.com/tlc-sites/tlc-weekly-report.git`으로 연결했다.
 
 ## 3. 5단계 변경 목록
 
@@ -122,7 +123,7 @@ tests/                        PGlite로 실제 Postgres에서 RLS 검증 (stub.m
 6. `20261020000000_push.sql` — 5단계 웹 푸시
 
 새 DB에는 위 1~6을 모두 적용한 뒤 `seed.sql`을 실행한다. seed가 `worship`, `campus` 유형을 쓰므로 3번 이후에 실행해야 한다.
-**SETUP.md는 아직 init과 seed만 안내하고 있어 이 순서로 고쳐야 한다**(남은 일 참고).
+`SETUP.md`에도 위 마이그레이션 순서와 seed 실행 절차를 반영했다.
 
 ### 핵심 개념
 
@@ -171,12 +172,12 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 
 ## 9. 남은 일 / 확인 필요
 
-1. **SETUP.md 갱신** — 마이그레이션 1~6 적용 순서(3번은 따로 실행), seed는 마지막, 푸시 설정(VAPID 키 생성, Vercel 환경변수 4개, `CRON_SECRET`) 추가
-2. **운영 DB 반영 확인** — 운영 Supabase에 어느 마이그레이션까지 적용됐는지 확인 후 남은 것 적용. `tests/upgrade.test.mjs`는 1·2차가 적용된 운영 DB에 3차를 올리는 상황을 검증한다
+1. **SETUP.md 갱신 완료** — 마이그레이션 1~6 순서(3번 별도 실행), seed 마지막, 푸시 설정과 Vercel 환경변수·크론 점검 절차 반영
+2. **운영 DB 후속 확인** — 6번 마이그레이션 적용과 함수 권한은 확인 완료. Vercel 배포·환경변수와 실기기 푸시 수신을 확인한다. `tests/upgrade.test.mjs`는 1·2차가 적용된 운영 DB에 3차를 올리는 상황을 검증한다
 3. **Vercel 크론** — 플랜에 따라 실행 시각 정밀도나 개수 제한이 있을 수 있다. 배포 후 Vercel 대시보드에서 크론 등록과 실행 시각 확인. 현재 시각은 `vercel.json`에 하드코딩돼 있고 `app_settings`의 `deadline`/`reminders` 값은 **코드에서 읽지 않는다**(`long_absence_threshold`만 `lib/meeting.ts`에서 사용)
 4. **실기기 테스트** — 안드로이드 Chrome, 아이폰 홈 화면 앱, 카카오톡 인앱 안내
 5. `profiles.locale`(ko/en) 컬럼과 권한은 있으나 화면 다국어 처리는 아직 없음
-6. 원격 저장소(GitHub) 미설정
+6. GitHub 원격 저장소 연결 완료: `https://github.com/tlc-sites/tlc-weekly-report` (코드 업로드 후 Vercel 연결 필요)
 
 ## 10. 작업 규칙 (사용자 지침)
 
