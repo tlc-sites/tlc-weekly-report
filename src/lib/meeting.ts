@@ -126,7 +126,8 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
     action: string | null;
     report: Pick<MeetingReport, "id" | "group_id" | "week" | "meeting_date" | "meeting_label" | "service" | "meeting">;
   };
-  const issues = ((issuesRes.data ?? []) as unknown as IssueRow[]).filter((i) => visibleIds.has(i.report.group_id)).sort((a, b) => b.report.meeting_date.localeCompare(a.report.meeting_date));
+  const worshipGroupIds=new Set(groups.filter(g=>g.type==="worship").map(g=>g.id));
+  const issues = ((issuesRes.data ?? []) as unknown as IssueRow[]).filter((i) => visibleIds.has(i.report.group_id) && !worshipGroupIds.has(i.report.group_id)).sort((a, b) => b.report.meeting_date.localeCompare(a.report.meeting_date));
 
   // 장기결석: 최근 6주 출석 기록에서 마지막부터 연속 결석이 기준 횟수 이상인 학생
   type AbsenceRow = { member_id: string; present: boolean; report: { meeting_date: string; group_id: string } };

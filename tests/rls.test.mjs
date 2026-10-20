@@ -515,8 +515,9 @@ test("보고 저장: 다른 부서 학생의 출석은 거부, 남의 보고는 
   await rejects(save(ids.techWriter, ids.eduReport, { details: {} }), /report not found|forbidden/);
 });
 
-test("보고 저장(예배팀): 이슈는 저장할 때마다 통째로 교체된다", async () => {
+test("보고 저장(예배팀): 이전 클라이언트의 이슈 배열은 무시하고 통합 이슈를 보존한다", async () => {
   const rid = await newReport(ids.techWriter, ids.sound, "1부 예배");
+  await db.query("update report.reports set meeting_date=(now() at time zone 'Asia/Seoul')::date where id=$1",[rid]);
   await save(ids.techWriter, rid, {
     details: { result: "minor" },
     issues: [
@@ -524,15 +525,14 @@ test("보고 저장(예배팀): 이슈는 저장할 때마다 통째로 교체�
       { category: "인력", content: "인원 부족", status: "resolved", action: "지원 요청" },
     ],
   }, "draft");
-  let issues = await db.query("select category, status, resolved_at is not null as resolved from report.report_issues where report_id = $1 order by category", [rid]);
-  assert.deepEqual(issues.rows, [
-    { category: "인력", status: "resolved", resolved: true },
-    { category: "장비", status: "open", resolved: false },
-  ]);
+  const legacy = await db.query("select id from report.report_issues where report_id=$1",[rid]);
+  assert.equal(legacy.rows.length,0);
+  const r=(await db.query("select meeting_date::text,service_type_id from report.reports where id=$1",[rid])).rows[0];
+  const issue=(await as(ids.techWriter,"insert into report.worship_incidents(author_id,report_id,group_ids,occurred_on,service_id,service_name,title,circumstances,detailed,status) values($1,$2,$3,$4,$5,'예배','장비 점검','현장 점검',false,'resolved') returning id",[ids.techWriter,rid,[ids.sound],r.meeting_date,r.service_type_id])).rows[0].id;
 
   await save(ids.techWriter, rid, { details: { result: "normal" }, issues: [{ category: "진행·큐시트", content: "순서 변경", status: "temporary", action: "" }] });
-  issues = await db.query("select category from report.report_issues where report_id = $1", [rid]);
-  assert.deepEqual(issues.rows.map((r) => r.category), ["진행·큐시트"]);
+  assert.equal((await db.query("select status from report.worship_incidents where id=$1",[issue])).rows[0].status,'resolved');
+  await rejects(as(ids.techWriter,"insert into report.report_issues(report_id,category,content) values($1,'장비','중복')",[rid]),/통합된 팀 이슈/);
 });
 
 test("보고 저장: 검토자가 저장해도 작성자의 글은 건드리지 않는다", async () => {
@@ -718,4 +718,45 @@ test("예배 경위서: 주간 보고 연결 시 부서·날짜·예배 일치�
   assert.equal(row.service_name,'수요예배');
   assert.equal((await db.query("select count(*)::int n from report.reports where id=$1",[rid])).rows[0].n,1);
   await rejects(as(ids.admin,"update report.worship_incidents set report_id=null where id=$1",[row.id]),/관련 정보/);
+});
+
+test("팀 이슈 업그레이드: 기존 이슈·경위서 보존, 같은 ID에 상세 추가, 관련 팀 보고에서 같은 상태 조회", async () => {
+  const upgrade=new PGlite();
+  try {
+    await upgrade.exec(SUPABASE_STUB);
+    const files=readdirSync(migrationsDir).sort();
+    for(const file of files.filter(f=>f<'20261025000000_team_issues.sql')) await upgrade.exec(readFileSync(join(migrationsDir,file),'utf8'));
+    await upgrade.exec(readFileSync(join(root,'supabase','seed.sql'),'utf8'));
+    const author=randomUUID(),reviewer=randomUUID(),other=randomUUID();
+    for(const user of [author,reviewer,other]) {
+      await upgrade.query("insert into auth.users(id) values($1)",[user]);
+      await upgrade.query("insert into report.profiles(id,status) values($1,'active')",[user]);
+    }
+    const sound=(await upgrade.query("select id from report.groups where name='음향팀'")).rows[0].id;
+    const video=(await upgrade.query("select id from report.groups where name='영상팀'")).rows[0].id;
+    const sid=(await upgrade.query("select id from report.service_types where name='수요예배'")).rows[0].id;
+    await upgrade.query("insert into report.memberships(user_id,group_id,role) values($1,$2,'writer'),($3,$4,'reviewer')",[author,sound,reviewer,video]);
+    const today=(await upgrade.query("select (now() at time zone 'Asia/Seoul')::date::text d")).rows[0].d;
+    const report=randomUUID(),legacy=randomUUID(),existing=randomUUID();
+    await upgrade.query("insert into report.reports(id,group_id,author_id,meeting_date,service_type_id) values($1,$2,$3,$4,$5)",[report,sound,author,today,sid]);
+    await upgrade.query("insert into report.report_issues(id,report_id,category,content,status,action) values($1,$2,'장비','케이블 교체','resolved','교체 완료')",[legacy,report]);
+    await upgrade.query("insert into report.worship_incidents(id,author_id,group_ids,occurred_on,service_id,service_name,title,circumstances,response,prevention,status) values($1,$2,$3,$4,$5,'수요예배','공유 이슈','경위','대응','개선','resolved')",[existing,author,[sound,video],today,sid]);
+    await upgrade.exec(readFileSync(join(migrationsDir,'20261025000000_team_issues.sql'),'utf8'));
+    const migrated=(await upgrade.query("select * from report.worship_incidents where id=$1",[legacy])).rows[0];
+    assert.equal(migrated.category,'장비'); assert.equal(migrated.circumstances,'케이블 교체');
+    assert.equal(migrated.response,'교체 완료'); assert.equal(migrated.status,'resolved');assert.equal(migrated.detailed,false);
+    assert.equal((await upgrade.query("select status from report.worship_incidents where id=$1",[existing])).rows[0].status,'resolved');
+    assert.equal((await upgrade.query("select count(*)::int n from report.worship_incidents")).rows[0].n,2);
+    assert.equal((await upgrade.query("select content from report.report_issues where id=$1",[legacy])).rows[0].content,'케이블 교체');
+    const asUpgrade=(user,sql,args=[])=>upgrade.transaction(async tx=>{await tx.exec('set local role authenticated');await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);return tx.query(sql,args);});
+    await asUpgrade(author,"update report.worship_incidents set detailed=true,prevention='사전 점검' where id=$1",[legacy]);
+    assert.equal((await upgrade.query("select count(*)::int n from report.worship_incidents")).rows[0].n,2);
+    await rejects(asUpgrade(author,"update report.worship_incidents set detailed=false where id=$1",[legacy]),/되돌릴/);
+    await rejects(asUpgrade(author,"update report.report_issues set status='open' where id=$1",[legacy]),/통합된 팀 이슈/);
+    const shared=await asUpgrade(reviewer,"select id,status from report.worship_incidents where group_ids @> $1::uuid[] and occurred_on=$2 and service_id=$3",[[video],today,sid]);
+    assert.deepEqual(shared.rows,[{id:existing,status:'resolved'}]);
+    assert.equal((await asUpgrade(other,"select id from report.worship_incidents")).rows.length,0);
+    await asUpgrade(reviewer,"update report.worship_incidents set status='temporary' where id=$1",[existing]);
+    assert.equal((await asUpgrade(author,"select status from report.worship_incidents where id=$1",[existing])).rows[0].status,'temporary');
+  } finally { await upgrade.close(); }
 });

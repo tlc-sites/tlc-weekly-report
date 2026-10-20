@@ -13,6 +13,8 @@ export async function saveIncident(_: IncidentState, form: FormData): Promise<In
   const parsed = incidentFields.safeParse(values);
   if (!parsed.success) return { error: "필수 항목과 글자 수를 확인해 주세요. 해결 처리에는 대응 결과와 개선대책이 필요합니다." };
   const fields = { ...parsed.data, due_on: parsed.data.due_on || null };
+  const target=form.get("returnTo");
+  const returnTo=typeof target==="string" && /^\/reports\/[0-9a-f-]{36}$/i.test(target) ? target : null;
   const id = form.get("id");
   if (id) {
     if (!z.uuid().safeParse(id).success) return {error:"올바른 이슈가 아닙니다."};
@@ -20,7 +22,7 @@ export async function saveIncident(_: IncidentState, form: FormData): Promise<In
     if (typeof version!=="string" || !version) return {error:"화면을 새로 열어 주세요."};
     const { data, error } = await supabase.from("worship_incidents").update(fields).eq("id",id).eq("updated_at",version).select("id").maybeSingle();
     if (error || !data) return {error:"저장하지 못했습니다. 다른 담당자가 수정했거나 권한이 바뀌었을 수 있습니다. 화면을 새로 열어 확인해 주세요."};
-    redirect(`/incidents/${id}?saved=1`);
+    redirect(returnTo ? `${returnTo}#team-issues` : `/incidents/${id}?saved=1`);
   }
   const context = z.object({
     occurred_on: z.iso.date(), service_id: z.union([z.uuid(),z.literal("")]),
@@ -35,5 +37,5 @@ export async function saveIncident(_: IncidentState, form: FormData): Promise<In
     report_id:c.report_id || null, service_name:c.service_name || "예배",
   }).select("id").single();
   if (error || !data) return {error:"등록하지 못했습니다. 본인 담당 파트를 포함하고 연결한 보고의 예배·날짜를 확인해 주세요."};
-  redirect(`/incidents/${data.id}?saved=1`);
+  redirect(returnTo ? `${returnTo}#team-issues` : `/incidents/${data.id}?saved=1`);
 }

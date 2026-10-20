@@ -1,5 +1,7 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { TeamIssues } from "@/components/team-issues";
+import type { Incident } from "@/lib/incidents";
+import { listGroupsOrdered } from "@/lib/groups";
 import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
 import { requireActive } from "@/lib/auth";
@@ -17,7 +19,7 @@ import {
   type ReportStatus,
   type WorshipPayload,
 } from "@/lib/report-forms";
-import { formatDate, weekOf } from "@/lib/week";
+import { formatDate, weekOf, todayKST } from "@/lib/week";
 import { deleteDraft, saveReport } from "./actions";
 import { Comments, ReviewPanel } from "./review";
 import { CampusForm } from "./campus-form";
@@ -40,6 +42,7 @@ type ReportRow = {
   group_id: string;
   author_id: string;
   meeting_date: string;
+  service_type_id: string | null;
   meeting_label: string | null;
   status: ReportStatus;
   details: Record<string, unknown>;
@@ -66,13 +69,21 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const { data: report } = await supabase
     .from("reports")
     .select(
-      "id, group_id, author_id, meeting_date, meeting_label, status, details, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
+      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
     )
     .eq("id", id)
     .maybeSingle<ReportRow>();
   if (!report?.group) notFound();
   const group = report.group;
-  const incidentResult = group.type === "worship" ? await supabase.from("worship_incidents").select("id,title").eq("report_id",id).order("created_at",{ascending:false}) : null;
+  const serviceName=report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "예배";
+  let incidentResult=null;
+  let teamGroups:{id:string;name:string}[]=[];
+  if(group.type==="worship") {
+    let query=supabase.from("worship_incidents").select("*").contains("group_ids",[group.id]).eq("occurred_on",report.meeting_date).order("created_at");
+    query=report.service_type_id ? query.eq("service_id",report.service_type_id) : query.is("service_id",null).eq("service_name",serviceName);
+    incidentResult=await query;
+    teamGroups=(await listGroupsOrdered(supabase)).filter(g=>g.type==="worship" && g.childCount===0);
+  }
 
   const isAuthor = report.author_id === profile.id;
   const [canEditRes, canReviewRes, messagesRes, prayerRes] = await Promise.all([
@@ -151,11 +162,11 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       />
     );
   } else if (group.type === "worship" || group.type === "other") {
-    const { data: issueRows } = await supabase
+    const { data: issueRows } = group.type === "other" ? await supabase
       .from("report_issues")
       .select("category, content, status, action")
       .eq("report_id", id)
-      .order("created_at");
+      .order("created_at") : {data:[]};
     const issues = (issueRows ?? []).map((i) => ({ ...i, action: i.action ?? "" })) as Issue[];
     if (editMode && group.type === "worship") {
       const result = str("result") as WorshipPayload["details"]["result"];
@@ -247,7 +258,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         </span>
       </PageTitle>
 
-      {group.type === "worship" ? <Card className="mb-4"><h2 className="mb-2 font-semibold">예배 이슈·상세 경위</h2><p className="mb-3 text-sm text-muted">간단한 이슈는 기존 양식에, 여러 팀의 후속 조치가 필요한 일은 경위서로 남겨 주세요.</p><Link href={`/incidents/new?report=${id}`} className={smallButtonClass}>상세 경위 작성</Link><ul className="mt-3 flex flex-col gap-2">{incidentResult?.data?.map(i=><li key={i.id}><Link href={`/incidents/${i.id}`} className="text-sm text-accent underline">{i.title}</Link></li>)}</ul>{incidentResult?.error ? <p className="mt-2 text-sm text-danger">연결된 이슈를 불러오지 못했습니다.</p> : null}</Card> : null}
+      {group.type === "worship" ? <TeamIssues items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
         {message ? <ErrorText>{message}</ErrorText> : null}

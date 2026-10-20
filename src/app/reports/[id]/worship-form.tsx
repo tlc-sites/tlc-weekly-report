@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Field, inputClass } from "@/components/ui";
-import { OTHER_ISSUE_CATEGORIES, RESULT_LABEL, WORSHIP_ISSUE_CATEGORIES, type OtherPayload, type WorshipPayload } from "@/lib/report-forms";
+import { OTHER_ISSUE_CATEGORIES, RESULT_LABEL, type OtherPayload, type WorshipPayload } from "@/lib/report-forms";
 import { IssuesEditor, MessagesEditor, ReportForm, RequestsEditor, Section, TextArea } from "./form-parts";
 
 type Props<T> = {
@@ -41,9 +41,6 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
             </label>
           ))}
         </div>
-      </Section>
-      <Section title="이슈" hint="그 예배에서 있었던 일 — 장비, 사람, 진행 등 무엇이든 적습니다.">
-        <IssuesEditor value={p.issues} onChange={(issues) => setP({ ...p, issues })} categories={WORSHIP_ISSUE_CATEGORIES} hint={personHint} />
       </Section>
       <Section title="요청사항">
         <RequestsEditor value={p.details.requests} onChange={(requests) => setP({ ...p, details: { ...p.details, requests } })} />
