@@ -18,7 +18,7 @@ import { getGroupAccess } from "@/lib/access";
 import { requireActive } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
 import { REPORT_STATUS_LABEL, type ReportStatus } from "@/lib/report-forms";
-import { addDays, dateInWeek, formatDate, formatWeek, reportWeek, latestWeekday, todayKST } from "@/lib/week";
+import { addDays, dateInWeek, formatDate, formatWeek, reportWeek, reportDateMax, latestWeekday, todayKST } from "@/lib/week";
 import { createReport } from "./actions";
 import { NewReportFields } from "./new-report-fields";
 
@@ -53,6 +53,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
   const { group, canWrite, isLeaf } = await getGroupAccess(supabase, id);
   const today = todayKST();
   const week = reportWeek(weekParam, today);
+  const maxDate=reportDateMax(week,today);
 
   // 상위 그룹이면 하위 그룹 목록만 보여 준다
   if (!isLeaf) {
@@ -114,7 +115,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
 
   // 선택한 주차 안에서 예배 요일을 자동 지정한다.
   const defaultDate = (weekday: number | null) =>
-    weekday === null ? week : dateInWeek(week, weekday);
+    weekday === null ? maxDate : dateInWeek(week, weekday);
   const options = [
     ...services.filter(s => serviceOccursOn(defaultDate(s.weekday), s)).filter(s => defaultDate(s.weekday) <= today).map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday), fixedDate: s.weekday !== null })),
     ...meetingTypes.filter(m => defaultDate(m.weekday) <= today).map((m) => ({ value: `meeting:${m.id}`, label: m.name, date: defaultDate(m.weekday), fixedDate: m.weekday !== null })),
@@ -124,6 +125,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     <>
       <BackLink href="/">홈</BackLink>
       <PageTitle>{group.name}</PageTitle>
+      <p className="mb-4 text-sm text-muted">일요일~토요일 주간 보고 · 금요일 오후 5시 전달</p>
       <Link href="/notices" className="mb-4 self-start text-sm text-accent underline">공지·소통 확인하기</Link>
       {message ? (
         <div className="mb-4">
@@ -181,11 +183,11 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
                 <>
                   <input type="hidden" name="meeting" value="campus" />
                   <Field label="판교 출발 날짜">
-                    <input name="meetingDate" type="date" min={addDays(week, -6)} max={week} required defaultValue={week} className={inputClass} />
+                    <input name="meetingDate" type="date" min={week} max={maxDate} required defaultValue={maxDate} className={inputClass} />
                   </Field>
                 </>
               ) : (
-                <NewReportFields options={options} fallbackDate={defaultDate(null)} maxDate={week} minDate={addDays(week, -6)} />
+                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
               )}
               <SubmitButton pendingText="작성 화면 여는 중…">{group.type === "education" ? "출결 체크 시작" : "작성 시작"}</SubmitButton>
             </form>

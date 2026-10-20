@@ -25,11 +25,12 @@
 | 9 | `supabase/migrations/20261023000000_notices.sql` | 담당 부서 공지·댓글, 수신 권한, 모임 없음 사유 검증, 기술팀 비정기 보고 |
 | 10 | `supabase/migrations/20261024000000_worship_incidents.sql` | 예배 이슈 경위서·관련 팀 검토 권한·후속 조치 |
 | 11 | `supabase/migrations/20261025000000_team_issues.sql` | 팀의 간단 이슈·상세 경위 통합 및 기존 이슈 보존 이관 |
+| 12 | `supabase/migrations/20261026000000_sunday_weeks.sql` | 주차를 시작 일요일로 재계산, 미래 사역 날짜 차단 (PostgreSQL 17 이상) |
 | 마지막 | `supabase/seed.sql` | 예배 5개, 교육부서 8개, 예배팀 10개, 부산 캠퍼스, 운영 설정 |
 
 **3번은 반드시 별도로 실행을 완료한 뒤 4번을 실행합니다.** 새 enum 값은 추가한 트랜잭션 안에서 사용할 수 없으므로, 3번과 후속 파일을 합쳐 실행하거나 하나의 `BEGIN`/`COMMIT`으로 묶지 않습니다.
 
-seed는 마이그레이션 1~11을 모두 적용한 뒤 마지막에 실행합니다. seed가 `worship`, `campus` 유형을 사용하므로 init 직후 실행하면 안 됩니다.
+seed는 마이그레이션 1~12를 모두 적용한 뒤 마지막에 실행합니다. seed가 `worship`, `campus` 유형을 사용하므로 init 직후 실행하면 안 됩니다.
 
 **Project Settings > Data API > Exposed schemas**에 `report`를 추가하고 저장합니다. 이걸 빼면 앱에서 테이블을 찾지 못합니다.
 
@@ -106,19 +107,21 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 
 | 경로 | UTC 설정 | 한국 시간 | 내용 |
 |---|---|---|---|
-| `/api/cron/mon-am` | `0 0 * * 1` | 월요일 09:00 | 미제출 그룹 작성자·검토자 알림 |
-| `/api/cron/mon-pm` | `0 11 * * 1` | 월요일 20:00 | 미제출 알림 + 관리자 요약 |
-| `/api/cron/tue-digest` | `0 23 * * 1` | 화요일 08:00 | 검토자·관리자 회의 자료 안내 |
+| `/api/cron/wed-am` | `0 0 * * 3` | 수요일 09:00 | 이번 주 미제출 그룹 작성자·검토자 알림 |
+| `/api/cron/fri-am` | `0 0 * * 5` | 금요일 09:00 | 오후 5시 전달 안내 + 관리자 미제출 요약 |
+| `/api/cron/fri-digest` | `0 8 * * 5` | 금요일 17:00 | 검토자·관리자·지정 목사님/사모님께 보고 안내 (기존 열람 권한 유지) |
 
 Vercel Cron은 `CRON_SECRET`을 `Authorization: Bearer <비밀값>` 헤더로 보냅니다. 실행 시각은 `vercel.json`에 고정돼 있으며 DB의 `app_settings.deadline`/`reminders` 값은 현재 코드에서 읽지 않습니다.
 
 아래는 PowerShell에서 로컬 개발 서버의 대상을 확인하는 예입니다. `$env:CRON_SECRET`은 요청을 보내는 셸에도 별도로 설정해야 합니다(`.env.local`은 PowerShell 환경변수로 자동 로드되지 않습니다).
 
 ```powershell
-Invoke-RestMethod -Uri 'http://localhost:3000/api/cron/mon-am?dryRun=1' -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
+Invoke-RestMethod -Uri 'http://localhost:3000/api/cron/wed-am?dryRun=1' -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
 ```
 
-`mon-am`을 `mon-pm`, `tue-digest`로 바꿔 각 슬롯을 확인할 수 있습니다. 운영 점검은 호스트를 실제 배포 주소로 바꿉니다. **`?dryRun=1`을 유지하면 발송과 중복 방지 기록 저장 없이 대상만 확인합니다.** 쿼리를 빼면 실제 발송 경로가 실행됩니다.
+`wed-am`을 `fri-am`, `fri-digest`로 바꿔 각 슬롯을 확인할 수 있습니다. 운영 점검은 호스트를 실제 배포 주소로 바꿉니다. **`?dryRun=1`을 유지하면 발송과 중복 방지 기록 저장 없이 대상만 확인합니다.** 쿼리를 빼면 실제 발송 경로가 실행됩니다.
+
+보고 주간은 일요일~토요일이고 시작 일요일로 저장합니다. 금요일 오후 5시에는 그때까지 기록된 내용을 안내하며 이후 기록도 같은 주에 추가됩니다. Vercel Hobby의 실제 크론 실행은 예약 시각부터 최대 1시간 범위 내 지연될 수 있습니다.
 
 ## 셀케어 계정이 없는 사람
 

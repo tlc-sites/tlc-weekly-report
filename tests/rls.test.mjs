@@ -172,11 +172,11 @@ test("다른 사람의 프로필 이름은 바꿀 수 없다", async () => {
   assert.equal(res.affectedRows, 0);
 });
 
-test("주차는 그 주(월~일)의 일요일로 계산된다", async () => {
+test("주차는 그 주(일~토)의 시작 일요일로 계산된다", async () => {
   const { rows } = await db.query(`
-    select d::date as d, (d::date + ((7 - extract(isodow from d::date)::int) % 7))::text as week
+    select d::date as d, (d::date - extract(dow from d::date)::int)::text as week
     from unnest(array['2026-10-12', '2026-10-14', '2026-10-16', '2026-10-18', '2026-10-19']) d`);
-  assert.deepEqual(rows.map((r) => r.week), ["2026-10-18", "2026-10-18", "2026-10-18", "2026-10-18", "2026-10-25"]);
+  assert.deepEqual(rows.map((r) => r.week), ["2026-10-11", "2026-10-11", "2026-10-11", "2026-10-18", "2026-10-18"]);
 });
 
 test("보고 작성 권한: 소속 그룹에만, 확인 상태로는 작성 불가", async () => {
@@ -392,7 +392,7 @@ test("받는 분 지정: 관리자만, 같은 역할은 한 명만", async () =>
 test("담임목사님·사모님께 드리는 글: 작성자와 받는 분만 보고, 관리자도 못 본다", async () => {
   const report = await as(
     ids.teacherA,
-    "insert into report.reports (group_id, author_id, meeting_date, meeting_label) values ($1, $2, '2026-10-25', '주일예배') returning id",
+    "insert into report.reports (group_id, author_id, meeting_date, meeting_label) values ($1, $2, '2026-10-18', '주일예배') returning id",
     [ids.youth, ids.teacherA],
   );
   const rid = report.rows[0].id;
@@ -434,7 +434,7 @@ async function memberId(name) {
 async function newReport(user, groupId, label = "주일예배") {
   const { rows } = await as(
     user,
-    "insert into report.reports (group_id, author_id, meeting_date, meeting_label) values ($1, $2, '2026-11-01', $3) returning id",
+    "insert into report.reports (group_id, author_id, meeting_date, meeting_label) values ($1, $2, (now() at time zone 'Asia/Seoul')::date, $3) returning id",
     [groupId, user, label],
   );
   return rows[0].id;
@@ -471,7 +471,8 @@ test("보고 저장(교육부서): 새친구 등록, 출석, 기도제목, 글, 
     "select m.status, m.first_visit_date::text as d, m.follow_up_status, a.present from report.members m join report.attendance a on a.member_id = m.id and a.report_id = $1 where m.name = '최새친구'",
     [rid],
   );
-  assert.deepEqual(newcomer.rows[0], { status: "newcomer", d: "2026-11-01", follow_up_status: "new", present: true });
+  const meetingDate=(await db.query("select meeting_date::text d from report.reports where id=$1",[rid])).rows[0].d;
+  assert.deepEqual(newcomer.rows[0], { status: "newcomer", d: meetingDate, follow_up_status: "new", present: true });
 
   const absent = await db.query("select present, absence_reason, contacted from report.attendance where report_id = $1 and member_id = $2", [rid, park]);
   assert.deepEqual(absent.rows[0], { present: false, absence_reason: "감기", contacted: true });
@@ -758,5 +759,36 @@ test("팀 이슈 업그레이드: 기존 이슈·경위서 보존, 같은 ID에 
     assert.equal((await asUpgrade(other,"select id from report.worship_incidents")).rows.length,0);
     await asUpgrade(reviewer,"update report.worship_incidents set status='temporary' where id=$1",[existing]);
     assert.equal((await asUpgrade(author,"select status from report.worship_incidents where id=$1",[existing])).rows[0].status,'temporary');
+  } finally { await upgrade.close(); }
+});
+
+test("일~토 업그레이드: 원본 날짜·보고 ID 보존, 주일과 주중은 같은 주, 미래 날짜 입력 차단",async()=>{
+  const upgrade=new PGlite();
+  try {
+    await upgrade.exec(SUPABASE_STUB);
+    for(const f of readdirSync(migrationsDir).sort().filter(f=>f<'20261026000000_sunday_weeks.sql')) await upgrade.exec(readFileSync(join(migrationsDir,f),'utf8'));
+    await upgrade.exec(readFileSync(join(root,'supabase','seed.sql'),'utf8'));
+    const author=randomUUID();
+    await upgrade.query("insert into auth.users(id) values($1)",[author]);
+    await upgrade.query("insert into report.profiles(id,status,is_admin) values($1,'active',true)",[author]);
+    const group=(await upgrade.query("select id from report.groups where name='초등부'")).rows[0].id;
+    const date=(await upgrade.query("select (now() at time zone 'Asia/Seoul')::date::text today,((now() at time zone 'Asia/Seoul')::date-extract(dow from now() at time zone 'Asia/Seoul')::int)::text sunday")).rows[0];
+    const reportIds=[];
+    for(const offset of [0,3,6,7]) {
+      const row=(await upgrade.query("insert into report.reports(group_id,author_id,meeting_date,meeting_label,details) values($1,$2,$3::date+$4::int,'보존','{\"notes\":\"원본\"}') returning id,meeting_date::text d",[group,author,date.sunday,offset])).rows[0];
+      reportIds.push(row);
+    }
+    await upgrade.query("insert into report.week_status(group_id,week,no_meeting,reason,set_by) values($1,$2,true,'주일 표시',$3)",[group,date.sunday,author]);
+    await upgrade.exec(readFileSync(join(migrationsDir,'20261026000000_sunday_weeks.sql'),'utf8'));
+    for(const [i,row] of reportIds.entries()) {
+      const saved=(await upgrade.query("select meeting_date::text d,week::text w,details from report.reports where id=$1",[row.id])).rows[0];
+      assert.equal(saved.d,row.d);assert.deepEqual(saved.details,{notes:'원본'});
+      assert.equal(saved.w,i===3 ? reportIds[3].d : date.sunday);
+    }
+    assert.equal((await upgrade.query("select week::text w from report.week_status where group_id=$1",[group])).rows[0].w,date.sunday);
+    await assert.rejects(upgrade.query("insert into report.reports(group_id,author_id,meeting_date,meeting_label) values($1,$2,$3::date+1,'미래')",[group,author,date.today]),/미래 날짜/);
+    await assert.rejects(upgrade.query("update report.reports set meeting_date=$1::date+1 where id=$2",[date.today,reportIds[0].id]),/미래 날짜/);
+    const saved=(await upgrade.query("insert into report.reports(group_id,author_id,meeting_date,meeting_label) values($1,$2,$3,'현재') returning week::text w",[group,author,date.today])).rows[0];
+    assert.equal(saved.w,date.sunday);
   } finally { await upgrade.close(); }
 });

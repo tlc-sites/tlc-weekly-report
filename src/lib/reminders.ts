@@ -11,28 +11,23 @@ import {
   type RtUser,
 } from "./reminder-targets";
 import { createAdminClient } from "./supabase/admin";
-import { addDays, formatWeek, todayKST, weekdayOf, weekOf } from "./week";
+import { formatWeek, todayKST, weekOf } from "./week";
 
-export const REMINDER_SLOTS = ["mon-am", "mon-pm", "tue-digest"] as const;
+export const REMINDER_SLOTS = ["wed-am", "fri-am", "fri-digest"] as const;
 export type ReminderSlot = (typeof REMINDER_SLOTS)[number];
-
-/** 가장 최근에 끝난 주 (월요일·화요일에 실행하면 지난 월~일) */
-export function lastCompletedWeek(today: string) {
-  return weekdayOf(today) === 0 ? today : addDays(weekOf(today), -7);
-}
 
 type Plan = { userId: string; payload: PushPayload }[];
 
 export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) {
   const admin = createAdminClient();
-  const week = lastCompletedWeek(todayKST());
+  const week = weekOf(todayKST());
 
   const [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes] = await Promise.all([
     admin.from("groups").select("id, type, name, parent_id, schedule, is_active"),
     admin.from("reports").select("group_id, status").eq("week", week),
     admin.from("week_status").select("group_id, no_meeting").eq("week", week),
     admin.from("memberships").select("user_id, group_id, role"),
-    admin.from("profiles").select("id, status, is_admin, notify_enabled"),
+    admin.from("profiles").select("id, status, is_admin, notify_enabled, recipient_role"),
   ]);
   for (const r of [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes]) if (r.error) throw r.error;
 
@@ -47,12 +42,12 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
   const weekText = formatWeek(week);
 
   const plan: Plan = [];
-  if (slot === "mon-am" || slot === "mon-pm") {
+  if (slot === "wed-am" || slot === "fri-am") {
     for (const [userId, names] of reminderTargets(missing, memberships, users)) {
       plan.push({
         userId,
         payload: {
-          title: slot === "mon-am" ? "지난주 보고가 아직 없어요" : "오늘 밤 마감이에요",
+          title: slot === "wed-am" ? "이번 주 보고를 작성해 주세요" : "오늘 오후 5시에 보고를 전달해요",
           body: `${summarizeNames(names)} · ${weekText} 보고를 작성해 주세요.`,
           url: "/",
           tag: `reminder-${week}`,
@@ -60,7 +55,7 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
       });
     }
   }
-  if (slot === "mon-pm" && missing.length) {
+  if (slot === "fri-am" && missing.length) {
     for (const userId of adminTargets(users)) {
       plan.push({
         userId,
@@ -73,12 +68,12 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
       });
     }
   }
-  if (slot === "tue-digest") {
+  if (slot === "fri-digest") {
     for (const userId of digestTargets(memberships, users)) {
       plan.push({
         userId,
         payload: {
-          title: "교역자 회의 자료가 준비됐어요",
+          title: "이번 주 사역 보고가 준비됐어요",
           body: missing.length ? `${weekText} · 미제출 ${missing.length}곳` : `${weekText} · 모든 그룹 제출 완료`,
           url: `/meeting?week=${week}`,
           tag: `digest-${week}`,

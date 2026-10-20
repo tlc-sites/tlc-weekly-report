@@ -5,7 +5,7 @@ import { requireActive } from "@/lib/auth";
 import { FOLLOW_UP_LABEL } from "@/lib/members";
 import { loadMeeting, reportTitle, type GroupStatus } from "@/lib/meeting";
 import { CAMPUS_TEXTS, ISSUE_STATUS_LABEL } from "@/lib/report-forms";
-import { addDays, formatDate, formatWeek, reportWeek, todayKST, latestWeekday } from "@/lib/week";
+import { addDays, formatDate, formatWeek, reportWeek, reportDateMax, todayKST, latestWeekday } from "@/lib/week";
 import { updateIssueStatus } from "./actions";
 import { PrintButton } from "./print-button";
 import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";
@@ -13,7 +13,7 @@ import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";
 const STATUS: Record<GroupStatus, { label: string; tone: "muted" | "accent" | "danger" }> = {
   reviewed: { label: "확인", tone: "accent" },
   submitted: { label: "제출", tone: "muted" },
-  late: { label: "마감 후 제출", tone: "danger" },
+  late: { label: "전달 후 추가", tone: "muted" },
   no_meeting: { label: "모임 없음", tone: "muted" },
   draft: { label: "작성 중", tone: "danger" },
   missing: { label: "미제출", tone: "danger" },
@@ -33,12 +33,12 @@ export default function MeetingPage({ searchParams }: PageProps<"/meeting">) {
 async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "searchParams">) {
   const { supabase, profile } = await requireActive();
   const { week: weekParam, error } = await searchParams;
-  // 기본은 가장 최근에 끝난 주 (화요일 회의에서 보는 것은 지난 월~일). 일요일이면 그날로 끝나는 이번 주.
+  // 일요일에 시작한 이번 주의 보고를 모은다. 금요일에는 그때까지 기록된 내용을 본다.
   const today = todayKST();
   const lastWeek = latestWeekday(today, 0);
   const week = reportWeek(weekParam, today);
   const data = await loadMeeting(supabase, profile, week);
-  const followUps = await supabase.from("worship_incidents").select("*").neq("status","resolved").lte("occurred_on",week).order("occurred_on",{ascending:false});
+  const followUps = await supabase.from("worship_incidents").select("*").neq("status","resolved").lte("occurred_on",reportDateMax(week,today)).order("occurred_on",{ascending:false});
   const message = pickMessage(MESSAGES, error);
   const counts = data.overview.reduce<Record<string, number>>((acc, o) => ({ ...acc, [o.status]: (acc[o.status] ?? 0) + 1 }), {});
 
@@ -48,6 +48,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
         <BackLink href="/">홈</BackLink>
       </div>
       <PageTitle sub={formatWeek(week)}>교역자 회의 자료</PageTitle>
+      <p className="mb-4 text-sm text-muted">금요일 오후 5시 전달 기준 · 현재까지 작성된 내용을 표시합니다.</p>
       <nav data-print-hide className="mb-4 flex items-center justify-between text-sm">
         <Link href={`/meeting?week=${addDays(week, -7)}`} className="px-2 py-1 text-muted">
           ← 지난주

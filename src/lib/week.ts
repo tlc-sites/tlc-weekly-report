@@ -1,4 +1,4 @@
-// 날짜는 모두 한국 날짜 기준 'YYYY-MM-DD' 문자열로 다룬다. 주차는 월~일, 그 주 일요일 날짜로 표시한다.
+// 한국 날짜 'YYYY-MM-DD'. 주차는 일~토이며 시작 일요일을 저장한다.
 
 export function todayKST() {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
@@ -20,14 +20,14 @@ export function weekdayOf(iso: string) {
   return toUTC(iso).getUTCDay();
 }
 
-/** 그 날짜가 속한 주(월~일)의 일요일 */
+/** 그 날짜가 속한 주(일~토)의 시작 일요일 */
 export function weekOf(iso: string) {
-  return addDays(iso, (7 - weekdayOf(iso)) % 7);
+  return addDays(iso, -weekdayOf(iso));
 }
 
-/** 주차(일요일) 안에서 해당 요일의 날짜. 일요일(0)은 그 주의 마지막 날이다. */
+/** 시작 일요일에서 해당 요일의 날짜를 계산한다. */
 export function dateInWeek(sunday: string, weekday: number) {
-  return weekday === 0 ? sunday : addDays(sunday, weekday - 7);
+  return addDays(sunday, weekday);
 }
 
 /** 오늘이거나 그 이전 중 가장 가까운 해당 요일 (월요일에 주일 보고를 쓰면 어제 날짜) */
@@ -47,10 +47,21 @@ export function formatDate(iso: string) {
 }
 
 export function formatWeek(sunday: string) {
-  return `${formatDate(addDays(sunday, -6))} ~ ${formatDate(sunday)}`;
+  return `${formatDate(sunday)} ~ ${formatDate(addDays(sunday, 6))}`;
 }
 
-/** 미래 주말을 기본으로 잡지 않고, 가장 최근 일요일까지의 주차만 허용한다. */
+/** 그 주에서 실제로 지난 마지막 날짜. 미래 사역을 실적으로 입력하지 않는다. */
+export function reportDateMax(sunday: string, today: string) {
+  const end=addDays(sunday,6);
+  return end<today ? end : today;
+}
+
+/** 금요일 17시 전달 직전까지 작성한다 (한국 시간). */
+export function reportDeadline(sunday:string) {
+  return new Date(`${addDays(sunday,5)}T16:59:59+09:00`);
+}
+
+/** 이번 일요일에 시작한 주를 기본으로, 다음 주 이후 URL은 이번 주로 제한한다. */
 export function reportWeek(value: unknown, today: string) {
   const latest = latestWeekday(today, 0);
   return isIsoDate(value) ? (weekOf(value) > latest ? latest : weekOf(value)) : latest;

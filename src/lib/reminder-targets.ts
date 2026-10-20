@@ -11,7 +11,7 @@ export type RtGroup = {
 };
 export type RtMembership = { user_id: string; group_id: string; role: "writer" | "reviewer" };
 export type RtReport = { group_id: string; status: "draft" | "submitted" | "reviewed" };
-export type RtUser = { id: string; status: "pending" | "active" | "disabled"; is_admin: boolean; notify_enabled: boolean };
+export type RtUser = { id: string; status: "pending" | "active" | "disabled"; is_admin: boolean; notify_enabled: boolean; recipient_role?: "pastor" | "pastor_wife" | null };
 
 /** 미제출 그룹: 하위 그룹이 없는 활성 주간 그룹 중 제출된 보고도, 모임 없음 표시도 없는 곳 (임시저장만 있으면 미제출) */
 export function missingGroups(groups: RtGroup[], reports: RtReport[], noMeetingGroupIds: Set<string>) {
@@ -42,10 +42,10 @@ export function adminTargets(users: RtUser[]) {
   return users.filter((u) => u.is_admin && canReceive(u)).map((u) => u.id);
 }
 
-/** 화요일 회의 자료 알림 대상: 검토자 역할이 하나라도 있거나 관리자 */
+/** 금요일 보고 안내: 검토자·관리자와 지정된 목사님·사모님. 실제 열람 범위는 RLS를 유지한다. */
 export function digestTargets(memberships: RtMembership[], users: RtUser[]) {
   const reviewers = new Set(memberships.filter((m) => m.role === "reviewer").map((m) => m.user_id));
-  return users.filter((u) => canReceive(u) && (u.is_admin || reviewers.has(u.id))).map((u) => u.id);
+  return users.filter((u) => canReceive(u) && (u.is_admin || reviewers.has(u.id) || u.recipient_role==="pastor" || u.recipient_role==="pastor_wife")).map((u) => u.id);
 }
 
 /** 알림 문구에 쓸 그룹 이름 요약: "중등부, 음향 외 2곳" */

@@ -29,7 +29,7 @@ export function PushBanner() {
   return (
     <div className="mb-4 flex items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3 text-sm">
       <Link href="/settings" className="flex-1">
-        <strong>알림을 켜 주세요.</strong> 월요일 미제출 알림을 받을 수 있습니다. ›
+        <strong>알림을 켜 주세요.</strong> 수요일·금요일 보고 알림을 받을 수 있습니다. ›
       </Link>
       <button
         type="button"

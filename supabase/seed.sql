@@ -62,8 +62,8 @@ cross join report.service_types s
 on conflict do nothing;
 
 insert into report.app_settings (key, value) values
-  ('deadline', '{"weekday": 1, "time": "23:59"}'),
-  ('reminders', '{"first": "09:00", "second": "20:00", "meeting_digest": "08:00"}'),
+  ('deadline', '{"weekday": 5, "time": "17:00"}'),
+  ('reminders', '{"first_weekday": 3, "first": "09:00", "second_weekday": 5, "second": "09:00", "meeting_weekday": 5, "meeting_digest": "17:00"}'),
   ('long_absence_threshold', '3')
 on conflict (key) do nothing;
 

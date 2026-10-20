@@ -1,7 +1,7 @@
 import type { Profile } from "./auth";
 import { listGroupsOrdered, type OrderedGroup, type ReportClient } from "./groups";
 import type { ReportStatus } from "./report-forms";
-import { addDays } from "./week";
+import { addDays, reportDateMax, reportDeadline, todayKST } from "./week";
 
 // 교역자 회의 자료에 필요한 데이터를 모은다. 조회는 모두 로그인한 사람의 권한(RLS) 안에서만 된다.
 
@@ -30,15 +30,16 @@ const REPORT_COLUMNS =
 export const reportTitle = (r: Pick<MeetingReport, "service" | "meeting" | "meeting_label">) =>
   r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "보고";
 
-// 마감: 그 주 다음 날(월요일) 23:59 (한국 시간)
-export const deadlineOf = (week: string) => new Date(`${addDays(week, 1)}T23:59:59+09:00`);
+// 금요일 오후 5시에 전달하며, 이후 입력도 같은 주차에 보존한다.
+export const deadlineOf = reportDeadline;
 
 export async function loadMeeting(supabase: ReportClient, profile: Profile, week: string) {
+  const end=reportDateMax(week,todayKST());
   const prevWeek = addDays(week, -7);
   const [groups, memberships, reportsRes, prevRes, weekStatusRes, thresholdRes] = await Promise.all([
     listGroupsOrdered(supabase),
     supabase.from("memberships").select("group_id").eq("user_id", profile.id).then((r) => new Set((r.data ?? []).map((m) => m.group_id as string))),
-    supabase.from("reports").select(REPORT_COLUMNS).eq("week", week).order("meeting_date").returns<MeetingReport[]>(),
+    supabase.from("reports").select(REPORT_COLUMNS).eq("week", week).lte("meeting_date",end).order("meeting_date").returns<MeetingReport[]>(),
     supabase.from("reports").select("group_id, attend_snapshot, enrolled_snapshot, status").eq("week", prevWeek).neq("status", "draft"),
     supabase.from("week_status").select("group_id, no_meeting, reason").eq("week", week),
     supabase.from("app_settings").select("value").eq("key", "long_absence_threshold").maybeSingle(),
@@ -93,6 +94,7 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
       .select("id, group_id, name, grade, first_visit_date, follow_up_status")
       .eq("status", "newcomer")
       .gte("first_visit_date", addDays(week, -55))
+      .lte("first_visit_date",end)
       .order("first_visit_date", { ascending: false }),
     supabase
       .from("report_issues")
@@ -108,14 +110,14 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
           .from("attendance")
           .select("member_id, present, report:reports!inner(meeting_date, group_id, status)")
           .gte("report.meeting_date", sixWeeksAgo)
-          .lte("report.meeting_date", week)
+          .lte("report.meeting_date", end)
           .neq("report.status", "draft")
       : Promise.resolve({ data: [] }),
   ]);
 
   const groupName = new Map(groups.map((g) => [g.id, g.label]));
   const newcomers = (newcomersRes.data ?? []).filter((m) => visibleIds.has(m.group_id));
-  const thisWeekNewcomers = newcomers.filter((m) => m.first_visit_date && m.first_visit_date > addDays(week, -7));
+  const thisWeekNewcomers = newcomers.filter((m) => m.first_visit_date && m.first_visit_date >= week);
   const followUps = newcomers.filter((m) => !thisWeekNewcomers.includes(m) && (m.follow_up_status === "new" || m.follow_up_status === "contacted"));
 
   type IssueRow = {
