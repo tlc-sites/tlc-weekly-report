@@ -61,7 +61,7 @@ export async function createReport(formData: FormData) {
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ group_id: groupId, author_id: profile.id, details:{session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
+    .insert({ group_id: groupId, author_id: profile.id, author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart, details:{session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
     .select("id")
     .single();
   if (error || !data) redirect(`${back}&error=save`);

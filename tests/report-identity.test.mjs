@@ -21,7 +21,7 @@ test('현행 12번 DB에서 같은 예배 세 보고와 작성자 기록을 스�
   try {
     await db.exec(SUPABASE_STUB);
     const dir=join(import.meta.dirname,'..','supabase');
-    for(const file of readdirSync(join(dir,'migrations')).sort())await db.exec(readFileSync(join(dir,'migrations',file),'utf8'));
+    for(const file of readdirSync(join(dir,'migrations')).sort().filter(f=>f<"20261027000000"))await db.exec(readFileSync(join(dir,'migrations',file),'utf8'));
     await db.exec(readFileSync(join(dir,'seed.sql'),'utf8'));
     const writer=randomUUID();await db.query('insert into auth.users(id,email) values($1,$2)',[writer,'writer@example.com']);
     await db.query("insert into report.profiles(id,real_name,status) values($1,'작성자','active')",[writer]);

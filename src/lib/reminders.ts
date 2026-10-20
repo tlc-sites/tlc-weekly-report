@@ -11,6 +11,7 @@ import {
   type RtUser,
 } from "./reminder-targets";
 import { createAdminClient } from "./supabase/admin";
+import { notifyRegistrationAlerts } from "./registration-alerts";
 import { formatWeek, todayKST, weekOf } from "./week";
 
 export const REMINDER_SLOTS = ["wed-am", "fri-am", "fri-digest"] as const;
@@ -19,6 +20,7 @@ export type ReminderSlot = (typeof REMINDER_SLOTS)[number];
 type Plan = { userId: string; payload: PushPayload }[];
 
 export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) {
+  if(!dryRun) await notifyRegistrationAlerts();
   const admin = createAdminClient();
   const week = weekOf(todayKST());
 
@@ -27,7 +29,7 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
     admin.from("reports").select("group_id, status").eq("week", week),
     admin.from("week_status").select("group_id, no_meeting").eq("week", week),
     admin.from("memberships").select("user_id, group_id, role"),
-    admin.from("profiles").select("id, status, is_admin, notify_enabled, recipient_role"),
+    admin.from("profiles").select("id, status, is_admin, is_minister, notify_enabled, recipient_role"),
   ]);
   for (const r of [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes]) if (r.error) throw r.error;
 
@@ -69,7 +71,7 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
     }
   }
   if (slot === "fri-digest") {
-    for (const userId of digestTargets(memberships, users)) {
+    for (const userId of digestTargets(users)) {
       plan.push({
         userId,
         payload: {

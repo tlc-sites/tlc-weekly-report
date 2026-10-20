@@ -5,9 +5,10 @@ import { getGroup, type ReportClient } from "./groups";
 export async function getGroupAccess(supabase: ReportClient, groupId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(groupId)) notFound();
 
-  const [group, view, review, children] = await Promise.all([
+  const [group, view, write, review, children] = await Promise.all([
     getGroup(supabase, groupId),
     supabase.rpc("can_view_group", { gid: groupId }),
+    supabase.rpc("can_write_group", { gid: groupId }),
     supabase.rpc("can_review_group", { gid: groupId }),
     supabase.from("groups").select("id", { count: "exact", head: true }).eq("parent_id", groupId),
   ]);
@@ -16,7 +17,7 @@ export async function getGroupAccess(supabase: ReportClient, groupId: string) {
   return {
     group,
     canView: Boolean(view.data),
-    canWrite: Boolean(view.data), // 그룹을 볼 수 있으면 작성자 이상이다 (can_write_group과 같은 조건)
+    canWrite: Boolean(write.data),
     canReview: Boolean(review.data),
     isLeaf: (children.count ?? 0) === 0,
   };

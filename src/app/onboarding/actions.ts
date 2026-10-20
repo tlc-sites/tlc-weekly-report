@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSessionProfile } from "@/lib/auth";
+import { notifyRegistrationAlerts } from "@/lib/registration-alerts";
 
 const schema = z.object({
   realName: z.string().trim().min(1).max(30),
@@ -25,6 +26,7 @@ export async function submitOnboarding(formData: FormData) {
     .update({ real_name: parsed.data.realName, requested_group_ids: parsed.data.groupIds })
     .eq("id", profile.id);
   if (error) redirect("/onboarding?error=save");
-
+  // 신청 접수는 보존하고, 푸시 오류 때문에 중복 신청을 요구하지 않는다.
+  try { await notifyRegistrationAlerts(profile.id); } catch { /* 정기 작업에서 재시도한다. */ }
   redirect("/pending");
 }

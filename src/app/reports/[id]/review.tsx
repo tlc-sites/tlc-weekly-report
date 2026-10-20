@@ -43,7 +43,7 @@ type CommentRow = {
   author: { real_name: string | null } | null;
 };
 
-export async function Comments({ reportId, myId, isAdmin }: { reportId: string; myId: string; isAdmin: boolean }) {
+export async function Comments({ reportId, myId, isSenior, canComment }: { reportId: string; myId: string; isSenior: boolean; canComment: boolean }) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("report_comments")
@@ -55,7 +55,7 @@ export async function Comments({ reportId, myId, isAdmin }: { reportId: string; 
 
   return (
     <section id="comments" className="mt-6">
-      <h2 className="mb-2 text-sm font-semibold">코멘트 {comments.length}</h2>
+      <h2 className="mb-2 text-sm font-semibold">목회 피드백 {comments.length}</h2>
       <Card className="flex flex-col gap-3">
         {comments.map((c) => (
           <div key={c.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
@@ -64,7 +64,7 @@ export async function Comments({ reportId, myId, isAdmin }: { reportId: string; 
                 <strong className="text-foreground">{c.author?.real_name}</strong>{" "}
                 {new Date(c.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
               </span>
-              {c.author_id === myId || isAdmin ? (
+              {(canComment && c.author_id === myId) || isSenior ? (
                 <form action={deleteComment}>
                   <input type="hidden" name="reportId" value={reportId} />
                   <input type="hidden" name="commentId" value={c.id} />
@@ -77,13 +77,13 @@ export async function Comments({ reportId, myId, isAdmin }: { reportId: string; 
             <p className="whitespace-pre-wrap text-sm">{c.body}</p>
           </div>
         ))}
-        <form action={addComment} className="flex flex-col gap-2">
+        {canComment ? <form action={addComment} className="flex flex-col gap-2">
           <input type="hidden" name="reportId" value={reportId} />
-          <textarea name="body" required maxLength={1000} rows={2} placeholder="코멘트 남기기" className={textareaClass} />
+          <textarea name="body" required maxLength={1000} rows={2} placeholder="보고에 대한 피드백을 남겨 주세요." className={textareaClass} />
           <button type="submit" className={`${smallButtonClass} self-end`}>
-            코멘트 등록
+            피드백 등록
           </button>
-        </form>
+        </form> : <p className="text-xs text-muted">담임목사님·사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
       </Card>
     </section>
   );

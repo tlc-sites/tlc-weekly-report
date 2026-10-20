@@ -4,7 +4,7 @@ import { Badge, Card } from "./ui";
 import { reportTitle, type MeetingReport } from "@/lib/meeting";
 import { RESULT_LABEL } from "@/lib/report-forms";
 
-const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",place:"진행 장소",notes:"특이사항"};
+const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",passage:"공과·성경 범위",place:"진행 장소",notes:"특이사항"};
 export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];groupName:Map<string,string>}) {
   const sent=reports.filter(r=>r.status!=="draft");
   const events=new Map<string,MeetingReport[]>();
@@ -20,6 +20,7 @@ export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];grou
         <Link href={`/reports/${r.id}`} className="font-semibold text-accent">{getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""} · 원본 보기 ›</Link>
         {typeof r.details.result==="string" && r.details.result in RESULT_LABEL ? <div className="mt-2"><Badge tone={r.details.result==="normal"?"muted":"danger"}>{RESULT_LABEL[r.details.result as keyof typeof RESULT_LABEL]}</Badge></div>:null}
         {Object.entries(FIELDS).map(([field,label])=>typeof r.details[field]==="string" && r.details[field] ? <p key={field} className="mt-2 whitespace-pre-wrap"><strong>{label}:</strong> {String(r.details[field])}</p>:null)}
+        {Array.isArray(r.details.members) ? <ul className="mt-2">{r.details.members.map((m,i)=><li key={i} className="whitespace-pre-wrap">{String(m.name??"")} · {m.present ? "참석":"불참"} · {String(m.note??"")} · {String(m.follow_up??"")}</li>)}</ul>:null}
         {Array.isArray(r.details.requests) ? r.details.requests.map((q,i)=><p key={i} className="mt-2 whitespace-pre-wrap"><strong>요청사항:</strong> {String(q.category ?? "")} · {String(q.content ?? "")}</p>):null}
       </div>)}
     </article>)}{!sent.length ? <p className="text-sm text-muted">이번 주에 제출된 보고가 없습니다.</p>:null}</div>

@@ -36,6 +36,7 @@ export function EducationForm({
   roster,
   guardianCheck,
   showMessages,
+  canEditPrayer,
 }: {
   action: (formData: FormData) => Promise<void>;
   reportId: string;
@@ -43,6 +44,7 @@ export function EducationForm({
   roster: RosterMember[];
   guardianCheck: boolean;
   showMessages: boolean;
+  canEditPrayer: boolean;
 }) {
   const [p, setP] = useState(initial);
   const byId = new Map(p.attendance.map((a) => [a.member_id, a]));
@@ -222,9 +224,9 @@ export function EducationForm({
         <TextArea label="공과·활동 내용" value={p.details.activity} onChange={(activity) => setDetails({ activity })} />
       </Section>
 
-      <Section title="기도제목" hint="작성자 본인과 검토자, 관리자만 볼 수 있습니다.">
+      {canEditPrayer ? <Section title="기도제목" hint="작성자와 담임목사님·사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
         <TextArea value={p.prayer} onChange={(prayer) => setP({ ...p, prayer })} />
-      </Section>
+      </Section> : null}
 
       <Section title="요청사항">
         <RequestsEditor value={p.details.requests} onChange={(requests) => setDetails({ requests })} />

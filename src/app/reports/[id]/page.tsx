@@ -7,7 +7,7 @@ import type { Incident } from "@/lib/incidents";
 import { listGroupsOrdered } from "@/lib/groups";
 import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
-import { requireActive } from "@/lib/auth";
+import { requireActive, isSenior, isClergy } from "@/lib/auth";
 import type { Group } from "@/lib/groups";
 import {
   CAMPUS_COUNTS,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/report-forms";
 import { formatDate, weekOf, todayKST } from "@/lib/week";
 import { deleteDraft, saveReport } from "./actions";
+import { PrivateSharing } from "./sharing";
 import { Comments, ReviewPanel } from "./review";
 import { CampusForm } from "./campus-form";
 import { EducationForm, type RosterMember } from "./education-form";
@@ -49,6 +50,8 @@ type ReportRow = {
   meeting_label: string | null;
   status: ReportStatus;
   details: Record<string, unknown>;
+  attend_snapshot:number|null;
+  enrolled_snapshot:number|null;
   updated_at: string;
   service: { name: string } | null;
   meeting: { name: string } | null;
@@ -72,7 +75,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const { data: report } = await supabase
     .from("reports")
     .select(
-      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
+      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, attend_snapshot, enrolled_snapshot, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
     )
     .eq("id", id)
     .maybeSingle<ReportRow>();
@@ -89,12 +92,13 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   }
 
   const isAuthor = report.author_id === profile.id;
-  const [canEditRes, canReviewRes, messagesRes, prayerRes] = await Promise.all([
+  const [canEditRes, canReviewRes, messagesRes, prayerRes, privateRes] = await Promise.all([
     supabase.rpc("can_edit_report", { rid: id }),
     supabase.rpc("can_review_report", { rid: id }),
     // 작성자에게는 자기가 쓴 글 전부, 받는 분에게는 자기에게 온 글만 돌아온다 (RLS)
     supabase.from("report_messages").select("recipient, body").eq("report_id", id),
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
+    supabase.rpc("can_read_private",{rid:id,kind:"prayer"}),
   ]);
   const canEdit = Boolean(canEditRes.data);
   const canReview = Boolean(canReviewRes.data);
@@ -113,7 +117,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   if(isTeamSession(report.details)) {
     const initial=teamSessionPayload.parse({details:{session_type:report.details.session_type,topic:str("topic"),passage:str("passage"),place:str("place"),content:str("content"),members:Array.isArray(report.details.members)?report.details.members:[]},messages});
-    body=editMode?<TeamSessionForm reportId={id} initial={initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
+    body=editMode?<TeamSessionForm reportId={id} initial={initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["공과·성경 범위",initial.details.passage],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
   } else if (group.type === "education") {
     const [{ data: members }, { data: attendance }] = await Promise.all([
       supabase.from("members").select("id, name, kind, class_name, status, photo_data, birth_date").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
@@ -144,13 +148,14 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         reportId={id}
         initial={initial}
         roster={roster}
+        canEditPrayer={Boolean(privateRes.data)}
         guardianCheck={Boolean(group.settings?.guardian_check)}
         showMessages={isAuthor}
       />
     ) : (
       <ReadOnly
         rows={[
-          ["출석", `${roster.filter((m) => att.get(m.id)?.present).length}명 / ${roster.length}명`],
+          ["출석", `${report.attend_snapshot ?? roster.filter((m) => m.kind==="student" && att.get(m.id)?.present).length}명 / ${report.enrolled_snapshot ?? roster.filter(m=>m.kind==="student").length}명`],
           [
             "결석",
             roster
@@ -200,6 +205,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
               ["설교본문", str("sermon_passage")],
               ["설교자", str("preacher")],
               ["예배·교육 내용", str("content")],
+              ["나눔 주제",str("sharing_topic")],["나눔 범위",str("sharing_passage")],["나눔 장소",str("sharing_place")],
             ] as [string, string][] : [["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
             ["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
             ...issues.map(
@@ -266,7 +272,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </PageTitle>
 
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
-      {group.type === "worship" ? <TeamIssues items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
+      {group.type === "worship" ? <TeamIssues canWrite={canEdit} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
         {message ? <ErrorText>{message}</ErrorText> : null}
@@ -290,6 +296,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         <ReviewPanel reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
       ) : null}
 
+      <PrivateSharing reportId={id}/>
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
           <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임목사님께 드리는 글" : "사모님께 드리는 글"}</p>
@@ -299,7 +306,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       {body}
 
-      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isAdmin={profile.is_admin} /> : null}
+      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
 
       {isAuthor && report.status === "draft" ? (
         <form action={deleteDraft} className="mt-6 flex justify-center">

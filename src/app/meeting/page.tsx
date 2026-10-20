@@ -1,8 +1,10 @@
+import { groupIncidentEvents } from "@/lib/incident-events";
 import { MeetingSummary } from "@/components/meeting-summary";
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
-import { requireActive } from "@/lib/auth";
+import { requireActive, isClergy } from "@/lib/auth";
 import { FOLLOW_UP_LABEL } from "@/lib/members";
 import { loadMeeting, reportTitle, type GroupStatus } from "@/lib/meeting";
 import { CAMPUS_TEXTS, ISSUE_STATUS_LABEL } from "@/lib/report-forms";
@@ -33,6 +35,7 @@ export default function MeetingPage({ searchParams }: PageProps<"/meeting">) {
 
 async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "searchParams">) {
   const { supabase, profile } = await requireActive();
+  if (!isClergy(profile)) redirect("/");
   const { week: weekParam, error } = await searchParams;
   // 일요일에 시작한 이번 주의 보고를 모은다. 금요일에는 그때까지 기록된 내용을 본다.
   const today = todayKST();
@@ -191,7 +194,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
       </Section>
 
       <Section title="예배 사고·경미한 팀 이슈" sub="이번 주 해결된 건도 포함 · 이전 주 미해결 건은 계속 표시 · 열람 권한 범위 내 공유">
-        {followUps.error ? <ErrorText>예배 이슈를 불러오지 못했습니다.</ErrorText> : followUps.data?.length ? <ul className="divide-y divide-border">{(followUps.data as Incident[]).map(i=><li key={i.id} className="py-3 text-sm"><div className="flex items-center justify-between gap-2"><Link href={`/incidents/${i.id}`} className="font-semibold text-accent">{i.title}</Link><Badge tone="danger">{INCIDENT_STATUS[i.status]}</Badge></div><p className="mt-1 text-xs text-muted">{i.occurred_on} · {i.service_name} · 담당 {i.follow_up_owner || "미정"} · 목표일 {i.due_on || "미정"}</p><p className="mt-2 whitespace-pre-wrap">{i.circumstances}</p>{i.response ? <p className="mt-2 whitespace-pre-wrap text-muted">조치: {i.response}</p>:null}{i.prevention ? <p className="mt-2 whitespace-pre-wrap text-muted">개선대책: {i.prevention}</p>:null}</li>)}</ul> : <Empty/>}
+        {followUps.error ? <ErrorText>예배 이슈를 불러오지 못했습니다.</ErrorText> : followUps.data?.length ? <ul className="divide-y divide-border">{groupIncidentEvents(followUps.data as Incident[]).map(event=><li key={event.key} className="py-3"><h3 className="rounded-xl bg-accent/10 px-3 py-2 font-semibold text-accent">{event.date} · {event.name}</h3><ul>{event.items.map(i=><li key={i.id} className="py-3 text-sm"><div className="flex items-center justify-between gap-2"><Link href={`/incidents/${i.id}`} className="font-semibold text-accent">{i.title}</Link><Badge tone="danger">{INCIDENT_STATUS[i.status]}</Badge></div><p className="mt-1 text-xs text-muted">{i.occurred_on} · {i.service_name} · 담당 {i.follow_up_owner || "미정"} · 목표일 {i.due_on || "미정"}</p><p className="mt-2 whitespace-pre-wrap">{i.circumstances}</p>{i.response ? <p className="mt-2 whitespace-pre-wrap text-muted">조치: {i.response}</p>:null}{i.prevention ? <p className="mt-2 whitespace-pre-wrap text-muted">개선대책: {i.prevention}</p>:null}</li>)}</ul></li>)}</ul> : <Empty/>}
       </Section>
 
       <Section title="6. 요청사항">

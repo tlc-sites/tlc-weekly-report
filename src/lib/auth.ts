@@ -8,9 +8,11 @@ export type Profile = {
   requested_group_ids: string[];
   status: "pending" | "active" | "disabled";
   is_admin: boolean;
+  is_minister: boolean;
+  recipient_role: "pastor" | "pastor_wife" | null;
 };
 
-const PROFILE_COLUMNS = "id, email, real_name, requested_group_ids, status, is_admin";
+const PROFILE_COLUMNS = "id, email, real_name, requested_group_ids, status, is_admin, is_minister, recipient_role";
 
 export async function getSessionProfile() {
   const supabase = await createClient();
@@ -42,6 +44,10 @@ export async function requireActive() {
 
 export async function requireAdmin() {
   const ctx = await requireActive();
-  if (!ctx.profile.is_admin) redirect("/");
+  if (!canManage(ctx.profile)) redirect("/");
   return ctx;
 }
+
+export const isSenior = (profile: Profile) => profile.recipient_role !== null;
+export const isClergy = (profile: Profile) => isSenior(profile) || profile.is_minister;
+export const canManage = (profile: Profile) => isSenior(profile) || profile.is_admin;

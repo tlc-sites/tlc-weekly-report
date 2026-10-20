@@ -37,7 +37,7 @@ export async function sendToSubscriptions(client: SupabaseClient<any, any, any>,
           await client.from("push_subscriptions").delete().eq("id", s.id);
         } else {
           failed++;
-          console.error("[push] 발송 실패", status, (error as Error).message);
+          console.error("[push] 발송 실패", status ?? "unknown");
         }
       }
     }),

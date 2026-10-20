@@ -52,6 +52,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
   if (!/^[0-9a-f-]{36}$/i.test(memberId)) notFound();
   const { group, canReview, canWrite } = await getGroupAccess(supabase, id);
 
+  const canEditMember=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
+  const rosterAccess=await supabase.rpc("can_view_roster",{gid:id});if(!rosterAccess.data)notFound();
   const [{ data: member }, guardians, groups] = await Promise.all([
     supabase.from("members").select(MEMBER_COLUMNS).eq("id", memberId).eq("group_id", id).maybeSingle<Member>(),
     // 보호자 정보는 검토자만 조회된다 (RLS)
@@ -62,12 +64,12 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
           .eq("member_id", memberId)
           .then((r) => (r.data ?? []) as Guardian[])
       : Promise.resolve([] as Guardian[]),
-    canReview ? listGroupsOrdered(supabase) : Promise.resolve([]),
+    canEditMember ? listGroupsOrdered(supabase) : Promise.resolve([]),
   ]);
   if (!member) notFound();
 
   const message = pickMessage(MESSAGES, error);
-  const moveTargets = groups.filter((g) => g.type === "education" && g.childCount === 0);
+  const moveTargets = groups.filter((g) => g.type === group.type && (canReview || g.id===id) && g.childCount === 0);
   const guardianBySlot = new Map(guardians.map((g) => [g.slot, g]));
 
   return (
@@ -86,7 +88,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
         {saved ? <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">저장했습니다.</p> : null}
       </div>
 
-      {canReview ? (
+      {canEditMember ? (
         <Card className="mb-6">
           <form action={updateMember} className="flex flex-col gap-3">
             <input type="hidden" name="id" value={member.id} />

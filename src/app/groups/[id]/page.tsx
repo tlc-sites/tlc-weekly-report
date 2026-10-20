@@ -150,6 +150,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
         )}
       </nav>
 
+      {group.type==="worship" ? <Link href={`/groups/${id}/rehearsals`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">팀원·리허설 참석 관리</Link>:null}
       <Card className="mb-4">
         <h2 className="mb-2 text-sm font-medium text-muted">이번 주 보고 {reports.length}건</h2>
         {reports.length ? (

@@ -42,7 +42,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   const { supabase } = await requireActive();
   const [{ id }, { error, added, skipped }] = await Promise.all([params, searchParams]);
   const { group, canReview, isLeaf } = await getGroupAccess(supabase, id);
-  if (group.type !== "education" || !isLeaf) notFound();
+  if (!["education","worship"].includes(group.type) || !isLeaf) notFound();
+  const rosterAccess=await supabase.rpc("can_view_roster",{gid:id});if(!rosterAccess.data)notFound();
 
   const [parent, { data, error: loadError }] = await Promise.all([
     group.parent_id ? getGroup(supabase, group.parent_id) : Promise.resolve(null),
@@ -51,6 +52,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   if (loadError) throw loadError;
   const members = (data ?? []) as Member[];
 
+  const canManageRoster=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
+  const guardians=canReview && members.length>0 ? await supabase.from("member_guardians").select("member_id,name,relation,contact").in("member_id",members.map(m=>m.id)).eq("consent",true) : {data:[]};
   const students = members.filter((m) => m.status === "active" && m.kind === "student");
   const teachers = members.filter((m) => m.status === "active" && m.kind === "teacher");
   const newcomers = members.filter((m) => m.status === "newcomer");
@@ -75,10 +78,10 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
       </div>
 
       <Link href={`/groups/${id}#new-report`} className={`${buttonClass} mb-4`}>출결 관리 · 예배 선택</Link>
-      <MemberCards members={members} groupId={id} />
+      <MemberCards members={members} groupId={id} guardians={guardians.data??[]} team={group.type==="worship"}/>
       <MemberSection title="학생" members={students} groupId={id} />
       {newcomers.length ? <MemberSection title="새친구" members={newcomers} groupId={id} showFollowUp /> : null}
-      <MemberSection title="교사" members={teachers} groupId={id} />
+      <MemberSection title={group.type==="worship" ? "팀원":"교사"} members={teachers} groupId={id} />
 
       {inactive.length ? (
         <details className="mb-6">
@@ -91,7 +94,7 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
                     {m.name}
                     {m.left_at ? <span className="ml-2 text-xs">{m.left_at} 비활성</span> : null}
                   </Link>
-                  {canReview ? (
+                  {canManageRoster ? (
                     <form action={quickSetStatus}>
                       <input type="hidden" name="id" value={m.id} />
                       <input type="hidden" name="groupId" value={id} />
@@ -108,7 +111,7 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
         </details>
       ) : null}
 
-      {canReview ? (
+      {canManageRoster ? (
         <>
           <h2 className="mb-2 text-sm font-semibold">명단 등록</h2>
           <Card>
@@ -119,9 +122,9 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="구분">
-                  <select name="kind" defaultValue="student" className={selectClass}>
-                    <option value="student">{KIND_LABEL.student}</option>
-                    <option value="teacher">{KIND_LABEL.teacher}</option>
+                  <select name="kind" defaultValue={group.type==="worship" ? "teacher":"student"} className={selectClass}>
+                    {group.type==="education"?<option value="student">{KIND_LABEL.student}</option>:null}
+                    <option value="teacher">{group.type==="worship"?"팀원":KIND_LABEL.teacher}</option>
                   </select>
                 </Field>
                 <Field label="반 (선택)">
