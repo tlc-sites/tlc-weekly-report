@@ -8,6 +8,7 @@ import { CAMPUS_TEXTS, ISSUE_STATUS_LABEL } from "@/lib/report-forms";
 import { addDays, formatDate, formatWeek, reportWeek, todayKST, latestWeekday } from "@/lib/week";
 import { updateIssueStatus } from "./actions";
 import { PrintButton } from "./print-button";
+import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";
 
 const STATUS: Record<GroupStatus, { label: string; tone: "muted" | "accent" | "danger" }> = {
   reviewed: { label: "확인", tone: "accent" },
@@ -37,6 +38,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
   const lastWeek = latestWeekday(today, 0);
   const week = reportWeek(weekParam, today);
   const data = await loadMeeting(supabase, profile, week);
+  const followUps = await supabase.from("worship_incidents").select("*").neq("status","resolved").lte("occurred_on",week).order("occurred_on",{ascending:false});
   const message = pickMessage(MESSAGES, error);
   const counts = data.overview.reduce<Record<string, number>>((acc, o) => ({ ...acc, [o.status]: (acc[o.status] ?? 0) + 1 }), {});
 
@@ -183,6 +185,10 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
         ) : (
           <Empty />
         )}
+      </Section>
+
+      <Section title="예배 이슈 후속 조치" sub="선택 주차까지 발생한 미해결 건 · 현재 처리 상태 기준 · 열람 권한이 있는 건만 표시">
+        {followUps.error ? <ErrorText>예배 이슈를 불러오지 못했습니다.</ErrorText> : followUps.data?.length ? <ul className="divide-y divide-border">{(followUps.data as Incident[]).map(i=><li key={i.id} className="py-3 text-sm"><div className="flex items-center justify-between gap-2"><Link href={`/incidents/${i.id}`} className="font-semibold text-accent">{i.title}</Link><Badge tone="danger">{INCIDENT_STATUS[i.status]}</Badge></div><p className="mt-1 text-xs text-muted">{i.occurred_on} · {i.service_name} · 담당 {i.follow_up_owner || "미정"} · 목표일 {i.due_on || "미정"}</p><p className="mt-2 whitespace-pre-wrap">{i.prevention || "개선대책 작성 예정"}</p></li>)}</ul> : <Empty/>}
       </Section>
 
       <Section title="6. 요청사항">

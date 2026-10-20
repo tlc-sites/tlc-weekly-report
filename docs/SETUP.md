@@ -23,11 +23,12 @@
 | 7 | `supabase/migrations/20261021000000_roster_services.sql` | 인물 사진·생년월일, 팀 분류, 예배 주차, 그룹 삭제 RPC |
 | 8 | `supabase/migrations/20261022000000_schools.sql` | 베리타스 기독초·기독국제중과 학교예배 추가 |
 | 9 | `supabase/migrations/20261023000000_notices.sql` | 담당 부서 공지·댓글, 수신 권한, 모임 없음 사유 검증, 기술팀 비정기 보고 |
+| 10 | `supabase/migrations/20261024000000_worship_incidents.sql` | 예배 이슈 경위서·관련 팀 검토 권한·후속 조치 |
 | 마지막 | `supabase/seed.sql` | 예배 5개, 교육부서 8개, 예배팀 10개, 부산 캠퍼스, 운영 설정 |
 
 **3번은 반드시 별도로 실행을 완료한 뒤 4번을 실행합니다.** 새 enum 값은 추가한 트랜잭션 안에서 사용할 수 없으므로, 3번과 후속 파일을 합쳐 실행하거나 하나의 `BEGIN`/`COMMIT`으로 묶지 않습니다.
 
-seed는 마이그레이션 1~9를 모두 적용한 뒤 마지막에 실행합니다. seed가 `worship`, `campus` 유형을 사용하므로 init 직후 실행하면 안 됩니다.
+seed는 마이그레이션 1~10을 모두 적용한 뒤 마지막에 실행합니다. seed가 `worship`, `campus` 유형을 사용하므로 init 직후 실행하면 안 됩니다.
 
 **Project Settings > Data API > Exposed schemas**에 `report`를 추가하고 저장합니다. 이걸 빼면 앱에서 테이블을 찾지 못합니다.
 

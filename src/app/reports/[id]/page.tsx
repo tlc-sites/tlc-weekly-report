@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
 import { requireActive } from "@/lib/auth";
@@ -71,6 +72,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     .maybeSingle<ReportRow>();
   if (!report?.group) notFound();
   const group = report.group;
+  const incidentResult = group.type === "worship" ? await supabase.from("worship_incidents").select("id,title").eq("report_id",id).order("created_at",{ascending:false}) : null;
 
   const isAuthor = report.author_id === profile.id;
   const [canEditRes, canReviewRes, messagesRes, prayerRes] = await Promise.all([
@@ -244,6 +246,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           </Badge>
         </span>
       </PageTitle>
+
+      {group.type === "worship" ? <Card className="mb-4"><h2 className="mb-2 font-semibold">예배 이슈·상세 경위</h2><p className="mb-3 text-sm text-muted">간단한 이슈는 기존 양식에, 여러 팀의 후속 조치가 필요한 일은 경위서로 남겨 주세요.</p><Link href={`/incidents/new?report=${id}`} className={smallButtonClass}>상세 경위 작성</Link><ul className="mt-3 flex flex-col gap-2">{incidentResult?.data?.map(i=><li key={i.id}><Link href={`/incidents/${i.id}`} className="text-sm text-accent underline">{i.title}</Link></li>)}</ul>{incidentResult?.error ? <p className="mt-2 text-sm text-danger">연결된 이슈를 불러오지 못했습니다.</p> : null}</Card> : null}
 
       <div className="mb-4 flex flex-col gap-2">
         {message ? <ErrorText>{message}</ErrorText> : null}

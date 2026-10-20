@@ -46,6 +46,7 @@ async function HomeContent() {
     <>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
+      <Card className="mb-4"><Link href="/incidents" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="report" description="예배 중 있었던 일과 후속 조치를 함께 확인해요.">예배 이슈</MenuHeading><span aria-hidden className="text-muted">›</span></Link></Card>
       <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
 
       {profile.is_admin ? (

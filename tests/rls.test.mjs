@@ -666,3 +666,56 @@ test("모임 없음: 교육·학교 사유 필수, 미래 주차·기술팀·다
   assert.equal((await as(ids.admin,"select reason from report.week_status where group_id=$1 and week=$2",[ids.youth,week])).rows[0].reason,'연합예배');
   await as(ids.admin,"delete from report.week_status where group_id=$1 and week=$2",[ids.youth,week]);
 });
+
+test("예배 경위서: 여러 팀의 검토자 공유, 작성자 외 팀원 차단, 변경 권한·후속 조치 검증", async () => {
+  const sound=randomUUID(),video=randomUUID(),third=randomUUID();
+  for(const [id,name] of [[sound,'경위음향'],[video,'경위영상'],[third,'경위조명']])
+    await db.query("insert into report.groups(id,name,type,schedule) values($1,$2,'worship','irregular')",[id,name]);
+  const writer=await signUp('경위작성자'),peer=await signUp('경위동료'),reviewer=await signUp('경위검토자'),other=await signUp('다른검토자');
+  for(const [user,group,role] of [[writer,sound,'writer'],[peer,sound,'writer'],[reviewer,video,'reviewer'],[other,third,'reviewer']])
+    await as(ids.admin,"select report.approve_user($1,$2::jsonb)",[user,JSON.stringify([{group_id:group,role}])]);
+  const today=(await db.query("select (now() at time zone 'Asia/Seoul')::date::text d")).rows[0].d;
+  const insert=(user,groups=[sound,video],owner=user,date=today,report=null)=>as(user,
+    "insert into report.worship_incidents(author_id,group_ids,occurred_on,service_name,title,circumstances,report_id) values($1,$2,$3,'수요예배','마이크 끊김','설교 중 발생',$4) returning id",
+    [owner,groups,date,report]);
+  const id=(await insert(writer)).rows[0].id;
+  for(const user of [writer,reviewer,ids.admin]) assert.equal((await as(user,"select id from report.worship_incidents where id=$1",[id])).rows.length,1);
+  for(const user of [peer,other,ids.teacherA,ids.pending]) assert.equal((await as(user,"select id from report.worship_incidents where id=$1",[id])).rows.length,0);
+  await rejects(as(null,"select * from report.worship_incidents"),/permission denied/);
+  await rejects(insert(other),/row-level security/);
+  await rejects(insert(writer,[sound],ids.admin),/row-level security/);
+  await rejects(insert(writer,[ids.youth]),/관련 파트/);
+  await rejects(insert(writer,[sound,sound]),/관련 파트/);
+  await rejects(insert(writer,[],writer),/check constraint|row-level security/);
+  const tomorrow=(await db.query("select ($1::date+1)::text d",[today])).rows[0].d;
+  await rejects(insert(writer,[sound],writer,tomorrow),/미래/);
+  await rejects(as(writer,"update report.worship_incidents set group_ids=$1 where id=$2",[[third],id]),/관련 정보/);
+  await rejects(as(writer,"update report.worship_incidents set author_id=$1 where id=$2",[ids.admin,id]),/관련 정보/);
+  assert.equal((await as(peer,"update report.worship_incidents set cause='위조' where id=$1 returning id",[id])).rows.length,0);
+  await rejects(as(reviewer,"update report.worship_incidents set status='resolved' where id=$1",[id]),/대응 결과/);
+  await as(reviewer,"update report.worship_incidents set status='temporary',cause='케이블',response='교체',prevention='사전 점검',follow_up_owner='담당자' where id=$1",[id]);
+  await as(writer,"update report.worship_incidents set status='resolved' where id=$1",[id]);
+  assert.equal((await as(reviewer,"select status from report.worship_incidents where id=$1",[id])).rows[0].status,'resolved');
+  await rejects(as(writer,"delete from report.worship_incidents where id=$1",[id]),/permission denied/);
+  await rejects(as(ids.admin,"truncate report.worship_incidents"),/permission denied/);
+  await db.query("update report.profiles set status='disabled' where id=$1",[writer]);
+  assert.equal((await as(writer,"select id from report.worship_incidents where id=$1",[id])).rows.length,0);
+  await rejects(insert(writer),/row-level security/);
+});
+
+test("예배 경위서: 주간 보고 연결 시 부서·날짜·예배 일치와 원본 보존", async () => {
+  const gid=(await db.query("select id from report.groups where name='경위음향'")).rows[0].id;
+  const sid=(await db.query("select id from report.service_types where name='수요예배'")).rows[0].id;
+  const today=(await db.query("select (now() at time zone 'Asia/Seoul')::date::text d")).rows[0].d;
+  const rid=randomUUID();
+  await db.query("insert into report.reports(id,group_id,author_id,meeting_date,service_type_id) values($1,$2,$3,$4,$5)",[rid,gid,ids.admin,today,sid]);
+  const add=(date,groups=[gid],service=sid)=>as(ids.admin,"insert into report.worship_incidents(author_id,group_ids,occurred_on,service_id,service_name,title,circumstances,report_id) values($1,$2,$3,$4,'틀린 이름','연결 테스트','경위',$5) returning id,service_name",[ids.admin,groups,date,service,rid]);
+  const previous=(await db.query("select ($1::date-1)::text d",[today])).rows[0].d;
+  await rejects(add(previous),/일치/);
+  await rejects(add(today,[ids.sound]),/일치/);
+  await rejects(add(today,[gid],null),/일치/);
+  const row=(await add(today)).rows[0];
+  assert.equal(row.service_name,'수요예배');
+  assert.equal((await db.query("select count(*)::int n from report.reports where id=$1",[rid])).rows[0].n,1);
+  await rejects(as(ids.admin,"update report.worship_incidents set report_id=null where id=$1",[row.id]),/관련 정보/);
+});
