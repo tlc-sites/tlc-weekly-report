@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, isSenior } from "@/lib/auth";
 
 const roleSchema = z.enum(["writer", "reviewer"]);
 
@@ -83,4 +83,22 @@ export async function setUserAdmin(formData: FormData) {
   });
   if (error) redirect(`${path}?error=${/own admin/.test(error.message) ? "own-admin" : "save"}`);
   redirect(`${path}?saved=1`);
+}
+
+export async function setMinister(formData: FormData) {
+  const { supabase, profile } = await requireAdmin();
+  if (!isSenior(profile)) redirect("/admin/users?error=save");
+  const parsed = z.object({ userId: z.uuid(), enabled: z.enum(["true","false"]) }).safeParse({userId:formData.get("userId"),enabled:formData.get("enabled")});
+  if (!parsed.success) redirect("/admin/users?error=invalid");
+  const {error} = await supabase.rpc("set_minister",{p_user:parsed.data.userId,p_enabled:parsed.data.enabled === "true"});
+  redirect(`/admin/users/${parsed.data.userId}?${error ? "error=save" : "saved=1"}`);
+}
+
+export async function setRecipientRole(formData: FormData) {
+  const { supabase, profile } = await requireAdmin();
+  if (!isSenior(profile)) redirect("/admin/users?error=save");
+  const parsed=z.object({userId:z.uuid(),role:z.enum(["","pastor","pastor_wife"])}).safeParse({userId:formData.get("userId"),role:formData.get("role")});
+  if(!parsed.success) redirect("/admin/users?error=invalid");
+  const {error}=await supabase.rpc("set_recipient_role",{p_user:parsed.data.userId,p_role:parsed.data.role || null});
+  redirect(`/admin/users/${parsed.data.userId}?${error ? "error=save" : "saved=1"}`);
 }

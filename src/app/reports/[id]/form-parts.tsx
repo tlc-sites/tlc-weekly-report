@@ -219,7 +219,7 @@ export function IssuesEditor({
 
 export function MessagesEditor({ value, onChange }: { value: Messages; onChange: (v: Messages) => void }) {
   return (
-    <Section title="담임목사님·사모님께 드리는 글 (선택)" hint="작성자 본인과 받는 분만 볼 수 있습니다. 관리자와 검토자도 볼 수 없습니다.">
+    <Section title="담임목사님·사모님께 드리는 글 (선택)" hint="작성자와 담임목사님·사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
       <TextArea
         label="담임목사님께"
         value={value.pastor}

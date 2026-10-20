@@ -4,7 +4,7 @@ import type { Incident } from "@/lib/incidents";
 import { listGroupsOrdered } from "@/lib/groups";
 import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
-import { requireActive } from "@/lib/auth";
+import { requireActive, isSenior, isClergy } from "@/lib/auth";
 import type { Group } from "@/lib/groups";
 import {
   CAMPUS_COUNTS,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/report-forms";
 import { formatDate, weekOf, todayKST } from "@/lib/week";
 import { deleteDraft, saveReport } from "./actions";
+import { PrivateSharing } from "./sharing";
 import { Comments, ReviewPanel } from "./review";
 import { CampusForm } from "./campus-form";
 import { EducationForm, type RosterMember } from "./education-form";
@@ -41,6 +42,9 @@ type ReportRow = {
   id: string;
   group_id: string;
   author_id: string;
+  author_name: string;
+  duty_part: string;
+  last_editor: {real_name:string|null}|null;
   meeting_date: string;
   service_type_id: string | null;
   meeting_label: string | null;
@@ -69,7 +73,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const { data: report } = await supabase
     .from("reports")
     .select(
-      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
+      "id, group_id, author_id, author_name, duty_part, last_editor:profiles!reports_last_edited_by_fkey(real_name), meeting_date, service_type_id, meeting_label, status, details, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
     )
     .eq("id", id)
     .maybeSingle<ReportRow>();
@@ -86,12 +90,13 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   }
 
   const isAuthor = report.author_id === profile.id;
-  const [canEditRes, canReviewRes, messagesRes, prayerRes] = await Promise.all([
+  const [canEditRes, canReviewRes, messagesRes, prayerRes, privateAccess] = await Promise.all([
     supabase.rpc("can_edit_report", { rid: id }),
     supabase.rpc("can_review_report", { rid: id }),
-    // 작성자에게는 자기가 쓴 글 전부, 받는 분에게는 자기에게 온 글만 돌아온다 (RLS)
+    // 비공개 내용은 담당 배정과 개별 공개 범위를 RLS로 제한한다.
     supabase.from("report_messages").select("recipient, body").eq("report_id", id),
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
+    supabase.rpc("can_read_private",{rid:id,kind:"prayer"}),
   ]);
   const canEdit = Boolean(canEditRes.data);
   const canReview = Boolean(canReviewRes.data);
@@ -138,6 +143,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         reportId={id}
         initial={initial}
         roster={roster}
+        canEditPrayer={Boolean(privateAccess.data)}
         guardianCheck={Boolean(group.settings?.guardian_check)}
         showMessages={isAuthor}
       />
@@ -229,7 +235,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         reportId={id}
         initial={initial}
         showMessages={isAuthor}
-        authorName={report.author?.real_name ?? ""}
+        authorName={report.author_name}
       />
     ) : (
       <ReadOnly
@@ -249,7 +255,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   return (
     <>
       <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{group.name}</BackLink>
-      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${group.name} · ${formatDate(report.meeting_date)} · ${report.author?.real_name ?? ""}`}>
+      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${group.name} · ${formatDate(report.meeting_date)} · ${report.author_name}`}>
         <span className="flex items-center gap-2">
           {title}
           <Badge tone={report.status === "draft" ? "danger" : report.status === "reviewed" ? "accent" : "muted"}>
@@ -258,7 +264,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         </span>
       </PageTitle>
 
-      {group.type === "worship" ? <TeamIssues items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
+      <p className="mb-4 text-xs text-muted">담당 파트: {report.duty_part || "미입력"} · 최종 수정: {report.last_editor?.real_name ?? report.author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
+      {group.type === "worship" ? <TeamIssues canWrite={canEdit} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
         {message ? <ErrorText>{message}</ErrorText> : null}
@@ -282,6 +289,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         <ReviewPanel reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
       ) : null}
 
+      <PrivateSharing reportId={id}/>
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
           <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임목사님께 드리는 글" : "사모님께 드리는 글"}</p>
@@ -291,7 +299,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       {body}
 
-      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isAdmin={profile.is_admin} /> : null}
+      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
 
       {isAuthor && report.status === "draft" ? (
         <form action={deleteDraft} className="mt-6 flex justify-center">

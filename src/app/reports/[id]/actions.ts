@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireActive } from "@/lib/auth";
+import { requireActive, isClergy } from "@/lib/auth";
 import { campusPayload, educationPayload, missingOnSubmit, otherPayload, worshipPayload } from "@/lib/report-forms";
 import { weekOf } from "@/lib/week";
 
@@ -81,6 +81,7 @@ export async function setReviewStatus(formData: FormData) {
 
 export async function addComment(formData: FormData) {
   const { supabase, profile } = await requireActive();
+  if (!isClergy(profile)) redirect("/");
   const parsed = z
     .object({ reportId: z.uuid(), body: z.string().trim().min(1).max(1000) })
     .safeParse({ reportId: formData.get("reportId"), body: formData.get("body") });

@@ -30,6 +30,8 @@ const MESSAGES: Record<string, string> = {
 
 type ReportRow = {
   id: string;
+  author_name: string;
+  duty_part: string;
   meeting_date: string;
   meeting_label: string | null;
   status: ReportStatus;
@@ -48,7 +50,7 @@ export default function GroupPage({ params, searchParams }: PageProps<"/groups/[
 }
 
 async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">) {
-  const { supabase } = await requireActive();
+  const { supabase, profile } = await requireActive();
   const [{ id }, { week: weekParam, error }] = await Promise.all([params, searchParams]);
   const { group, canWrite, isLeaf } = await getGroupAccess(supabase, id);
   const today = todayKST();
@@ -82,7 +84,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     supabase
       .from("reports")
       .select(
-        "id, meeting_date, meeting_label, status, submitted_at, author:profiles!reports_author_id_fkey(real_name), service:service_types(name), meeting:group_meeting_types(name)",
+        "id, author_name, duty_part, meeting_date, meeting_label, status, submitted_at, author:profiles!reports_author_id_fkey(real_name), service:service_types(name), meeting:group_meeting_types(name)",
       )
       .eq("group_id", id)
       .eq("week", week)
@@ -157,7 +159,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
                   <span>
                     <span className="font-medium">{r.service?.name ?? r.meeting?.name ?? r.meeting_label}</span>
                     <span className="ml-2 text-xs text-muted">
-                      {formatDate(r.meeting_date)} · {r.author?.real_name}
+                      {formatDate(r.meeting_date)} · {r.author_name}{r.duty_part ? ` · ${r.duty_part}` : ""}
                     </span>
                   </span>
                   <Badge tone={r.status === "draft" ? "danger" : r.status === "reviewed" ? "accent" : "muted"}>
@@ -179,6 +181,9 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             <form action={createReport} className="flex flex-col gap-3">
               <input type="hidden" name="groupId" value={id} />
               <input type="hidden" name="reportWeek" value={week} />
+              <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
+              <Field label="담당 파트"><input name="dutyPart" maxLength={100} placeholder="예: 메인 음향, 모니터 음향, 방송 음향" className={inputClass}/></Field>
+              <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />

@@ -27,7 +27,7 @@ export const SCHEDULE_LABEL: Record<Group["schedule"], string> = {
   irregular: "비정기",
 };
 
-export const ROLE_LABEL = { writer: "작성자", reviewer: "검토자" } as const;
+export const ROLE_LABEL = { writer: "작성자", reviewer: "파트총괄·담당 교역자 소속" } as const;
 
 const GROUP_COLUMNS = "id, type, name, parent_id, schedule, settings, sort_order, is_active";
 

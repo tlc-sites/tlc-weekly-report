@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, buttonClass, pickMessage, secondaryButtonClass } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, isSenior } from "@/lib/auth";
 import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
-import { saveMemberships, setUserAdmin, setUserStatus } from "../actions";
+import { saveMemberships, setRecipientRole, setMinister, setUserAdmin, setUserStatus } from "../actions";
 
 const MESSAGES: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
@@ -17,6 +17,8 @@ type UserDetail = {
   email: string | null;
   status: "pending" | "active" | "disabled";
   is_admin: boolean;
+  is_minister: boolean;
+  recipient_role: "pastor" | "pastor_wife" | null;
   memberships: { group_id: string; role: keyof typeof ROLE_LABEL }[];
 };
 
@@ -36,7 +38,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
   const [{ data: user }, groups] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, real_name, email, status, is_admin, memberships(group_id, role)")
+      .select("id, real_name, email, status, is_admin, is_minister, recipient_role, memberships(group_id, role)")
       .eq("id", id)
       .maybeSingle<UserDetail>(),
     listGroupsOrdered(supabase),
@@ -62,12 +64,21 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         {saved ? <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">저장했습니다.</p> : null}
       </div>
 
+      {isSenior(me) && user.status === "active" ? <Card className="mb-4"><form action={setMinister} className="flex items-center justify-between gap-3">
+        <input type="hidden" name="userId" value={user.id}/><input type="hidden" name="enabled" value={String(!user.is_minister)}/>
+        <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">일반 보고 전체 열람·수정·확인, 목회 피드백 작성</p></div>
+        <button className={secondaryButtonClass}>{user.is_minister ? "교역자 해제" : "교역자 지정"}</button>
+      </form></Card> : null}
+      {isSenior(me) && user.status === "active" && !isMe ? <Card className="mb-4"><form action={setRecipientRole} className="flex flex-col gap-2">
+        <input type="hidden" name="userId" value={user.id}/><label className="text-sm font-semibold">최상단 역할<select name="role" defaultValue={user.recipient_role ?? ""} className="mt-1 w-full rounded-xl border border-border bg-surface p-2"><option value="">해당 없음</option><option value="pastor">담임목사님</option><option value="pastor_wife">사모님</option></select></label>
+        <p className="text-xs text-muted">모든 비공개 내용과 관리 기능에 접근합니다. 같은 역할의 기존 지정은 해제됩니다.</p><button className={secondaryButtonClass}>최상단 역할 저장</button>
+      </form></Card> : null}
       <h2 className="mb-2 text-sm font-semibold">소속과 역할</h2>
       <Card className="mb-6">
         <form action={saveMemberships} className="flex flex-col gap-2">
           <input type="hidden" name="userId" value={user.id} />
           <p className="mb-1 text-xs text-muted">
-            상위 그룹(예: 교육부 전체)에 배정하면 하위 그룹 전체에 같은 역할이 적용됩니다.
+            상위 그룹 배정은 하위 그룹에 상속됩니다. 파트총괄은 열람만 가능하며, 교역자에게 배정한 담당 파트는 비공개 내용 열람 범위가 됩니다. 본인 소속 변경은 담임목사님·사모님께 요청해 주세요.
           </p>
           {groups.map((g) => (
             <label key={g.id} className={`flex items-center justify-between gap-3 text-sm ${g.depth ? "pl-4" : "font-medium"}`}>
@@ -93,7 +104,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <Card className="mb-3 flex items-center justify-between gap-3">
           <div className="text-sm">
             <p className="font-medium">관리자 권한</p>
-            <p className="text-xs text-muted">전체 보고 열람, 가입 승인, 그룹·예배 관리</p>
+            <p className="text-xs text-muted">가입 승인, 그룹·예배·기능 관리 (내용 열람 권한과 별도)</p>
           </div>
           <form action={setUserAdmin}>
             <input type="hidden" name="userId" value={user.id} />

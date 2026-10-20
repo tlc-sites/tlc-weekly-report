@@ -63,7 +63,9 @@ async function groupId(name) {
 before(async () => {
   db = new PGlite();
   await db.exec(SUPABASE_STUB);
-  for (const file of readdirSync(migrationsDir).sort()) {
+  // 12번까지의 기존 운영 동작 회귀 검사. 새 권한으로 바뀌는 기대값은 roles.test.mjs에서
+  // 기존 자료가 들어 있는 DB를 13번으로 업그레이드한 뒤 별도로 검증한다.
+  for (const file of readdirSync(migrationsDir).sort().filter(f => f < "20261027000000")) {
     await db.exec(readFileSync(join(migrationsDir, file), "utf8"));
   }
   const seed = readFileSync(join(root, "supabase", "seed.sql"), "utf8");

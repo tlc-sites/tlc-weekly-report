@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { requireActive } from "@/lib/auth";
+import { requireActive, isSenior } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
 import { BackLink, Card, Loading, PageTitle } from "@/components/ui";
 
@@ -14,7 +14,7 @@ async function Content({searchParams}:Pick<PageProps<"/incidents/new">,"searchPa
   const groups=await listGroupsOrdered(supabase);
   const {data:memberships}=await supabase.from("memberships").select("group_id").eq("user_id",profile.id);
   const memberGroups=new Set((memberships ?? []).map(m=>m.group_id));
-  const available=groups.filter(g=>g.type==="worship" && g.childCount===0 && (profile.is_admin || memberGroups.has(g.id) || memberGroups.has(g.parent_id)));
+  const available=groups.filter(g=>g.type==="worship" && g.childCount===0 && (isSenior(profile) || memberGroups.has(g.id) || memberGroups.has(g.parent_id)));
   if(report!==undefined) {
     if(typeof report!=="string" || !/^[0-9a-f-]{36}$/i.test(report)) notFound();
     const {data:r}=await supabase.from("reports").select("id,group_id,meeting_date,service_id:service_type_id,meeting_label").eq("id",report).maybeSingle();

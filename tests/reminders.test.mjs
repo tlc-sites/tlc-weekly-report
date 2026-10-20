@@ -53,15 +53,11 @@ test("관리자 요약과 금요일 보고 알림 대상", () => {
   const users = [
     { id: "admin", status: "active", is_admin: true, notify_enabled: true },
     { id: "adminOff", status: "active", is_admin: true, notify_enabled: false },
-    { id: "rev", status: "active", is_admin: false, notify_enabled: true },
+    { id: "rev", status: "active", is_admin: false, is_minister: true, notify_enabled: true },
     { id: "writer", status: "active", is_admin: false, notify_enabled: true },
   ];
-  const memberships = [
-    { user_id: "rev", group_id: "edu", role: "reviewer" },
-    { user_id: "writer", group_id: "mid", role: "writer" },
-  ];
   assert.deepEqual(adminTargets(users), ["admin"]);
-  assert.deepEqual(digestTargets(memberships, users), ["admin", "rev"]);
+  assert.deepEqual(digestTargets(users), ["rev"]);
 });
 
 test("금요일 안내는 지정된 목사님·사모님에게도 보내며 알림 해제·비활성은 제외",()=>{
@@ -72,7 +68,7 @@ test("금요일 안내는 지정된 목사님·사모님에게도 보내며 알�
     {id:'disabled',status:'disabled',notify_enabled:true,is_admin:false,recipient_role:'pastor_wife'},
     {id:'writer',status:'active',notify_enabled:true,is_admin:false},
   ];
-  assert.deepEqual(digestTargets([],users),['pastor','wife']);
+  assert.deepEqual(digestTargets(users),['pastor','wife']);
 });
 
 test("그룹 이름 요약", () => {

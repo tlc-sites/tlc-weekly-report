@@ -9,7 +9,7 @@ export async function createNotice(formData: FormData) {
   const { supabase, profile } = await requireActive();
   const parsed = z.object({
     target: z.string().regex(/^type:(education|worship|other|campus)$|^group:[0-9a-f-]{36}$/),
-    audience: z.enum(["all", "reviewer"]),
+    audience: z.enum(["all", "senior", "minister", "lead", "member"]),
     title: z.string().trim().min(1).max(100), body: z.string().trim().min(1).max(2000),
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) redirect("/notices?error=invalid");

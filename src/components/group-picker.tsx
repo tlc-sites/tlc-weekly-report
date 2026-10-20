@@ -5,8 +5,8 @@ import { useState } from "react";
 import { GROUP_TYPE_LABEL, type OrderedGroup } from "@/lib/groups";
 import { selectClass } from "./ui";
 
-export function GroupPicker({ groups, base = "/groups", suffix = "" }: { groups: OrderedGroup[]; base?: string; suffix?: string }) {
-  const [category, setCategory] = useState("");
+export function GroupPicker({ groups, base = "/groups", suffix = "", defaultCategory = "" }: { defaultCategory?: string; groups: OrderedGroup[]; base?: string; suffix?: string }) {
+  const [category, setCategory] = useState(defaultCategory);
   return <div className="flex flex-col gap-3">
     <label className="flex flex-col gap-2 text-sm">분류
       <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value)}>

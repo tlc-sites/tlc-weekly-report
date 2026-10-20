@@ -1,4 +1,4 @@
-import type { Profile } from "./auth";
+import { isSenior, type Profile } from "./auth";
 import { listGroupsOrdered, type OrderedGroup, type ReportClient } from "./groups";
 import type { ReportStatus } from "./report-forms";
 import { addDays, reportDateMax, reportDeadline, todayKST } from "./week";
@@ -9,6 +9,8 @@ export type MeetingReport = {
   id: string;
   group_id: string;
   author_id: string;
+  author_name: string;
+  duty_part: string;
   meeting_date: string;
   meeting_label: string | null;
   status: ReportStatus;
@@ -25,7 +27,7 @@ export type MeetingReport = {
 export type GroupStatus = "reviewed" | "submitted" | "late" | "no_meeting" | "draft" | "missing" | "none";
 
 const REPORT_COLUMNS =
-  "id, group_id, author_id, meeting_date, meeting_label, status, submitted_at, enrolled_snapshot, attend_snapshot, details, week, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name)";
+  "id, group_id, author_id, author_name, duty_part, meeting_date, meeting_label, status, submitted_at, enrolled_snapshot, attend_snapshot, details, week, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name)";
 
 export const reportTitle = (r: Pick<MeetingReport, "service" | "meeting" | "meeting_label">) =>
   r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "보고";
@@ -50,8 +52,9 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
   // 볼 수 있는 보고 그룹: 관리자는 전체, 그 외에는 소속 그룹과 그 하위 그룹 (비활성 그룹은 제외)
   // 아래 모든 항목은 이 그룹 범위 안의 보고만 쓴다
   const visible = groups.filter(
-    (g) => g.childCount === 0 && (profile.is_admin || memberships.has(g.id) || (g.parent_id !== null && memberships.has(g.parent_id))),
+    (g) => g.childCount === 0 && (isSenior(profile) || (reportsRes.data ?? []).some(r=>r.group_id===g.id) || memberships.has(g.id) || (g.parent_id !== null && memberships.has(g.parent_id))),
   );
+  visible.sort((a,b)=>Number(memberships.has(b.id) || Boolean(b.parent_id && memberships.has(b.parent_id))) - Number(memberships.has(a.id) || Boolean(a.parent_id && memberships.has(a.parent_id))));
   const visibleIds = new Set(visible.map((g) => g.id));
   const reports = (reportsRes.data ?? []).filter((r) => visibleIds.has(r.group_id));
   const noMeeting = new Map((weekStatusRes.data ?? []).filter((w) => w.no_meeting).map((w) => [w.group_id as string, w.reason as string | null]));
