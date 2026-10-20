@@ -21,7 +21,7 @@ export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-[15px] font-medium">{label}</span>
       {children}
       {hint ? <span className="text-xs text-muted">{hint}</span> : null}
     </label>
@@ -34,14 +34,14 @@ export function pickMessage(messages: Record<string, string>, code: string | str
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-border bg-surface p-4 sm:p-5 ${className}`}>{children}</section>;
+  return <section className={`rounded-[14px] border border-border bg-surface p-[18px] ${className}`}>{children}</section>;
 }
 
 export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (
     <header className="mb-5">
-      <h1 className="text-xl font-semibold">{children}</h1>
-      {sub ? <p className="mt-1 text-sm text-muted">{sub}</p> : null}
+      <h1 className="text-[26px]">{children}</h1>
+      {sub ? <p className="mt-2 text-[15px] leading-relaxed text-muted">{sub}</p> : null}
     </header>
   );
 }
@@ -55,11 +55,11 @@ export function Loading() {
 }
 
 export const buttonClass =
-  "inline-flex min-h-12 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent bg-accent px-[18px] py-3 text-[17px] font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const secondaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/50 bg-surface px-4 py-2 text-sm font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent/50 bg-surface px-[18px] py-3 text-[17px] font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const smallButtonClass =
-  "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
   "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =

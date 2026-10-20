@@ -8,14 +8,14 @@ const ITEMS = [
 
 export function AdminNav({ current }: { current: (typeof ITEMS)[number]["href"] }) {
   return (
-    <nav className="mb-5 flex gap-1 rounded-lg border border-border bg-surface p-1 text-sm">
+    <nav aria-label="관리 메뉴" className="mb-5 flex gap-1 rounded-2xl border border-border bg-accent/5 p-1.5 text-[15px]">
       {ITEMS.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           aria-current={item.href === current ? "page" : undefined}
-          className={`flex-1 rounded-md py-2 text-center ${
-            item.href === current ? "bg-accent text-accent-foreground font-semibold" : "text-muted"
+          className={`flex min-h-11 flex-1 items-center justify-center rounded-xl px-2 py-2 text-center transition ${
+            item.href === current ? "bg-accent text-accent-foreground font-semibold" : "text-muted hover:bg-surface"
           }`}
         >
           {item.label}
