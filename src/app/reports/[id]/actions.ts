@@ -1,5 +1,6 @@
 "use server";
 
+import { preserveReportIdentity } from "@/lib/report-identity";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,7 +11,7 @@ import { weekOf } from "@/lib/week";
 const SCHEMAS = { education: educationPayload, worship: worshipPayload, other: otherPayload, campus: campusPayload } as const;
 
 export async function saveReport(formData: FormData) {
-  const { supabase } = await requireActive();
+  const { supabase, profile } = await requireActive();
   const reportId = z.uuid().safeParse(formData.get("reportId"));
   if (!reportId.success) redirect("/");
   const back = `/reports/${reportId.data}`;
@@ -18,9 +19,9 @@ export async function saveReport(formData: FormData) {
 
   const { data: report } = await supabase
     .from("reports")
-    .select("id, group:groups(type)")
+    .select("id, details, author:profiles!reports_author_id_fkey(real_name), group:groups(type)")
     .eq("id", reportId.data)
-    .maybeSingle<{ id: string; group: { type: keyof typeof SCHEMAS } | null }>();
+    .maybeSingle<{ id: string; details:Record<string,unknown>; author:{real_name:string|null}|null; group: { type: keyof typeof SCHEMAS } | null }>();
   const type = report?.group?.type;
   if (!report || !type) redirect("/");
 
@@ -39,7 +40,7 @@ export async function saveReport(formData: FormData) {
 
   const { error } = await supabase.rpc("save_report", {
     p_report: reportId.data,
-    p_payload: parsed.data,
+    p_payload: {...parsed.data,details:{...parsed.data.details,_report_meta:preserveReportIdentity(report.details,report.author?.real_name,{id:profile.id,name:profile.real_name})}},
     p_status: intent === "submit" ? "submitted" : "draft",
   });
   if (error) {

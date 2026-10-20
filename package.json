@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "node --test tests/rls.test.mjs tests/upgrade.test.mjs tests/reminders.test.mjs tests/service-schedule.test.mjs tests/report-week.test.mjs"
+    "test:db": "node --test tests/rls.test.mjs tests/upgrade.test.mjs tests/reminders.test.mjs tests/service-schedule.test.mjs tests/report-week.test.mjs tests/report-identity.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

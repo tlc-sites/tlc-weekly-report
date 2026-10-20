@@ -1,3 +1,4 @@
+import { getReportIdentity } from "@/lib/report-identity";
 import { Suspense } from "react";
 import { TeamIssues } from "@/components/team-issues";
 import type { Incident } from "@/lib/incidents";
@@ -229,7 +230,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         reportId={id}
         initial={initial}
         showMessages={isAuthor}
-        authorName={report.author?.real_name ?? ""}
+        authorName={getReportIdentity(report.details,report.author?.real_name).author_name}
       />
     ) : (
       <ReadOnly
@@ -249,7 +250,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   return (
     <>
       <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{group.name}</BackLink>
-      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${group.name} · ${formatDate(report.meeting_date)} · ${report.author?.real_name ?? ""}`}>
+      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${group.name} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
         <span className="flex items-center gap-2">
           {title}
           <Badge tone={report.status === "draft" ? "danger" : report.status === "reviewed" ? "accent" : "muted"}>
@@ -258,6 +259,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         </span>
       </PageTitle>
 
+      <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
       {group.type === "worship" ? <TeamIssues items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
