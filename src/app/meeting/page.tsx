@@ -51,11 +51,11 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
       <PageTitle sub={formatWeek(week)}>교역자 회의 자료</PageTitle>
       <p className="mb-4 text-sm text-muted">금요일 오후 5시 전달 기준 · 현재까지 작성된 내용을 표시합니다.</p>
       <nav data-print-hide className="mb-4 flex items-center justify-between text-sm">
-        <Link href={`/meeting?week=${addDays(week, -7)}`} className="px-2 py-1 text-muted">
+        <Link href={`/meeting?week=${addDays(week, -7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
           ← 지난주
         </Link>
         <PrintButton />
-        {week < lastWeek ? <Link href={`/meeting?week=${addDays(week, 7)}`} className="px-2 py-1 text-muted">다음 주 →</Link> : <span className="px-2 py-1 text-muted/40">다음 주 →</span>}
+        {week < lastWeek ? <Link href={`/meeting?week=${addDays(week, 7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">다음 주 →</Link> : <span className="px-2 py-1 text-muted/40">다음 주 →</span>}
       </nav>
       {message ? (
         <div className="mb-4">

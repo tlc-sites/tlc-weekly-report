@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="mb-3 self-start text-sm text-muted">
+    <Link href={href} className="mb-4 inline-flex min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
       ← {children}
     </Link>
   );

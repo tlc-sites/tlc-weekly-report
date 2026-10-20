@@ -1,4 +1,6 @@
 import { getReportIdentity } from "@/lib/report-identity";
+import {TeamSessionForm} from "./team-session-form";
+import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { Suspense } from "react";
 import { TeamIssues } from "@/components/team-issues";
 import type { Incident } from "@/lib/incidents";
@@ -109,7 +111,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   let body: React.ReactNode = null;
 
-  if (group.type === "education") {
+  if(isTeamSession(report.details)) {
+    const initial=teamSessionPayload.parse({details:{session_type:report.details.session_type,topic:str("topic"),passage:str("passage"),place:str("place"),content:str("content"),members:Array.isArray(report.details.members)?report.details.members:[]},messages});
+    body=editMode?<TeamSessionForm reportId={id} initial={initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
+  } else if (group.type === "education") {
     const [{ data: members }, { data: attendance }] = await Promise.all([
       supabase.from("members").select("id, name, kind, class_name, status, photo_data, birth_date").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
       supabase.from("attendance").select("member_id, present, absence_reason, contacted, guardian_present").eq("report_id", id),
@@ -176,16 +181,16 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           key={report.updated_at}
           action={saveReport}
           reportId={id}
-          initial={{ details: { result, notes: str("notes"), requests }, issues, messages }}
+          initial={{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff") }, issues, messages }}
           showMessages={isAuthor}
         />
       );
     } else if (editMode) {
       const initial: OtherPayload = {
-        details: { song_list: str("song_list"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests },
+        details: { song_list: str("song_list"), sharing_topic:str("sharing_topic"),sharing_passage:str("sharing_passage"),sharing_place:str("sharing_place"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests },
         issues, messages,
       };
-      body = <OtherForm key={report.updated_at} action={saveReport} reportId={id} initial={initial} showMessages={isAuthor} />;
+      body = <OtherForm internship={group.settings?.report_category==="internship"} key={report.updated_at} action={saveReport} reportId={id} initial={initial} showMessages={isAuthor} />;
     } else {
       body = (
         <ReadOnly
@@ -195,7 +200,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
               ["설교본문", str("sermon_passage")],
               ["설교자", str("preacher")],
               ["예배·교육 내용", str("content")],
-            ] as [string, string][] : [["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
+            ] as [string, string][] : [["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
+            ["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
             ...issues.map(
               (i) => [`이슈 · ${i.category}`, `${i.content}${i.action ? `\n→ ${i.action}` : ""} (${ISSUE_STATUS_LABEL[i.status]})`] as [string, string],
             ),

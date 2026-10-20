@@ -8,7 +8,7 @@ export type Group = {
   name: string;
   parent_id: string | null;
   schedule: "weekly" | "irregular";
-  settings: { guardian_check?: boolean };
+  settings: { guardian_check?: boolean; report_category?:"internship" };
   sort_order: number;
   is_active: boolean;
 };
@@ -21,6 +21,9 @@ export const GROUP_TYPE_LABEL: Record<Group["type"], string> = {
   other: "학교",
   campus: "부산캠퍼스",
 };
+
+export const NAV_CATEGORY_LABEL={...GROUP_TYPE_LABEL,internship:"스데반 인턴십"};
+export const groupCategory=(g:Pick<Group,"type"|"settings">)=>g.settings?.report_category==="internship" ? "internship" : g.type;
 
 export const SCHEDULE_LABEL: Record<Group["schedule"], string> = {
   weekly: "주간",

@@ -27,10 +27,14 @@ export async function saveIncident(_: IncidentState, form: FormData): Promise<In
   const context = z.object({
     occurred_on: z.iso.date(), service_id: z.union([z.uuid(),z.literal("")]),
     service_name: z.string().trim().max(100), report_id: z.union([z.uuid(),z.literal("")]),
-    group_ids: z.array(z.uuid()).min(1).max(10),
+    group_ids: z.array(z.uuid()).length(1),
   }).safeParse({...values,group_ids:form.getAll("group_ids")});
   if (!context.success) return {error:"예배 날짜와 관련 파트를 선택해 주세요."};
   const c = context.data;
+  if(c.report_id) {
+    const {data:source}=await supabase.from("reports").select("group_id").eq("id",c.report_id).maybeSingle();
+    if(!source || c.group_ids[0]!==source.group_id) return {error:"현재 보고의 팀 이슈만 작성할 수 있습니다."};
+  }
   if (c.occurred_on>todayKST() || (!c.service_id && !c.service_name)) return {error:"미래 날짜는 선택할 수 없습니다. 예배도 선택해 주세요."};
   const {data,error} = await supabase.from("worship_incidents").insert({
     ...fields, ...c, author_id:profile.id, service_id:c.service_id || null,

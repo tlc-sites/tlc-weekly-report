@@ -1,5 +1,6 @@
 "use server";
 
+import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { preserveReportIdentity } from "@/lib/report-identity";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
@@ -31,11 +32,12 @@ export async function saveReport(formData: FormData) {
   } catch {
     redirect(`${back}?error=invalid`);
   }
-  const parsed = SCHEMAS[type].safeParse(raw);
+  const parsed = (isTeamSession(report.details) ? teamSessionPayload : SCHEMAS[type]).safeParse(raw);
   if (!parsed.success) {
     const consent = parsed.error.issues.some((i) => i.message === "consent");
     redirect(`${back}?error=${consent ? "consent" : "invalid"}`);
   }
+  if(isTeamSession(report.details) && parsed.data.details.session_type!==report.details.session_type) redirect(`${back}?error=invalid`);
   if (intent === "submit" && missingOnSubmit(type, parsed.data).length) redirect(`${back}?error=missing`);
 
   const { error } = await supabase.rpc("save_report", {

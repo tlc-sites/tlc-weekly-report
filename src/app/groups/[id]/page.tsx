@@ -1,4 +1,5 @@
 import { getReportIdentity } from "@/lib/report-identity";
+import { ReportKindFields } from "./report-kind-fields";
 import { NoMeeting } from "./no-meeting";
 import { SubmitButton } from "@/components/submit-button";
 import { serviceOccursOn } from "@/lib/service-schedule";
@@ -136,14 +137,14 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
       ) : null}
 
       <nav className="mb-4 flex items-center justify-between text-sm">
-        <Link href={`/groups/${id}?week=${addDays(week, -7)}`} className="px-2 py-1 text-muted">
+        <Link href={`/groups/${id}?week=${addDays(week, -7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
           ← 지난주
         </Link>
         <span className="font-semibold">{formatWeek(week)}</span>
         {isCurrentWeek ? (
           <span className="px-2 py-1 text-muted/40">다음 주 →</span>
         ) : (
-          <Link href={`/groups/${id}?week=${addDays(week, 7)}`} className="px-2 py-1 text-muted">
+          <Link href={`/groups/${id}?week=${addDays(week, 7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
             다음 주 →
           </Link>
         )}
@@ -184,6 +185,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
               <Field label="담당 파트"><input name="dutyPart" maxLength={100} placeholder="예: 메인 음향, 모니터 음향, 방송 음향" className={inputClass}/></Field>
               <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
+              <ReportKindFields minDate={week} maxDate={maxDate}>
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
@@ -194,6 +196,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               ) : (
                 <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
               )}
+              </ReportKindFields>
               <SubmitButton pendingText="작성 화면 여는 중…">{group.type === "education" ? "출결 체크 시작" : "작성 시작"}</SubmitButton>
             </form>
           </Card>

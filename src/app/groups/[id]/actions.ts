@@ -13,6 +13,7 @@ export async function createReport(formData: FormData) {
   const { supabase, profile } = await requireActive();
   const parsed = z
     .object({
+      reportKind:z.enum(["standard","meeting","curriculum"]),
       authorName: z.string().trim().min(1).max(100),
       dutyPart: z.string().trim().max(100),
       groupId: z.uuid(),
@@ -22,6 +23,7 @@ export async function createReport(formData: FormData) {
       reportWeek: z.iso.date(),
     })
     .safeParse({
+      reportKind:formData.get("reportKind") ?? "standard",
       authorName: formData.get("authorName"),
       dutyPart: formData.get("dutyPart") ?? "",
       groupId: formData.get("groupId"),
@@ -59,7 +61,7 @@ export async function createReport(formData: FormData) {
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ group_id: groupId, author_id: profile.id, details:{_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
+    .insert({ group_id: groupId, author_id: profile.id, details:{session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
     .select("id")
     .single();
   if (error || !data) redirect(`${back}&error=save`);

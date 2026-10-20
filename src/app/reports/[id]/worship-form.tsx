@@ -20,6 +20,11 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
+      <Section title="말씀과 예배위원">
+        <Field label="말씀본문"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
+        <TextArea label="말씀·예배 내용" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
+        <TextArea label="예배위원" value={p.details.service_staff} placeholder="예: 인도 / 대표기도 / 봉독 / 헌금 / 안내 담당자" onChange={service_staff=>setP({...p,details:{...p.details,service_staff}})}/>
+      </Section>
       <Section title="진행 결과">
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(RESULT_LABEL).map(([value, label]) => (
@@ -54,11 +59,11 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
 }
 
 // 학교: 출결 없이 예배·교육 내용과 이슈를 보고한다.
-export function OtherForm({ action, reportId, initial, showMessages }: Props<OtherPayload>) {
+export function OtherForm({ action, reportId, initial, showMessages, internship=false }: Props<OtherPayload> & {internship?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
-      <Section title="학교 예배·교육">
+      <Section title={internship ? "스데반 인턴십 · 예배 보고":"학교 예배·교육"}>
         <TextArea label="예배 송리스트" value={p.details.song_list} maxLength={2000}
           placeholder="곡 제목을 순서대로 한 줄에 하나씩 적어 주세요."
           onChange={(song_list) => setP({ ...p, details: { ...p.details, song_list } })} />
@@ -77,6 +82,7 @@ export function OtherForm({ action, reportId, initial, showMessages }: Props<Oth
           placeholder="설교 요약, 교육 내용, 활동과 반응 등을 적어 주세요."
           onChange={(content) => setP({ ...p, details: { ...p.details, content } })} />
       </Section>
+      {internship ? <Section title="나눔 보고"><TextArea label="무엇을 나누었나요?" value={p.details.sharing_topic ?? ""} onChange={sharing_topic=>setP({...p,details:{...p.details,sharing_topic}})}/><Field label="나눔·성경 범위"><input value={p.details.sharing_passage ?? ""} onChange={e=>setP({...p,details:{...p.details,sharing_passage:e.target.value}})} maxLength={200} className={inputClass}/></Field><Field label="나눔 장소"><input value={p.details.sharing_place ?? ""} onChange={e=>setP({...p,details:{...p.details,sharing_place:e.target.value}})} maxLength={200} className={inputClass}/></Field></Section>:null}
       <Section title="이슈" hint="예배·교육 중 있었던 일과 필요한 조치를 적어 주세요. 이슈가 없으면 비워 두셔도 됩니다.">
         <IssuesEditor value={p.issues} onChange={(issues) => setP({ ...p, issues })} categories={OTHER_ISSUE_CATEGORIES} hint={personHint} />
       </Section>

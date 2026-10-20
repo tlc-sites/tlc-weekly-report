@@ -86,6 +86,9 @@ export const educationPayload = z.object({
 
 export const worshipPayload = z.object({
   details: z.object({
+    sermon_passage: text(100).default(""),
+    sermon_content: text(2000).default(""),
+    service_staff: text(1000).default(""),
     result: z.union([z.enum(["normal", "minor", "incident"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -98,6 +101,7 @@ export const otherPayload = z.object({
   details: z.object({
     // 이전에 작성한 기타 모임 보고도 그대로 열고 저장할 수 있도록 기본값을 둔다.
     song_list: text(2000).default(""),
+    sharing_topic:text(1000).optional(),sharing_passage:text(200).optional(),sharing_place:text(200).optional(),
     sermon_passage: text(100).default(""),
     preacher: text(100).default(""),
     content: text(2000).default(""),
@@ -139,6 +143,8 @@ export type CampusPayload = z.infer<typeof campusPayload>;
 
 // 제출할 때만 확인하는 필수 항목 (임시저장은 비어 있어도 된다). 빠진 항목 이름을 돌려준다.
 export function missingOnSubmit(type: string, payload: unknown): string[] {
+  const session=(payload as {details?:Record<string,unknown>})?.details;
+  if(session?.session_type==="meeting" || session?.session_type==="curriculum") return [...(!session.topic ? ["모임 주제"]:[]),...(!session.content ? ["진행 내용"]:[])];
   if (type === "worship") {
     const p = payload as WorshipPayload;
     return p.details.result ? [] : ["진행 결과"];
