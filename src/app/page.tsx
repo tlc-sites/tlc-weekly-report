@@ -25,7 +25,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
   const adminStatus = canManage(profile) ? await loadAdminSubmissions(supabase, week) : null;
 
   const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses] = await Promise.all([
-    supabase.from("memberships").select("group_id, role").eq("user_id", profile.id),
+    supabase.from("memberships").select("group_id, role, position").eq("user_id", profile.id),
     listGroupsOrdered(supabase),
     canManage(profile)
       ? supabase
@@ -40,6 +40,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
   ]);
 
   const roleByGroup = new Map((memberships ?? []).map((m) => [m.group_id as string, m.role as keyof typeof ROLE_LABEL]));
+  const positionByGroup = new Map((memberships ?? []).map(m => [m.group_id as string, m.position as string | null]));
   const myGroups = groups.filter((g) => roleByGroup.has(g.id));
   // 보고할 수 있는 그룹: 하위 그룹이 없는 그룹 중 직접 소속이거나 상위 그룹 소속이면 포함 (관리자는 전체)
   const reportGroups = groups.filter(
@@ -54,9 +55,13 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
     <>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
+      <nav aria-label="주요 메뉴" className="mb-4 grid grid-cols-2 gap-2">
+        <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 작성 · 추가</Link>
+        {canManage(profile) ? <Link href={`/admin/submissions?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">관리 · 제출현황</Link> : <Link href={`/reports?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">내 보고 목록</Link>}
+      </nav>
       {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-sm text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
-      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} writablePartIds={reportGroups.map(g => g.id)} />
-      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "전체 제출현황은 위에서 확인할 수 있습니다. 보고 작성·수정은 담당 파트 배정이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
+      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} writablePartIds={(canManage(profile) ? adminStatus?.groups ?? reportGroups : reportGroups).map(g => g.id)} />
+      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "보고 작성 탭에서 파트를 선택해 내 보고를 추가할 수 있습니다. 출결 명단이나 팀 이슈 작성은 담당 파트 권한이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
       {reportGroups.length ? (
         <Card className="mb-4">
           <MenuHeading icon="report" description="새 보고를 작성할 파트를 선택해 주세요.">보고 작성</MenuHeading>
@@ -107,7 +112,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
             {myGroups.map((g) => (
               <li key={g.id} className="flex items-center justify-between py-3">
                 <span>{g.label}</span>
-                <span className="text-xs text-muted">{ROLE_LABEL[roleByGroup.get(g.id)!]}</span>
+                <span className="text-xs text-muted">{positionByGroup.get(g.id) ?? ROLE_LABEL[roleByGroup.get(g.id)!]}</span>
               </li>
             ))}
           </ul>

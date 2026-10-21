@@ -33,6 +33,7 @@ import type { Issue, Messages } from "./form-parts";
 import { OtherForm, WorshipForm } from "./worship-form";
 
 const MESSAGES: Record<string, string> = {
+  "attendance-assignment": "교육부서 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
   invalid: "입력값이 올바르지 않습니다. 다시 확인해 주세요.",
   missing: "제출에 필요한 항목이 비어 있습니다.",
   consent: "보호자 연락처를 저장하려면 수집 동의를 체크해 주세요.",
@@ -93,13 +94,14 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   }
 
   const isAuthor = report.author_id === profile.id;
-  const [canEditRes, canReviewRes, messagesRes, prayerRes, privateRes] = await Promise.all([
+  const [canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes] = await Promise.all([
     supabase.rpc("can_edit_report", { rid: id }),
     supabase.rpc("can_review_report", { rid: id }),
     // 작성자에게는 자기가 쓴 글 전부, 받는 분에게는 자기에게 온 글만 돌아온다 (RLS)
     supabase.from("report_messages").select("recipient, body").eq("report_id", id),
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
     supabase.rpc("can_read_private",{rid:id,kind:"prayer"}),
+    supabase.rpc("can_write_group",{gid:group.id}),
   ]);
   const canEdit = Boolean(canEditRes.data);
   const canReview = Boolean(canReviewRes.data);
@@ -273,9 +275,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </PageTitle>
 
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
-      {group.type === "worship" ? <TeamIssues canWrite={canEdit} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
+      {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
+        {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}
         {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt/> : null}
         {message ? <ErrorText>{message}</ErrorText> : null}
         {existing ? <p className="rounded-lg bg-border/60 px-3 py-2 text-sm">이미 작성 중인 같은 보고가 있어서 이어서 엽니다.</p> : null}

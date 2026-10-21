@@ -3,13 +3,16 @@ import Link from "next/link";
 import { AdminNav } from "@/components/admin-nav";
 import { Card, ErrorText, Loading, PageTitle, buttonClass, secondaryButtonClass } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
-import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
+import { ROLE_LABEL, listGroupsOrdered, type OrderedGroup } from "@/lib/groups";
+import { MembershipPositionSelect } from "@/components/membership-position-select";
 import { approveUser, setUserStatus } from "./actions";
 
 const ERRORS: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
   "no-group": "소속을 하나 이상 배정하거나 관리자로 지정해 주세요.",
   save: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  position: "파트에 맞는 직책을 선택해 주세요.",
+  "minister-role": "먼저 교역자 역할을 지정한 뒤 교역자 직책을 배정해 주세요.",
 };
 
 type UserRow = {
@@ -18,9 +21,10 @@ type UserRow = {
   email: string | null;
   status: "pending" | "active" | "disabled";
   is_admin: boolean;
+  is_minister: boolean;
   requested_group_ids: string[];
   created_at: string;
-  memberships: { group_id: string; role: keyof typeof ROLE_LABEL }[];
+  memberships: { group_id: string; role: keyof typeof ROLE_LABEL; position: string | null }[];
 };
 
 export default function AdminUsersPage({ searchParams }: PageProps<"/admin/users">) {
@@ -39,7 +43,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
     listGroupsOrdered(supabase),
     supabase
       .from("profiles")
-      .select("id, real_name, email, status, is_admin, requested_group_ids, created_at, memberships(group_id, role)")
+      .select("id, real_name, email, status, is_admin, is_minister, requested_group_ids, created_at, memberships(group_id, role, position)")
       .order("created_at")
       .returns<UserRow[]>(),
     supabase.rpc("push_status"),
@@ -86,7 +90,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
                   {groups
                     .filter((g) => requested.has(g.id))
                     .map((g) => (
-                      <RoleSelect key={g.id} groupId={g.id} label={g.label} defaultRole="writer" />
+                      <RoleSelect key={g.id} group={g} minister={u.is_minister} />
                     ))}
                   {requested.size === 0 ? <p className="text-sm text-muted">신청한 소속이 없습니다.</p> : null}
                 </div>
@@ -97,7 +101,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
                     {groups
                       .filter((g) => !requested.has(g.id))
                       .map((g) => (
-                        <RoleSelect key={g.id} groupId={g.id} label={g.label} defaultRole="" />
+                        <RoleSelect key={g.id} group={g} minister={u.is_minister} />
                       ))}
                   </div>
                 </details>
@@ -128,7 +132,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
                 </p>
                 <p className="text-xs text-muted">
                   {u.memberships.length
-                    ? u.memberships.map((m) => `${groupLabel.get(m.group_id) ?? "?"} ${ROLE_LABEL[m.role]}`).join(", ")
+                    ? u.memberships.map((m) => `${groupLabel.get(m.group_id) ?? "?"} ${m.position ?? ROLE_LABEL[m.role]}`).join(", ")
                     : "소속 없음"}
                 </p>
               </Link>
@@ -185,19 +189,11 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
   );
 }
 
-function RoleSelect({ groupId, label, defaultRole }: { groupId: string; label: string; defaultRole: string }) {
+function RoleSelect({ group, minister }: { group: OrderedGroup; minister: boolean }) {
   return (
     <label className="flex items-center justify-between gap-3 text-sm">
-      <span>{label}</span>
-      <select
-        name={`role:${groupId}`}
-        defaultValue={defaultRole}
-        className="h-9 rounded-lg border border-border bg-surface px-2"
-      >
-        <option value="">배정 안 함</option>
-        <option value="writer">{ROLE_LABEL.writer}</option>
-        <option value="reviewer">{ROLE_LABEL.reviewer}</option>
-      </select>
+      <span>{group.label}</span>
+      <MembershipPositionSelect group={group} minister={minister}/>
     </label>
   );
 }

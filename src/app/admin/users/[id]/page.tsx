@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, buttonClass, pickMessage, secondaryButtonClass } from "@/components/ui";
 import { requireAdmin, isSenior } from "@/lib/auth";
 import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
+import { MembershipPositionSelect } from "@/components/membership-position-select";
 import { saveMemberships, setRecipientRole, setMinister, setUserAdmin, setUserStatus } from "../actions";
 
 const MESSAGES: Record<string, string> = {
@@ -11,6 +12,8 @@ const MESSAGES: Record<string, string> = {
   "own-admin": "자기 자신의 관리자 권한은 해제할 수 없습니다. 다른 관리자에게 요청해 주세요.",
   "own-memberships": "현재 계정은 본인의 소속·역할을 변경할 수 없습니다. 담당 파트 배정은 담임목사님·사모님 권한으로 처리해야 합니다. 잠시 후 재시도해도 저장되지 않습니다.",
   "assignment-permission": "소속을 저장할 권한이 없습니다. 로그인 계정의 관리 권한을 확인해 주세요.",
+  "minister-role": "교역자 직책을 배정하려면 먼저 최상단 권한으로 교역자를 지정해야 합니다.",
+  position: "해당 파트에서 사용할 수 있는 직책을 선택해 주세요.",
 };
 
 type UserDetail = {
@@ -21,7 +24,7 @@ type UserDetail = {
   is_admin: boolean;
   is_minister: boolean;
   recipient_role: "pastor" | "pastor_wife" | null;
-  memberships: { group_id: string; role: keyof typeof ROLE_LABEL }[];
+  memberships: { group_id: string; role: keyof typeof ROLE_LABEL; position: string | null }[];
 };
 
 export default function AdminUserPage({ params, searchParams }: PageProps<"/admin/users/[id]">) {
@@ -40,14 +43,14 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
   const [{ data: user }, groups] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, real_name, email, status, is_admin, is_minister, recipient_role, memberships(group_id, role)")
+      .select("id, real_name, email, status, is_admin, is_minister, recipient_role, memberships(group_id, role, position)")
       .eq("id", id)
       .maybeSingle<UserDetail>(),
     listGroupsOrdered(supabase),
   ]);
   if (!user) notFound();
 
-  const roleByGroup = new Map(user.memberships.map((m) => [m.group_id, m.role]));
+  const roleByGroup = new Map(user.memberships.map((m) => [m.group_id, m.position ? `position:${m.position}` : m.role]));
   const message = pickMessage(MESSAGES, error);
   const isMe = user.id === me.id;
   const ownAssignmentsLocked = isMe && !isSenior(me);
@@ -88,21 +91,12 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <form action={saveMemberships} className="flex flex-col gap-2">
           <input type="hidden" name="userId" value={user.id} />
           <p className="mb-1 text-xs text-muted">
-            상위 그룹 배정은 하위 그룹에 상속됩니다. 파트총괄은 열람만 가능하며, 교역자에게 배정한 담당 파트는 비공개 내용 열람 범위가 됩니다. 본인 소속 변경은 담임목사님·사모님께 요청해 주세요.
+            상위 그룹 배정은 하위 그룹에 상속됩니다. 총괄·팀장은 파트 열람, 담당 교역자는 그 파트의 확인·비공개 열람 권한을 갖습니다. 본인 소속 변경은 담임목사님·사모님께 요청해 주세요.
           </p>
           {groups.map((g) => (
             <label key={g.id} className={`flex items-center justify-between gap-3 text-sm ${g.depth ? "pl-4" : "font-medium"}`}>
               <span>{g.depth ? g.name : g.label}</span>
-              <select
-                name={`role:${g.id}`}
-                defaultValue={roleByGroup.get(g.id) ?? ""}
-                disabled={ownAssignmentsLocked}
-                className="h-9 rounded-lg border border-border bg-surface px-2"
-              >
-                <option value="">-</option>
-                <option value="writer">{ROLE_LABEL.writer}</option>
-                <option value="reviewer">{ROLE_LABEL.reviewer}</option>
-              </select>
+              <MembershipPositionSelect group={g} value={roleByGroup.get(g.id) ?? ""} disabled={ownAssignmentsLocked} minister={user.is_minister || user.recipient_role !== null}/>
             </label>
           ))}
           {!ownAssignmentsLocked ? <button type="submit" className={`${buttonClass} mt-2`}>

@@ -46,7 +46,7 @@ export async function saveReport(formData: FormData) {
     p_status: intent === "submit" ? "submitted" : "draft",
   });
   if (error) {
-    redirect(`${back}?error=${/consent/.test(error.message) ? "consent" : /forbidden|not found/.test(error.message) ? "forbidden" : "save"}`);
+    redirect(`${back}?error=${/education attendance assignment/.test(error.message) ? "attendance-assignment" : /consent/.test(error.message) ? "consent" : /forbidden|not found/.test(error.message) ? "forbidden" : "save"}`);
   }
   redirect(`${back}?saved=${intent}`);
 }

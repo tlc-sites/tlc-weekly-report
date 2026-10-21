@@ -5,12 +5,13 @@ import { getGroup, type ReportClient } from "./groups";
 export async function getGroupAccess(supabase: ReportClient, groupId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(groupId)) notFound();
 
-  const [group, view, write, review, children] = await Promise.all([
+  const [group, view, write, review, children, create] = await Promise.all([
     getGroup(supabase, groupId),
     supabase.rpc("can_view_group", { gid: groupId }),
     supabase.rpc("can_write_group", { gid: groupId }),
     supabase.rpc("can_review_group", { gid: groupId }),
     supabase.from("groups").select("id", { count: "exact", head: true }).eq("parent_id", groupId),
+    supabase.rpc("can_create_report", { gid: groupId }),
   ]);
   if (!group || !view.data) notFound();
 
@@ -18,6 +19,7 @@ export async function getGroupAccess(supabase: ReportClient, groupId: string) {
     group,
     canView: Boolean(view.data),
     canWrite: Boolean(write.data),
+    canCreateReport: Boolean(create.data),
     canReview: Boolean(review.data),
     isLeaf: (children.count ?? 0) === 0,
   };

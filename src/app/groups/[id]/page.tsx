@@ -53,7 +53,7 @@ export default function GroupPage({ params, searchParams }: PageProps<"/groups/[
 async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">) {
   const { supabase, profile } = await requireActive();
   const [{ id }, { week: weekParam, error }] = await Promise.all([params, searchParams]);
-  const { group, canWrite, isLeaf } = await getGroupAccess(supabase, id);
+  const { group, canWrite, canCreateReport, isLeaf } = await getGroupAccess(supabase, id);
   const today = todayKST();
   const week = reportWeek(weekParam, today);
   const maxDate=reportDateMax(week,today);
@@ -81,7 +81,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     );
   }
 
-  const [reportsRes, weekStatus, services, meetingTypes] = await Promise.all([
+  const [reportsRes, weekStatus, services, meetingTypes, myMembership] = await Promise.all([
     supabase
       .from("reports")
       .select(
@@ -109,6 +109,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
       .eq("is_active", true)
       .order("sort_order")
       .then((r) => r.data ?? []),
+    supabase.from("memberships").select("position").eq("user_id",profile.id).eq("group_id",id).maybeSingle(),
   ]);
   if (reportsRes.error) throw reportsRes.error;
   const reports = reportsRes.data ?? [];
@@ -176,7 +177,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
         )}
       </Card>
 
-      {canWrite ? (
+      {canCreateReport ? (
         <>
           <h2 id="new-report" className="mb-2 text-sm font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 작성" : "새 보고 작성"}</h2>
           <Card className="mb-4">
@@ -184,7 +185,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               <input type="hidden" name="groupId" value={id} />
               <input type="hidden" name="reportWeek" value={week} />
               <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
-              <Field label="담당 파트"><input name="dutyPart" maxLength={100} placeholder="예: 메인 음향, 모니터 음향, 방송 음향" className={inputClass}/></Field>
+              <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={myMembership.data?.position ?? ""} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
               <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
               <ReportKindFields minDate={week} maxDate={maxDate}>
               {group.type === "campus" ? (
@@ -202,7 +203,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             </form>
           </Card>
 
-          {group.type === "education" || group.type === "other" ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
+          {canWrite && (group.type === "education" || group.type === "other") ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
         </>
       ) : null}
 

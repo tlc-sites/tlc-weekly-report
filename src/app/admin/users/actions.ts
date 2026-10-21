@@ -4,8 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin, isSenior } from "@/lib/auth";
-
-const roleSchema = z.enum(["writer", "reviewer"]);
+import { parsePositionValue } from "@/lib/positions";
 
 export async function approveUser(formData: FormData) {
   const { supabase } = await requireAdmin();
@@ -13,13 +12,13 @@ export async function approveUser(formData: FormData) {
   const userId = z.uuid().safeParse(formData.get("userId"));
   if (!userId.success) redirect("/admin/users?error=invalid");
 
-  const assignments: { group_id: string; role: "writer" | "reviewer" }[] = [];
+  const assignments: { group_id: string; role: "writer" | "reviewer"; position: string | null }[] = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("role:") || !value) continue;
     const groupId = z.uuid().safeParse(key.slice("role:".length));
-    const role = roleSchema.safeParse(value);
-    if (!groupId.success || !role.success) redirect("/admin/users?error=invalid");
-    assignments.push({ group_id: groupId.data, role: role.data });
+    const role = typeof value === "string" ? parsePositionValue(value) : null;
+    if (!groupId.success || !role) redirect("/admin/users?error=invalid");
+    assignments.push({ group_id: groupId.data, ...role });
   }
   const makeAdmin = formData.get("makeAdmin") === "on";
   if (!assignments.length && !makeAdmin) redirect("/admin/users?error=no-group");
@@ -29,7 +28,7 @@ export async function approveUser(formData: FormData) {
     p_assignments: assignments,
     p_make_admin: makeAdmin,
   });
-  if (error) redirect("/admin/users?error=save");
+  if (error) redirect(`/admin/users?error=${/minister role required/.test(error.message) ? "minister-role" : /position/.test(error.message) ? "position" : "save"}`);
   refresh();
 }
 
@@ -56,17 +55,17 @@ export async function saveMemberships(formData: FormData) {
   const path = `/admin/users/${userId.data}`;
   if (userId.data === profile.id && !isSenior(profile)) redirect(`${path}?error=own-memberships`);
 
-  const assignments: { group_id: string; role: "writer" | "reviewer" }[] = [];
+  const assignments: { group_id: string; role: "writer" | "reviewer"; position: string | null }[] = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("role:") || !value) continue;
     const groupId = z.uuid().safeParse(key.slice("role:".length));
-    const role = roleSchema.safeParse(value);
-    if (!groupId.success || !role.success) redirect(`${path}?error=invalid`);
-    assignments.push({ group_id: groupId.data, role: role.data });
+    const role = typeof value === "string" ? parsePositionValue(value) : null;
+    if (!groupId.success || !role) redirect(`${path}?error=invalid`);
+    assignments.push({ group_id: groupId.data, ...role });
   }
 
   const { error } = await supabase.rpc("set_memberships", { p_user: userId.data, p_assignments: assignments });
-  if (error) redirect(`${path}?error=${/own content assignments/.test(error.message) ? "own-memberships" : error.code === "42501" ? "assignment-permission" : "save"}`);
+  if (error) redirect(`${path}?error=${/own content assignments/.test(error.message) ? "own-memberships" : /minister role required/.test(error.message) ? "minister-role" : /position/.test(error.message) ? "position" : error.code === "42501" ? "assignment-permission" : "save"}`);
   redirect(`${path}?saved=1`);
 }
 

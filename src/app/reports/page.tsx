@@ -15,7 +15,8 @@ async function Content({searchParams}:PageProps<"/reports">){
   const {data,error}=await supabase.from("reports").select("id,author_id,meeting_date,meeting_label,status,submitted_at,details,author:profiles!reports_author_id_fkey(real_name),group:groups(name),service:service_types(name)").gte("meeting_date",week).lte("meeting_date",addDays(week,6)).order("meeting_date",{ascending:false}).returns<Row[]>();
   if(error)throw error;
   const authors=new Map((data??[]).map(r=>[r.author_id,getReportIdentity(r.details,r.author?.real_name).author_name]));
-  const selected=typeof params.author==="string" && authors.has(params.author)?params.author:"";
+  const selected=typeof params.author==="string" && /^[0-9a-f-]{36}$/i.test(params.author)?params.author:"";
+  if(selected && !authors.has(selected)) authors.set(selected,"선택한 작성자 (이 주차 보고 없음)");
   const sort=params.sort==="author" || params.sort==="part" ? params.sort:"date";
   const status = ["draft","submitted","reviewed","sent"].includes(String(params.status)) ? String(params.status) : "all";
   const rows=(data??[]).filter(r=>(!selected || r.author_id===selected) && (status==="all" || (status==="sent" ? r.status!=="draft" : r.status===status))).sort((a,b)=>sort==="author" ? getReportIdentity(a.details,a.author?.real_name).author_name.localeCompare(getReportIdentity(b.details,b.author?.real_name).author_name,"ko") : sort==="part" ? (a.group?.name??"").localeCompare(b.group?.name??"","ko"):b.meeting_date.localeCompare(a.meeting_date));
