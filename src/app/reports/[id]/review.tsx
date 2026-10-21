@@ -1,3 +1,4 @@
+import { FeedbackReplies } from "@/components/feedback-replies";
 import Link from "next/link";
 import { Card, buttonClass, secondaryButtonClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -74,7 +75,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
                 </form>
               ) : null}
             </div>
-            <p className="whitespace-pre-wrap text-sm">{c.body}</p>
+            <p className="whitespace-pre-wrap text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id}/>
           </div>
         ))}
         {canComment ? <form action={addComment} className="flex flex-col gap-2">
@@ -83,7 +84,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
           <button type="submit" className={`${smallButtonClass} self-end`}>
             피드백 등록
           </button>
-        </form> : <p className="text-xs text-muted">담임목사님·사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
+        </form> : <p className="text-xs text-muted">담임 목사님·담임 사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
       </Card>
     </section>
   );

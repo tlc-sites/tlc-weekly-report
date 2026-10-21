@@ -304,7 +304,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       <PrivateSharing reportId={id}/>
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
-          <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임목사님께 드리는 글" : "사모님께 드리는 글"}</p>
+          <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임 목사님께 드리는 글" : "담임 사모님께 드리는 글"}</p>
           <p className="whitespace-pre-wrap text-sm">{m.body}</p>
         </Card>
       ))}

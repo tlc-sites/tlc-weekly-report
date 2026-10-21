@@ -10,7 +10,7 @@ const MESSAGES: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
   save: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   "own-admin": "자기 자신의 관리자 권한은 해제할 수 없습니다. 다른 관리자에게 요청해 주세요.",
-  "own-memberships": "현재 계정은 본인의 소속·역할을 변경할 수 없습니다. 담당 파트 배정은 담임목사님·사모님 권한으로 처리해야 합니다. 잠시 후 재시도해도 저장되지 않습니다.",
+  "own-memberships": "현재 계정은 본인의 소속·역할을 변경할 수 없습니다. 담당 파트 배정은 담임 목사님·담임 사모님 권한으로 처리해야 합니다. 잠시 후 재시도해도 저장되지 않습니다.",
   "assignment-permission": "소속을 저장할 권한이 없습니다. 로그인 계정의 관리 권한을 확인해 주세요.",
   "minister-role": "교역자 직책을 배정하려면 먼저 최상단 권한으로 교역자를 지정해야 합니다.",
   position: "해당 파트에서 사용할 수 있는 직책을 선택해 주세요.",
@@ -63,7 +63,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
           {user.real_name ?? "(이름 미입력)"}
           {user.is_admin ? <Badge tone="accent">관리자</Badge> : null}
           {user.is_minister ? <Badge tone="accent">교역자</Badge> : null}
-          {user.recipient_role ? <Badge tone="accent">{user.recipient_role === "pastor" ? "담임목사님" : "사모님"}</Badge> : null}
+          {user.recipient_role ? <Badge tone="accent">{user.recipient_role === "pastor" ? "담임 목사님" : "담임 사모님"}</Badge> : null}
           {user.status !== "active" ? <Badge tone="danger">{user.status === "pending" ? "승인 대기" : "사용 중지"}</Badge> : null}
         </span>
       </PageTitle>
@@ -78,20 +78,20 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <button className={secondaryButtonClass}>{user.is_minister ? "교역자 해제" : "교역자 지정"}</button>
       </form></Card> : null}
       {isSenior(me) && user.status === "active" && !isMe ? <Card className="mb-4"><form action={setRecipientRole} className="flex flex-col gap-2">
-        <input type="hidden" name="userId" value={user.id}/><label className="text-sm font-semibold">최상단 역할<select name="role" defaultValue={user.recipient_role ?? ""} className="mt-1 w-full rounded-xl border border-border bg-surface p-2"><option value="">해당 없음</option><option value="pastor">담임목사님</option><option value="pastor_wife">사모님</option></select></label>
+        <input type="hidden" name="userId" value={user.id}/><label className="text-sm font-semibold">최상단 역할<select name="role" defaultValue={user.recipient_role ?? ""} className="mt-1 w-full rounded-xl border border-border bg-surface p-2"><option value="">해당 없음</option><option value="pastor">담임 목사님</option><option value="pastor_wife">담임 사모님</option></select></label>
         <p className="text-xs text-muted">모든 비공개 내용과 관리 기능에 접근합니다. 같은 역할의 기존 지정은 해제됩니다.</p><button className={secondaryButtonClass}>최상단 역할 저장</button>
       </form></Card> : null}
       <h2 className="mb-2 text-sm font-semibold">소속과 역할</h2>
       {ownAssignmentsLocked ? <div role="note" className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm">
         <p className="font-semibold">본인의 소속·역할은 여기서 변경할 수 없습니다.</p>
-        <p className="mt-1 text-muted">담임목사님·사모님 권한으로 담당 파트를 배정해야 합니다. 아래는 현재 배정 상태입니다.</p>
+        <p className="mt-1 text-muted">담임 목사님·담임 사모님 권한으로 담당 파트를 배정해야 합니다. 아래는 현재 배정 상태입니다.</p>
         {!user.memberships.length ? <p className="mt-2 text-muted">담당 파트는 아직 없습니다. 관리자 제출현황과 승인된 셋업용 임시 열람은 홈에서 확인할 수 있습니다.</p> : null}
       </div> : null}
       <Card className="mb-6">
         <form action={saveMemberships} className="flex flex-col gap-2">
           <input type="hidden" name="userId" value={user.id} />
           <p className="mb-1 text-xs text-muted">
-            상위 그룹 배정은 하위 그룹에 상속됩니다. 총괄·팀장은 파트 열람, 담당 교역자는 그 파트의 확인·비공개 열람 권한을 갖습니다. 본인 소속 변경은 담임목사님·사모님께 요청해 주세요.
+            상위 그룹 배정은 하위 그룹에 상속됩니다. 총괄·팀장은 파트 열람, 담당 교역자는 그 파트의 확인·비공개 열람 권한을 갖습니다. 본인 소속 변경은 담임 목사님·담임 사모님께 요청해 주세요.
           </p>
           {groups.map((g) => (
             <label key={g.id} className={`flex items-center justify-between gap-3 text-sm ${g.depth ? "pl-4" : "font-medium"}`}>

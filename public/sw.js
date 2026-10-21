@@ -24,11 +24,13 @@ self.addEventListener("notificationclick", (event) => {
   const target = new URL(event.notification.data?.url || "/", self.location.origin);
   if (target.origin !== self.location.origin) return;
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (windows) => {
       for (const w of windows) {
         if (w.url.startsWith(self.location.origin) && "focus" in w) {
-          w.navigate(target.href);
-          return w.focus();
+          try {
+            const navigated = await w.navigate(target.href);
+            if (navigated) return navigated.focus();
+          } catch { /* 닫힌 창은 건너뛰고 새 창으로 연다. */ }
         }
       }
       return self.clients.openWindow(target.href);

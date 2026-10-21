@@ -219,18 +219,18 @@ export function IssuesEditor({
 
 export function MessagesEditor({ value, onChange }: { value: Messages; onChange: (v: Messages) => void }) {
   return (
-    <Section title="담임목사님·사모님께 드리는 글 (선택)" hint="작성자와 담임목사님·사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
+    <Section title="담임 목사님·담임 사모님께 드리는 글 (선택)" hint="작성자와 담임 목사님·담임 사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
       <TextArea
-        label="담임목사님께"
+        label="담임 목사님께"
         value={value.pastor}
         onChange={(v) => onChange({ ...value, pastor: v })}
-        placeholder="목사님께 직접 전하고 싶은 내용"
+        placeholder="담임 목사님께 직접 전하고 싶은 내용"
       />
       <TextArea
-        label="사모님께"
+        label="담임 사모님께"
         value={value.pastor_wife}
         onChange={(v) => onChange({ ...value, pastor_wife: v })}
-        placeholder="사모님께 직접 전하고 싶은 내용"
+        placeholder="담임 사모님께 직접 전하고 싶은 내용"
       />
     </Section>
   );

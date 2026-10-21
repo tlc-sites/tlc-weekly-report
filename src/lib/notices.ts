@@ -20,10 +20,10 @@ export async function notifyUsers(userIds: string[], noticeId: string, title: st
     if (!targets.length) return true;
     const { data: subs, error: subsError } = await admin.from("push_subscriptions").select("id,endpoint,p256dh,auth").in("user_id", targets);
     if (subsError) return false;
-    if (!subs?.length) return true;
-    const result = await sendToSubscriptions(admin, subs, {
+
+    const result = await sendToSubscriptions(admin, subs ?? [], {
       title, body: "앱에서 공지와 댓글을 확인해 주세요.", url: `/notices/${noticeId}`, tag: `notice:${noticeId}`,
-    });
+    }, targets);
     return result.failed === 0;
   } catch {
     // 공지는 보존하고 푸시 실패만 별도로 안내한다. 재제출로 공지가 중복되지 않게 한다.

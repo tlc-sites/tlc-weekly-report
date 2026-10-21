@@ -299,3 +299,32 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 운영은 9e6057b / DB16으로 유지한다. DB17→18 적용, 사진팀 운영 추가, 본인 역할·6개 배정, 작성 탭·직책 UI 배포는 아직 하지 않았다. 실제 새 화면·운영 계정 배정 후의 동작은 미검증이며 테스트 보고·알림은 생성하지 않았다. AGENTS.md의 별도 DB 변경·배포 승인에 따라 구체 배정 범위와 함께 운영 반영 승인을 받는다. 루트/셀케어의 다른 작업은 보존했다.
 
 - 38절 최종 전체 DB 검사 완료: 83개 통과, 실패 0. 운영 반영 없이 로컬 검증만 수행했다.
+
+### 2026-10-21 직책·작성 탭 운영 반영 완료
+- 사용자 배포 승인에 따라 DB 17→18 적용 후 본인 관리자 계정의 교역자 플래그와 요청한 6개 직책을 배정했다. 관리자 유지, 타 사용자 소속 보존. 상세 직책은 docs/GROUP_POSITIONS.md 참조.
+- 기존 report 스키마 행 스냅샷을 트랜잭션 내 비교했다. 승인된 본인 역할·자동 수정 시각 외 기존 값 보존을 확인했다. 적용 시 기존 보고 10건. public/auth 변경 없음.
+- 사전 점검의 profiles 상태 컬럼 오기 및 자동 updated_at 비교로 최초 시도들은 롤백됐다. 수정 후 원자적 적용 성공.
+- 운영 소스 d26327f, remote master 정상 푸시. Vercel 5j5QyUdjoajmnt1Pfe7hcNyMVsLY Production Ready, 36초, tlc-weekly-report.vercel.app 반영 확인.
+- 이번 실행: npm run test:db 83/83 통과, staged diff --check 통과. lint/tsc/webpack build는 배포 준비 단계에서 통과했고 이번 Vercel 빌드 성공.
+- 운영 UI에서 /write 분류, 사진팀, 본인 6개 직책 선택값, 예배팀 새 보고 폼의 예배인도자 자동 입력 확인. 실제 새 보고 생성·제출은 수행하지 않았다.
+- 증빙: outputs/deploy_20261021/positions-writing-ready.png (루트 출력 폴더).
+- 임시 관리자 일반 내용 열람 종료 2026-11-04 00:00 KST 유지. 담당 직책/동급/본인 작성 등 정상 권한은 별개다. 담임목사님·사모님 계정 배정은 이메일 수령 후 별도 진행.
+- 변경 파일: src/app/write, admin/users, groups/[id], reports, 홈, src/lib/access.ts·positions.ts, membership-position-select, migrations 17·18, 권한 테스트, package.json, 관련 운영 문서. 코드 운영 반영 완료. 이 배포 영수증 문서는 로컬 후속 기록이다.
+
+## 39. 우상단 알림함·피드백 답글·최상단 호칭 (2026-10-21, 로컬)
+- 요청: 푸시 클릭 시 원문 이동, 우상단 종 모양으로 받은 내용 확인, 담임 목사님·담임 사모님 코멘트 답글, 두 분 호칭 통일.
+- 변경 파일: layout 및 account-notifications/notification-bell, notifications/actions, feedback-replies, 보고 review/incident-feedback, public/sw.js, lib/push·notices·reminders, 호칭이 있는 UI, 신규 DB19 20261102000000_inbox_replies.sql, tests/inbox-replies·push-navigation, package.json.
+- DB19: report.inbox_notifications와 보고/이슈 피드백별 reply 테이블. 본인 알림만 SELECT, 읽음은 본인 전용 RPC. 원문 보고/이슈/공지 권한 재검사, 관리자 URL은 관리자만. 답글은 활성 원문 열람자만 본인 이름으로 작성하며 기존 최상위 피드백은 교역자 이상 유지. 피드백/답글 INSERT 시 보고 작성자/원 코멘트 작성자에게 원문 링크가 있는 알림 생성. 본인에게는 중복 알림 제외. 기존 행/역할/public/auth 변경 없음.
+- 알림함은 종을 눌러 최근50건 제목/내용/읽음과 원문 링크 표시. 기존 푸시 이벤트는 발송 시점부터 저장하며 과거 알림 복원은 하지 않는다. 공지 내용 본문은 현재 기존 안전한 안내문으로 표시되고 상세는 원문에서 읽는다. 피드백·답글은 알림함 등록이며 해당 이벤트의 새 OS 푸시 발송은 추가하지 않았다.
+- SW는 기존 창 navigate 완료 후 focus, 닫힌 창은 다른 창/새 창으로 fallback. 외부 origin 차단 유지. 호칭은 UI 표시만 변경하고 DB role key 유지.
+- 검증: 최종 npm run test:db 85/85 통과(수신인 격리/위조·비열람자 답글 차단/작성자 답글/읽음 격리/비활성·원문 제한/보고·이슈 알림 링크/푸시 이동 순서·닫힌창·외부주소), lint 성공, webpack build 30경로 성공, tsc --noEmit 성공, diff --check 통과. 이슈 테스트의 권한 없는 fixture 삽입을 authenticated 작성자로 바꾼 뒤 재통과. 기존 Node 모듈 형식 경고만 남음.
+- 실제 브라우저/휴대폰 시각 확인과 OS 푸시 탭 동작은 미검증. 운영은 d26327f / DB18 유지. DB19 적용·배포·실제 보고/댓글·알림 발송은 하지 않았다. AGENTS.md의 신규 DB/배포 승인 후 운영 반영할 것. 루트/셀케어 및 직전 배포 문서 변경 보존.
+
+## 40. 교역자 공동 주중 기도회·최상단 비공개 메시지 (2026-10-21, 로컬)
+- 사용자가 DB19·알림함 배포를 승인한 뒤 추가 기능을 요청했다. 중단까지 포함하지 않고 교역자 이상만 기도회 보고 작성·공유, 메시지는 두 분과 지정 교역자만 열람·답장으로 명시 확인했다.
+- 신규 DB20 20261103000000_prayer_minister_messages.sql: prayer_meeting_reports에 이름 필수/미래날짜 차단/말씀·내용·기도제목·특이사항 기록. 활성 is_clergy만 SELECT/INSERT하며 admin 단독·총괄·팀원·대기는 불가. 기존 보고/기도제목 권한 확대 없음.
+- minister_threads/messages는 두 분만 대화 시작, 활성 교역자에게만 발송, 지정 교역자는 답장 가능. 두 분과 지정 수신자만 원문/알림을 읽으며 다른 교역자·기능 관리자·중단·대기 차단. 역할 회수 시 수신인 열람도 회수한다. 대화+첫 본문은 RPC 한 트랜잭션으로 저장한다. 메시지 알림은 본문/제목 미리보기를 노출하지 않고 원문 링크만 안내한다. 실제 메시지 전송/푸시 없음.
+- 홈에 교역자 전용 주중 기도회 보고·비공개 메시지 메뉴 추가. 신규 app/prayer-meetings 및 app/messages 페이지/서버액션. 기도회 최신50건 공유, 메시지 최신50대화와 시간순 본문·답장. 두 분 계정 미배정 상태는 유지하며 임의 역할 시드 없음.
+- 검증: 최종 전체 DB86개 통과, lint 성공, webpack build33경로 성공, tsc --noEmit 성공, diff --check 성공. 신규 tests/prayer-messages.test.mjs에서 모든 권한/미래날짜/빈 본문 원자적 롤백/역할회수/수신인 알림 격리 검증. 최초 thread SELECT helper가 INSERT RETURNING 새행을 보지 못하는 문제를 직접 행 정책으로 수정 후 통과.
+- 운영 DB18/d26327f 유지. DB19 기존 승인 유효. 추가 DB20 운영 적용 승인은 아직 받지 않아 DB19와 함께 묶은 전체 앱을 운영에 배포하지 않았다. 추가 DB20 승인 후 DB19→20 원본 보존 비교 적용, 전체 코드 배포·운영 화면 확인 필요. 실제 브라우저·휴대폰 검증은 아직 없음.
+- 루트/셀케어의 기존 수정과 직전 배포 기록 보존. 변경 파일은 위 신규 페이지/액션/DB20/테스트/package.json 및 홈, 직전39절 수정들이다.

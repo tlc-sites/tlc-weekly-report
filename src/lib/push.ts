@@ -17,7 +17,10 @@ function configure() {
 // 구독 목록에 알림을 보낸다. 만료된 구독(404/410)은 지우고, 성공하면 마지막 성공 시각을 남긴다.
 // client는 관리자 클라이언트이거나, 본인 구독만 다루는 경우 로그인한 사용자의 클라이언트다.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function sendToSubscriptions(client: SupabaseClient<any, any, any>, subs: Subscription[], payload: PushPayload) {
+export async function sendToSubscriptions(client: SupabaseClient<any, any, any>, subs: Subscription[], payload: PushPayload, recipientIds?: string[]) {
+  const targets: string[] = recipientIds ?? (subs.length ? (await client.from("push_subscriptions").select("user_id").in("id",subs.map(s=>s.id))).data?.map(s=>s.user_id) ?? [] : []);
+  if(targets.length){const {error}=await client.from("inbox_notifications").insert([...new Set(targets)].map(user_id=>({user_id,title:payload.title,body:payload.body,url:payload.url,notice_id:payload.url.match(/^\/notices\/([0-9a-f-]{36})/)?.[1] ?? null})));if(error)console.error("[push] 알림함 저장 실패");}
+  if(!subs.length)return {sent:0,removed:0,failed:0};
   configure();
   let sent = 0;
   let removed = 0;

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { AccountNotifications } from "@/components/account-notifications";
 import Link from "next/link";
 import { MenuIcon } from "@/components/menu-heading";
 import "./globals.css";
@@ -25,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex min-h-16 w-full max-w-2xl items-center px-4 sm:px-5">
             <Link href="/" className="app-brand inline-flex items-center gap-2.5 text-base text-accent">
               <MenuIcon name="report" small />TLC 교회 보고서
-            </Link>
+            </Link><Suspense fallback={null}><AccountNotifications /></Suspense>
           </div>
         </header>
         <main className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col px-4 py-6 sm:px-5 sm:py-7">{children}</main>

@@ -42,7 +42,7 @@ export function adminTargets(users: RtUser[]) {
   return users.filter((u) => u.is_admin && canReceive(u)).map((u) => u.id);
 }
 
-/** 금요일 보고 안내는 교역자와 담임목사님·사모님에게 보낸다. */
+/** 금요일 보고 안내는 교역자와 담임 목사님·담임 사모님에게 보낸다. */
 export function digestTargets(users: RtUser[]) {
   return users.filter((u) => canReceive(u) && (u.is_minister || u.recipient_role==="pastor" || u.recipient_role==="pastor_wife")).map((u) => u.id);
 }

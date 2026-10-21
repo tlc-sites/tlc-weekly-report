@@ -224,7 +224,7 @@ export function EducationForm({
         <TextArea label="공과·활동 내용" value={p.details.activity} onChange={(activity) => setDetails({ activity })} />
       </Section>
 
-      {canEditPrayer ? <Section title="기도제목" hint="작성자와 담임목사님·사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
+      {canEditPrayer ? <Section title="기도제목" hint="작성자와 담임 목사님·담임 사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
         <TextArea value={p.prayer} onChange={(prayer) => setP({ ...p, prayer })} />
       </Section> : null}
 

@@ -100,9 +100,8 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
       continue;
     }
     const { data: subs } = await admin.from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("user_id", item.userId);
-    if (!subs?.length) continue;
     results.attempted++;
-    const r = await sendToSubscriptions(admin, subs, item.payload);
+    const r = await sendToSubscriptions(admin, subs ?? [], item.payload, [item.userId]);
     results.sent += r.sent;
     results.removed += r.removed;
     results.failed += r.failed;
