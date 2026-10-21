@@ -65,7 +65,7 @@ export async function saveMemberships(formData: FormData) {
     assignments.push({ group_id: groupId.data, ...role });
   }
 
-  const { error } = await supabase.rpc("set_memberships", { p_user: userId.data, p_assignments: assignments });
+  const { error } = await supabase.rpc("set_memberships_with_minister", { p_user: userId.data, p_assignments: assignments });
   if (error) redirect(`${path}?error=${/own content assignments/.test(error.message) ? "own-memberships" : /minister role required/.test(error.message) ? "minister-role" : /position/.test(error.message) ? "position" : error.code === "42501" ? "assignment-permission" : "save"}`);
   redirect(`${path}?saved=1`);
 }

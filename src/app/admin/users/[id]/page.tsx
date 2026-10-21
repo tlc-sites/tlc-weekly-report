@@ -91,12 +91,12 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <form action={saveMemberships} className="flex flex-col gap-2">
           <input type="hidden" name="userId" value={user.id} />
           <p className="mb-1 text-xs text-muted">
-            상위 그룹 배정은 하위 그룹에 상속됩니다. 총괄·팀장은 파트 열람, 담당 교역자는 그 파트의 확인·비공개 열람 권한을 갖습니다. 본인 소속 변경은 담임 목사님·담임 사모님께 요청해 주세요.
+            교역자·담당교역자를 선택하고 저장하면 교역자 역할도 함께 지정됩니다. 상위 그룹 배정은 하위 그룹에 상속됩니다. 본인 소속 변경은 담임 목사님·담임 사모님께 요청해 주세요.
           </p>
           {groups.map((g) => (
             <label key={g.id} className={`flex items-center justify-between gap-3 text-sm ${g.depth ? "pl-4" : "font-medium"}`}>
               <span>{g.depth ? g.name : g.label}</span>
-              <MembershipPositionSelect group={g} value={roleByGroup.get(g.id) ?? ""} disabled={ownAssignmentsLocked} minister={user.is_minister || user.recipient_role !== null}/>
+              <MembershipPositionSelect group={g} value={roleByGroup.get(g.id) ?? ""} disabled={ownAssignmentsLocked} minister={!ownAssignmentsLocked || user.is_minister || user.recipient_role !== null}/>
             </label>
           ))}
           {!ownAssignmentsLocked ? <button type="submit" className={`${buttonClass} mt-2`}>
