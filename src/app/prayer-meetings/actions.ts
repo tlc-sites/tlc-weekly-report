@@ -1,13 +1,18 @@
 "use server";
-import {requireActive,isClergy} from "@/lib/auth";
+import {requireActive} from "@/lib/auth";
 import {z} from "zod";
 import {redirect} from "next/navigation";
-import {todayKST} from "@/lib/week";
+import {todayKST,weekdayOf} from "@/lib/week";
 export async function addPrayerMeeting(form:FormData){
- const {supabase,profile}=await requireActive();if(!isClergy(profile))redirect("/");
- const v=z.object({meeting_date:z.iso.date(),author_name:z.string().trim().min(1).max(100),prayer_leader:z.string().trim().min(1).max(100),attendee_names:z.string().trim().min(1).max(3000),title:z.string().trim().max(150),scripture:z.string().trim().max(1000),content:z.string().trim().max(5000),prayer_topics:z.string().trim().max(5000),notes:z.string().trim().max(3000)}).safeParse(Object.fromEntries(form));
- if(!v.success || v.data.meeting_date>todayKST())redirect("/prayer-meetings?error=invalid");
- const {error}=await supabase.from("prayer_meeting_reports").insert({...v.data,title:v.data.title||"주중 기도회",content:v.data.content||"기도회",author_id:profile.id});
+ const {supabase,profile}=await requireActive();
+ const v=z.object({meeting_date:z.iso.date(),prayer_session:z.enum(["morning","evening"]),attendee_names:z.string().trim().min(1).max(3000),prayer_topics:z.string().trim().min(1).max(5000)}).safeParse(Object.fromEntries(form));
+ if(!v.success || v.data.meeting_date>todayKST() || !(v.data.prayer_session==="morning"?[1,2,4,5]:[1,2,3,4]).includes(weekdayOf(v.data.meeting_date)))redirect("/prayer-meetings?error=invalid");
+ const {error}=await supabase.from("prayer_meeting_reports").insert({...v.data,author_name:profile.real_name??"교역자",author_id:profile.id,title:v.data.prayer_session==="morning"?"오전기도회":"저녁기도회",content:"기도제목 보고"});
  if(error)redirect("/prayer-meetings?error=save");
  redirect("/prayer-meetings?saved=1");
+}
+export async function addPrayerComment(form:FormData){
+ const {supabase,profile}=await requireActive();const v=z.object({reportId:z.uuid(),body:z.string().trim().min(1).max(1000)}).parse(Object.fromEntries(form));
+ const {error}=await supabase.from("prayer_meeting_comments").insert({prayer_report_id:v.reportId,author_id:profile.id,body:v.body});
+ redirect("/prayer-meetings?"+(error?"error=comment":"commented=1")+"#prayer-"+v.reportId);
 }

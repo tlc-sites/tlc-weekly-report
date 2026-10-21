@@ -23,7 +23,8 @@ export async function approveUser(formData: FormData) {
   const makeAdmin = formData.get("makeAdmin") === "on";
   if (!assignments.length && !makeAdmin) redirect("/admin/users?error=no-group");
 
-  const { error } = await supabase.rpc("approve_user", {
+  const withMinister = assignments.some(a=>a.position==="교역자" || a.position==="담당교역자");
+  const { error } = await supabase.rpc(withMinister ? "approve_minister_user" : "approve_user", {
     p_user: userId.data,
     p_assignments: assignments,
     p_make_admin: makeAdmin,
@@ -86,8 +87,7 @@ export async function setUserAdmin(formData: FormData) {
 }
 
 export async function setMinister(formData: FormData) {
-  const { supabase, profile } = await requireAdmin();
-  if (!isSenior(profile)) redirect("/admin/users?error=save");
+  const { supabase } = await requireAdmin();
   const parsed = z.object({ userId: z.uuid(), enabled: z.enum(["true","false"]) }).safeParse({userId:formData.get("userId"),enabled:formData.get("enabled")});
   if (!parsed.success) redirect("/admin/users?error=invalid");
   const {error} = await supabase.rpc("set_minister",{p_user:parsed.data.userId,p_enabled:parsed.data.enabled === "true"});

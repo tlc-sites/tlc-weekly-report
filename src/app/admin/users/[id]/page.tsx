@@ -12,7 +12,7 @@ const MESSAGES: Record<string, string> = {
   "own-admin": "자기 자신의 관리자 권한은 해제할 수 없습니다. 다른 관리자에게 요청해 주세요.",
   "own-memberships": "현재 계정은 본인의 소속·역할을 변경할 수 없습니다. 담당 파트 배정은 담임 목사님·담임 사모님 권한으로 처리해야 합니다. 잠시 후 재시도해도 저장되지 않습니다.",
   "assignment-permission": "소속을 저장할 권한이 없습니다. 로그인 계정의 관리 권한을 확인해 주세요.",
-  "minister-role": "교역자 직책을 배정하려면 먼저 최상단 권한으로 교역자를 지정해야 합니다.",
+  "minister-role": "교역자 직책을 배정하려면 먼저 관리 메뉴에서 교역자를 지정해야 합니다.",
   position: "해당 파트에서 사용할 수 있는 직책을 선택해 주세요.",
 };
 
@@ -72,7 +72,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         {saved ? <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">저장했습니다.</p> : null}
       </div>
 
-      {isSenior(me) && user.status === "active" ? <Card className="mb-4"><form action={setMinister} className="flex items-center justify-between gap-3">
+      {(isSenior(me) || (!isMe && !user.recipient_role)) && user.status === "active" ? <Card className="mb-4"><form action={setMinister} className="flex items-center justify-between gap-3">
         <input type="hidden" name="userId" value={user.id}/><input type="hidden" name="enabled" value={String(!user.is_minister)}/>
         <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">담당 파트 수정·확인과 목회 피드백 작성. 다른 파트는 동급 작성 보고 또는 공개받은 내용만 열람합니다.</p></div>
         <button className={secondaryButtonClass}>{user.is_minister ? "교역자 해제" : "교역자 지정"}</button>

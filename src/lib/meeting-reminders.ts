@@ -1,3 +1,4 @@
+import {runWeeklyEmail} from "./weekly-email";
 import {createAdminClient} from "./supabase/admin";
 import {sendToSubscriptions} from "./push";
 import {weekOf} from "./week";
@@ -10,5 +11,6 @@ export async function runMeetingReminders(){
   if(subError){failed++;continue;}
   try{const r=await sendToSubscriptions(admin,subs??[],{title:"보고서 제출을 확인해 주세요",body:item.label+" · "+item.meeting_date+" · 모임 종료 후 3시간이 지났습니다.",url:"/groups/"+item.group_id+"?week="+weekOf(item.meeting_date),tag:"meeting:"+item.group_id+":"+item.meeting_date},[item.user_id]);sent+=r.sent;failed+=r.failed;}catch{failed++;}
  }
- return {claimed:data?.length??0,sent,failed};
+ const weeklyEmail=await runWeeklyEmail();
+ return {claimed:data?.length??0,sent,failed,weeklyEmail};
 }

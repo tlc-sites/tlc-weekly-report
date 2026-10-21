@@ -2,24 +2,16 @@ import {Suspense} from "react";
 import Link from "next/link";
 import {requireActive,isClergy} from "@/lib/auth";
 import {redirect} from "next/navigation";
-import {todayKST} from "@/lib/week";
-import {Card,Field,PageTitle,Loading,textareaClass,smallButtonClass} from "@/components/ui";
-import {addPrayerMeeting} from "./actions";
+import {todayKST,weekdayOf} from "@/lib/week";
+import {Card,Field,PageTitle,Loading,textareaClass,smallButtonClass,inputClass} from "@/components/ui";
+import {addPrayerMeeting,addPrayerComment} from "./actions";
 export default function Page(props:PageProps<"/prayer-meetings">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
 async function Content({searchParams}:PageProps<"/prayer-meetings">){
  const {supabase,profile}=await requireActive();if(!isClergy(profile))redirect("/");
- const query=await searchParams;
- const {data,error}=await supabase.from("prayer_meeting_reports").select("id,author_name,meeting_date,title,scripture,content,prayer_topics,notes,prayer_leader,attendee_names").order("meeting_date",{ascending:false}).order("created_at",{ascending:false}).limit(50);if(error)throw error;
- return <><Link href="/" className="mb-4 text-sm text-accent">← 홈</Link><PageTitle sub="교역자 이상이 함께 작성하고 나누는 기도회 보고입니다.">주중 기도회</PageTitle>{query.saved?<p role="status" className="mb-4 text-accent">제출이 완료되었습니다!</p>:null}{query.error?<p role="alert" className="mb-4 text-red-600">저장하지 못했습니다. 입력 내용과 날짜를 확인해 주세요.</p>:null}
- <Card className="mb-5"><details><summary className="cursor-pointer font-semibold">기도회 보고 작성</summary><form action={addPrayerMeeting} className="mt-4 flex flex-col gap-3">
- <Field label="작성자 이름"><input name="author_name" required maxLength={100} defaultValue={profile.real_name??""} className={textareaClass}/></Field>
- <Field label="기도회 날짜"><input type="date" name="meeting_date" required defaultValue={todayKST()} max={todayKST()} className={textareaClass}/></Field>
- <Field label="기도인도자"><input name="prayer_leader" required maxLength={100} className={textareaClass}/></Field>
- <Field label="참석명단"><textarea name="attendee_names" required rows={3} maxLength={3000} placeholder="이름을 한 줄에 한 명씩 적어 주세요." className={textareaClass}/></Field>
- <Field label="제목 (선택)"><input name="title" maxLength={150} className={textareaClass}/></Field>
- <Field label="말씀 본문"><input name="scripture" maxLength={1000} className={textareaClass}/></Field>
- <Field label="진행 내용"><textarea name="content" rows={4} maxLength={5000} className={textareaClass}/></Field>
- <Field label="함께 기도한 제목"><textarea name="prayer_topics" rows={3} maxLength={5000} className={textareaClass}/></Field>
- <Field label="특이사항·후속 조치"><textarea name="notes" rows={2} maxLength={3000} className={textareaClass}/></Field><button className={smallButtonClass}>보고 제출</button></form></details></Card>
- <h2 className="mb-3 font-semibold">공유된 보고</h2>{!data?.length?<p className="text-sm text-muted">아직 등록된 기도회 보고가 없습니다.</p>:data.map(r=><Card key={r.id} className="mb-3"><details><summary className="cursor-pointer"><span className="block text-xs text-muted">{r.meeting_date} · {r.author_name}</span><strong>{r.title}</strong></summary><dl className="mt-4 space-y-3">{[["기도인도자",r.prayer_leader],["참석명단",r.attendee_names],["말씀 본문",r.scripture],["진행 내용",r.content],["기도제목",r.prayer_topics],["특이사항",r.notes]].map(([label,body])=>body?<div key={label}><dt className="text-xs text-muted">{label}</dt><dd className="whitespace-pre-wrap text-sm">{body}</dd></div>:null)}</dl></details></Card>)}</>;
+ const q=await searchParams;const today=todayKST();
+ const {data,error}=await supabase.from("prayer_meeting_reports").select("id,author_name,meeting_date,prayer_session,prayer_topics,attendee_names").order("meeting_date",{ascending:false}).order("created_at",{ascending:false}).limit(50);if(error)throw error;
+ const ids=(data??[]).map(r=>r.id);const comments=ids.length?await supabase.from("prayer_meeting_comments").select("id,prayer_report_id,body,created_at,author:profiles(real_name)").in("prayer_report_id",ids).order("created_at"):null;if(comments?.error)throw comments.error;
+ return <><Link href="/" className="mb-4 text-sm text-accent">← 홈</Link><PageTitle sub="오전: 월·화·목·금 10:00 / 저녁: 월·화·수·목 20:30">주중 기도회</PageTitle>{q.saved||q.commented?<p role="status" className="mb-4 text-accent">{q.saved?"기도제목을 등록했습니다.":"코멘트를 등록했습니다."}</p>:null}{q.error?<p role="alert" className="mb-4 text-red-600">저장하지 못했습니다. 모임 요일·참석명단·기도제목을 확인해 주세요.</p>:null}
+ <Card className="mb-5"><form action={addPrayerMeeting} className="flex flex-col gap-3"><div className="grid grid-cols-2 gap-3"><Field label="모임 구분"><select name="prayer_session" defaultValue={weekdayOf(today)===3?"evening":"morning"} className={inputClass}><option value="morning">오전기도회 · 10:00</option><option value="evening">저녁기도회 · 20:30</option></select></Field><Field label="모임 날짜"><input type="date" name="meeting_date" required max={today} defaultValue={today} className={inputClass}/></Field></div><Field label="참석명단"><textarea name="attendee_names" required rows={3} maxLength={3000} className={textareaClass}/></Field><Field label="기도제목"><textarea name="prayer_topics" required rows={5} maxLength={5000} className={textareaClass}/></Field><p className="text-xs text-muted">작성자는 로그인한 계정으로 자동 기록합니다.</p><button className={smallButtonClass}>기도제목 등록</button></form></Card>
+ <h2 className="mb-3 font-semibold">함께 나누는 기도제목</h2>{!data?.length?<p className="text-sm text-muted">아직 등록된 기도제목이 없습니다.</p>:data.map(r=><Card key={r.id} className="mb-4"><article id={"prayer-"+r.id}><h3 className="font-semibold">{r.meeting_date} · {r.prayer_session==="morning"?"오전기도회":r.prayer_session==="evening"?"저녁기도회":"기존 기도회 기록"}</h3><p className="text-xs text-muted">{r.author_name}</p>{r.attendee_names?<p className="my-3 whitespace-pre-wrap text-sm"><strong>참석명단:</strong> {r.attendee_names}</p>:null}<p className="my-3 whitespace-pre-wrap">{r.prayer_topics}</p><div className="border-t border-border pt-3"><h4 className="text-sm font-semibold">코멘트</h4>{(comments?.data??[]).filter(c=>c.prayer_report_id===r.id).map(c=><div key={c.id} className="my-3 text-sm"><p className="text-xs text-muted">{(c.author as unknown as {real_name:string}|null)?.real_name??"교역자"} · {new Date(c.created_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p><p className="whitespace-pre-wrap">{c.body}</p></div>)}<form action={addPrayerComment} className="mt-3 flex flex-col gap-2"><input type="hidden" name="reportId" value={r.id}/><textarea name="body" aria-label="기도제목 코멘트" required rows={2} maxLength={1000} className={textareaClass}/><button className={smallButtonClass}>코멘트 등록</button></form></div></article></Card>)}</>;
 }

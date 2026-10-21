@@ -45,7 +45,7 @@ test('같은 직급 작성 보고는 다른 파트에서도 읽되 다른 직급
  const row=(await as(id.writerA,'select author_layer,author_name,details from report.reports where id=$1',[id.rwriterA])).rows[0];assert.equal(row.author_layer,1);assert.equal(row.details._report_meta.author_name,row.author_name);
 });
 test('스데반 별도 분류와 수요예배 연결, 회의·공과는 출결 통계에 포함하지 않는다',async()=>{
- const internship=(await db.query("select id from report.groups where settings->>'report_category'='internship'")).rows;assert.equal(internship.length,1);
+ const internship=(await db.query("select id from report.groups where settings->>'report_category'='internship' and parent_id is null")).rows;assert.equal(internship.length,1);
  assert.ok((await db.query("select 1 from report.group_service_types t join report.service_types s on s.id=t.service_type_id where t.group_id=$1 and s.name='수요예배'",[internship[0].id])).rows.length);
  const rid=(await as(id.writerA,"insert into report.reports(group_id,author_id,author_name,meeting_date,meeting_label,details) values($1,$2,'작성자',current_date,'팀 회의','{\"session_type\":\"meeting\"}') returning id",[id.a,id.writerA])).rows[0].id;
  await as(id.writerA,"select report.save_report($1,$2::jsonb,'submitted')",[rid,JSON.stringify({details:{session_type:'meeting',topic:'주제',content:'내용',members:[{name:'팀원',present:true,note:'상황',follow_up:'후속'}]},attendance:[{member_id:id.child,present:false}]})]);

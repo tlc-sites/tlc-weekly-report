@@ -55,6 +55,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
     <>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
+      {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 items-center justify-between rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
       {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">주중 기도회 보고</Link><Link href="/messages" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">비공개 메시지</Link></div> : null}
       <nav aria-label="주요 메뉴" className="mb-4 grid grid-cols-2 gap-2">
         <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 작성 · 추가</Link>

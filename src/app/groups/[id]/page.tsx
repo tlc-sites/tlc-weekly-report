@@ -66,6 +66,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
       <>
         <BackLink href="/">홈</BackLink><div className="mb-3 flex flex-wrap gap-3 text-sm text-accent"><Link href={`/groups/${id}/team`}>팀 구성 명단</Link><Link href={`/groups/${id}/schedule`}>모임 시간 설정</Link></div>
         <PageTitle>{groupDisplayName(group.name)}</PageTitle>
+      {group.settings?.report_category==="internship" && group.parent_id ? <Link href={`/groups/${id}/attendance`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">참여자 명단·출결 관리</Link>:null}
         <Card>
           <ul className="flex flex-col divide-y divide-border">
             {children.map((g) => (

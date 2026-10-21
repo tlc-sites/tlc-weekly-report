@@ -86,11 +86,12 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
                   </p>
                 </div>
 
+                <p className="text-xs text-muted">교역자·담당교역자 직책을 선택하면 교역자 역할을 함께 지정하여 승인합니다.</p>
                 <div className="flex flex-col gap-2">
                   {groups
                     .filter((g) => requested.has(g.id))
                     .map((g) => (
-                      <RoleSelect key={g.id} group={g} minister={u.is_minister} />
+                      <RoleSelect key={g.id} group={g} minister={true} />
                     ))}
                   {requested.size === 0 ? <p className="text-sm text-muted">신청한 소속이 없습니다.</p> : null}
                 </div>
