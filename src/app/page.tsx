@@ -1,4 +1,5 @@
 import { GroupPicker } from "@/components/group-picker";
+import { HomeOverview, type OverviewReport } from "@/components/home-overview";
 import { MenuHeading, MenuIcon } from "@/components/menu-heading";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -6,20 +7,22 @@ import { Card, Loading, PageTitle } from "@/components/ui";
 import { PushBanner } from "@/components/push-banner";
 import { SignOutButton } from "@/components/signout-button";
 import { requireActive, canManage, isClergy, isSenior } from "@/lib/auth";
-import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
+import { ROLE_LABEL, groupCategory, listGroupsOrdered } from "@/lib/groups";
+import { reportWeek, todayKST } from "@/lib/week";
 
-export default function HomePage() {
+export default function HomePage(props: PageProps<"/">) {
   return (
     <Suspense fallback={<Loading />}>
-      <HomeContent />
+      <HomeContent {...props} />
     </Suspense>
   );
 }
 
-async function HomeContent() {
+async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
+  const week = reportWeek((await searchParams).week, todayKST());
 
-  const [{ data: memberships }, groups, pendingCount, notices] = await Promise.all([
+  const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses] = await Promise.all([
     supabase.from("memberships").select("group_id, role").eq("user_id", profile.id),
     listGroupsOrdered(supabase),
     canManage(profile)
@@ -30,14 +33,12 @@ async function HomeContent() {
           .then((r) => r.count ?? 0)
       : Promise.resolve(0),
     supabase.from("notices").select("id,title").order("created_at", { ascending: false }).limit(3),
+    supabase.from("reports").select("id,group_id,author_id,author_name,meeting_date,status,meeting_label,service:service_types(name),meeting:group_meeting_types(name)").eq("week", week).order("updated_at", { ascending: false }).returns<OverviewReport[]>(),
+    supabase.from("week_status").select("group_id").eq("week", week).eq("no_meeting", true),
   ]);
 
   const roleByGroup = new Map((memberships ?? []).map((m) => [m.group_id as string, m.role as keyof typeof ROLE_LABEL]));
   const myGroups = groups.filter((g) => roleByGroup.has(g.id));
-  const shared = isClergy(profile) && !isSenior(profile)
-    ? await supabase.from("reports").select("id,group_id,author_name,meeting_date,group:groups(name,parent_id)").order("updated_at",{ascending:false}).returns<{id:string;group_id:string;author_name:string;meeting_date:string;group:{name:string;parent_id:string|null}|null}[]>()
-    : {data:[]};
-  const sharedReports=(shared.data ?? []).filter(r=>!roleByGroup.has(r.group_id) && !(r.group?.parent_id && roleByGroup.has(r.group.parent_id)));
   // 보고할 수 있는 그룹: 하위 그룹이 없는 그룹 중 직접 소속이거나 상위 그룹 소속이면 포함 (관리자는 전체)
   const reportGroups = groups.filter(
     (g) =>
@@ -51,12 +52,25 @@ async function HomeContent() {
     <>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
-      <Link href="/reports" className="mb-4 inline-flex min-h-12 items-center justify-between rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">사람별 보고 모아보기 <span aria-hidden>›</span></Link>
-      {sharedReports.length ? <Card className="mb-4"><MenuHeading icon="report" description="다른 파트에서 공개해 주신 보고입니다.">공개받은 보고</MenuHeading><ul className="divide-y divide-border">{sharedReports.map(r=><li key={r.id}><Link href={`/reports/${r.id}`} className="block py-3 text-sm">{r.group?.name} · {r.meeting_date} · {r.author_name}</Link></li>)}</ul></Card>:null}
+      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={weeklyReports.data ?? []} parts={reportGroups} noMeeting={(weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={Boolean(weeklyReports.error || weekStatuses.error)} allParts={isSenior(profile)} />
+      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">배정 후 보고 작성과 담당 현황을 볼 수 있습니다.{canManage(profile) ? " 관리자 역할만으로는 보고 내용을 열람할 수 없습니다." : " 담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
+      {reportGroups.length ? (
+        <Card className="mb-4">
+          <MenuHeading icon="report" description="새 보고를 작성할 파트를 선택해 주세요.">보고 작성</MenuHeading>
+          <GroupPicker groups={reportGroups} suffix={`?week=${week}`} defaultCategory={myGroups[0] ? groupCategory(myGroups[0]) : undefined} />
+        </Card>
+      ) : null}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        {isClergy(profile) ? <Link href={`/meeting?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="meeting" small />교역자 회의 자료</Link> : null}
+        <Link href={`/incidents?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="report" small />예배·팀 이슈</Link>
+        <a href="https://tlc-cell-care.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="people" small />셀케어 열기 ↗</a>
+      </div>
       <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
 
       {canManage(profile) ? (
         <Card className="mb-4">
+          <details>
+          <summary className="min-h-11 cursor-pointer py-2 font-semibold">관리 메뉴 · 승인 대기 {pendingCount}명</summary>
           <MenuHeading icon="manage" description="담당자와 부서, 예배 정보를 관리해요.">관리</MenuHeading>
           <ul className="flex flex-col divide-y divide-border text-sm">
             <li>
@@ -78,26 +92,13 @@ async function HomeContent() {
               </Link>
             </li>
           </ul>
-        </Card>
-      ) : null}
-
-      {isClergy(profile) ? (
-        <Card className="mb-4">
-          <Link href="/meeting" className="menu-link flex items-center justify-between gap-3">
-            <MenuHeading icon="meeting" description="이번 주 사역 보고를 한눈에 살펴보세요.">교역자 회의 자료</MenuHeading>
-            <span className="text-muted">›</span>
-          </Link>
-        </Card>
-      ) : null}
-
-      {reportGroups.length ? (
-        <Card className="mb-4">
-          <MenuHeading icon="report" description="담당 부서를 선택해 한 주의 사역을 기록해 주세요.">{isClergy(profile) ? "사역 보고" : "내 파트 보고"}</MenuHeading>
-          <GroupPicker groups={reportGroups} defaultCategory={isClergy(profile) ? myGroups[0]?.type : undefined} />
+          </details>
         </Card>
       ) : null}
 
       <Card className="mb-4">
+        <details>
+        <summary className="min-h-11 cursor-pointer py-2 font-semibold">내 소속 · {myGroups.length}개 파트</summary>
         <MenuHeading icon="people" description="함께 섬기는 부서와 나의 역할이에요.">내 소속</MenuHeading>
         {myGroups.length ? (
           <ul className="flex flex-col divide-y divide-border">
@@ -111,6 +112,7 @@ async function HomeContent() {
         ) : (
           <p className="text-sm text-muted">아직 배정된 소속이 없습니다. 관리자에게 문의해 주세요.</p>
         )}
+        </details>
       </Card>
 
       {rosterGroups.length ? (
@@ -131,7 +133,6 @@ async function HomeContent() {
         </Card>
       ) : null}
 
-      <Link href="/incidents" className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm text-accent"><MenuIcon name="report" small />팀 이슈 모아보기 ›</Link>
       <div className="mt-auto flex items-center justify-between pt-8">
         <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
           <MenuIcon name="bell" small />알림 설정
