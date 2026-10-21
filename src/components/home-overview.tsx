@@ -13,14 +13,14 @@ export type OverviewReport = {
 
 type Part = { id: string; name: string; type: string; schedule: string };
 
-export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, userId, failed, allParts = false, adminStatus = false }: {
+export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, userId, failed, allParts = false, adminStatus = false, writablePartIds }: {
   week: string; currentWeek: string; reports: OverviewReport[]; parts: Part[];
-  noMeeting: string[]; userId: string; failed: boolean; allParts?: boolean; adminStatus?: boolean;
+  noMeeting: string[]; userId: string; failed: boolean; allParts?: boolean; adminStatus?: boolean; writablePartIds?: string[];
 }) {
   const sent = reports.filter(r => r.status !== "draft");
   const drafts = reports.filter(r => r.status === "draft");
   const pending = sent.filter(r => r.status === "submitted");
-  const myDrafts = drafts.filter(r => r.author_id === userId);
+  const myDrafts = drafts.filter(r => r.author_id === userId && (!writablePartIds || writablePartIds.includes(r.group_id)));
   const partNames = new Map(parts.map(g => [g.id, g.name]));
   const overdue = new Date() > reportDeadline(week);
   const listBase = adminStatus ? "/admin/submissions" : "/reports";

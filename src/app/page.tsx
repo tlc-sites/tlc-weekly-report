@@ -55,7 +55,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
       {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-sm text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
-      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} />
+      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} writablePartIds={reportGroups.map(g => g.id)} />
       {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "전체 제출현황은 위에서 확인할 수 있습니다. 보고 작성·수정은 담당 파트 배정이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
       {reportGroups.length ? (
         <Card className="mb-4">
