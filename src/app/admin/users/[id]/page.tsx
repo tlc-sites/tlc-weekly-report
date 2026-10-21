@@ -9,6 +9,8 @@ const MESSAGES: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
   save: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   "own-admin": "자기 자신의 관리자 권한은 해제할 수 없습니다. 다른 관리자에게 요청해 주세요.",
+  "own-memberships": "현재 계정은 본인의 소속·역할을 변경할 수 없습니다. 담당 파트 배정은 담임목사님·사모님 권한으로 처리해야 합니다. 잠시 후 재시도해도 저장되지 않습니다.",
+  "assignment-permission": "소속을 저장할 권한이 없습니다. 로그인 계정의 관리 권한을 확인해 주세요.",
 };
 
 type UserDetail = {
@@ -48,6 +50,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
   const roleByGroup = new Map(user.memberships.map((m) => [m.group_id, m.role]));
   const message = pickMessage(MESSAGES, error);
   const isMe = user.id === me.id;
+  const ownAssignmentsLocked = isMe && !isSenior(me);
 
   return (
     <>
@@ -56,6 +59,8 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <span className="flex items-center gap-2">
           {user.real_name ?? "(이름 미입력)"}
           {user.is_admin ? <Badge tone="accent">관리자</Badge> : null}
+          {user.is_minister ? <Badge tone="accent">교역자</Badge> : null}
+          {user.recipient_role ? <Badge tone="accent">{user.recipient_role === "pastor" ? "담임목사님" : "사모님"}</Badge> : null}
           {user.status !== "active" ? <Badge tone="danger">{user.status === "pending" ? "승인 대기" : "사용 중지"}</Badge> : null}
         </span>
       </PageTitle>
@@ -66,7 +71,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
 
       {isSenior(me) && user.status === "active" ? <Card className="mb-4"><form action={setMinister} className="flex items-center justify-between gap-3">
         <input type="hidden" name="userId" value={user.id}/><input type="hidden" name="enabled" value={String(!user.is_minister)}/>
-        <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">일반 보고 전체 열람·수정·확인, 목회 피드백 작성</p></div>
+        <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">담당 파트 수정·확인과 목회 피드백 작성. 다른 파트는 동급 작성 보고 또는 공개받은 내용만 열람합니다.</p></div>
         <button className={secondaryButtonClass}>{user.is_minister ? "교역자 해제" : "교역자 지정"}</button>
       </form></Card> : null}
       {isSenior(me) && user.status === "active" && !isMe ? <Card className="mb-4"><form action={setRecipientRole} className="flex flex-col gap-2">
@@ -74,6 +79,11 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <p className="text-xs text-muted">모든 비공개 내용과 관리 기능에 접근합니다. 같은 역할의 기존 지정은 해제됩니다.</p><button className={secondaryButtonClass}>최상단 역할 저장</button>
       </form></Card> : null}
       <h2 className="mb-2 text-sm font-semibold">소속과 역할</h2>
+      {ownAssignmentsLocked ? <div role="note" className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm">
+        <p className="font-semibold">본인의 소속·역할은 여기서 변경할 수 없습니다.</p>
+        <p className="mt-1 text-muted">담임목사님·사모님 권한으로 담당 파트를 배정해야 합니다. 아래는 현재 배정 상태입니다.</p>
+        {!user.memberships.length ? <p className="mt-2 text-muted">담당 파트는 아직 없습니다. 관리자 제출현황과 승인된 셋업용 임시 열람은 홈에서 확인할 수 있습니다.</p> : null}
+      </div> : null}
       <Card className="mb-6">
         <form action={saveMemberships} className="flex flex-col gap-2">
           <input type="hidden" name="userId" value={user.id} />
@@ -86,6 +96,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
               <select
                 name={`role:${g.id}`}
                 defaultValue={roleByGroup.get(g.id) ?? ""}
+                disabled={ownAssignmentsLocked}
                 className="h-9 rounded-lg border border-border bg-surface px-2"
               >
                 <option value="">-</option>
@@ -94,9 +105,9 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
               </select>
             </label>
           ))}
-          <button type="submit" className={`${buttonClass} mt-2`}>
+          {!ownAssignmentsLocked ? <button type="submit" className={`${buttonClass} mt-2`}>
             소속 저장
-          </button>
+          </button> : null}
         </form>
       </Card>
 

@@ -9,6 +9,7 @@ import { SignOutButton } from "@/components/signout-button";
 import { requireActive, canManage, isClergy, isSenior } from "@/lib/auth";
 import { ROLE_LABEL, groupCategory, listGroupsOrdered } from "@/lib/groups";
 import { reportWeek, todayKST } from "@/lib/week";
+import { loadAdminSubmissions } from "@/lib/admin-submissions";
 
 export default function HomePage(props: PageProps<"/">) {
   return (
@@ -21,6 +22,7 @@ export default function HomePage(props: PageProps<"/">) {
 async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
   const week = reportWeek((await searchParams).week, todayKST());
+  const adminStatus = canManage(profile) ? await loadAdminSubmissions(supabase, week) : null;
 
   const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses] = await Promise.all([
     supabase.from("memberships").select("group_id, role").eq("user_id", profile.id),
@@ -52,8 +54,9 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
     <>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
       <PushBanner />
-      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={weeklyReports.data ?? []} parts={reportGroups} noMeeting={(weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={Boolean(weeklyReports.error || weekStatuses.error)} allParts={isSenior(profile)} />
-      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">배정 후 보고 작성과 담당 현황을 볼 수 있습니다.{canManage(profile) ? " 관리자 역할만으로는 보고 내용을 열람할 수 없습니다." : " 담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
+      {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-sm text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
+      <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} />
+      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "전체 제출현황은 위에서 확인할 수 있습니다. 보고 작성·수정은 담당 파트 배정이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
       {reportGroups.length ? (
         <Card className="mb-4">
           <MenuHeading icon="report" description="새 보고를 작성할 파트를 선택해 주세요.">보고 작성</MenuHeading>
@@ -63,7 +66,6 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       <div className="mb-4 grid grid-cols-2 gap-2">
         {isClergy(profile) ? <Link href={`/meeting?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="meeting" small />교역자 회의 자료</Link> : null}
         <Link href={`/incidents?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="report" small />예배·팀 이슈</Link>
-        <a href="https://tlc-cell-care.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="people" small />셀케어 열기 ↗</a>
       </div>
       <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
 

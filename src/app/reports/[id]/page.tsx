@@ -1,4 +1,5 @@
 import { getReportIdentity } from "@/lib/report-identity";
+import { SubmissionReceipt } from "@/components/submission-receipt";
 import {TeamSessionForm} from "./team-session-form";
 import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { Suspense } from "react";
@@ -275,6 +276,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {group.type === "worship" ? <TeamIssues canWrite={canEdit} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
+        {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt/> : null}
         {message ? <ErrorText>{message}</ErrorText> : null}
         {existing ? <p className="rounded-lg bg-border/60 px-3 py-2 text-sm">이미 작성 중인 같은 보고가 있어서 이어서 엽니다.</p> : null}
         {saved ? (

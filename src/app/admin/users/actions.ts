@@ -50,10 +50,11 @@ export async function setUserStatus(formData: FormData) {
 }
 
 export async function saveMemberships(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, profile } = await requireAdmin();
   const userId = z.uuid().safeParse(formData.get("userId"));
   if (!userId.success) redirect("/admin/users?error=invalid");
   const path = `/admin/users/${userId.data}`;
+  if (userId.data === profile.id && !isSenior(profile)) redirect(`${path}?error=own-memberships`);
 
   const assignments: { group_id: string; role: "writer" | "reviewer" }[] = [];
   for (const [key, value] of formData.entries()) {
@@ -65,7 +66,7 @@ export async function saveMemberships(formData: FormData) {
   }
 
   const { error } = await supabase.rpc("set_memberships", { p_user: userId.data, p_assignments: assignments });
-  if (error) redirect(`${path}?error=save`);
+  if (error) redirect(`${path}?error=${/own content assignments/.test(error.message) ? "own-memberships" : error.code === "42501" ? "assignment-permission" : "save"}`);
   redirect(`${path}?saved=1`);
 }
 
