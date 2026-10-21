@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { REMINDER_SLOTS, runReminders, type ReminderSlot } from "@/lib/reminders";
+import { runMeetingReminders } from "@/lib/meeting-reminders";
 
 // 정해진 시각에 크론이 호출한다. Vercel Cron은 CRON_SECRET을 Authorization 헤더로 보낸다.
 // ?dryRun=1 이면 보내지 않고 대상만 돌려준다 (점검용).
@@ -13,6 +14,11 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/api/c
   }
 
   const { slot } = await params;
+  if(slot === "meeting-deadlines") {
+    if(request.nextUrl.searchParams.get("dryRun") === "1") return NextResponse.json({error:"dry-run is not supported for reminder claims"},{status:400});
+    try { return NextResponse.json(await runMeetingReminders()); }
+    catch { return NextResponse.json({error:"meeting reminder failed"},{status:500}); }
+  }
   if (!REMINDER_SLOTS.includes(slot as ReminderSlot)) {
     return NextResponse.json({ error: "unknown slot" }, { status: 404 });
   }

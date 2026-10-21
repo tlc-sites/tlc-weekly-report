@@ -13,6 +13,7 @@ export const ISSUE_STATUS_LABEL = { open: "미해결", temporary: "임시 조치
 export const RESULT_LABEL = { normal: "정상", minor: "경미한 문제", incident: "사고" } as const;
 
 // 부산 캠퍼스 보고: 기존 구글 폼 항목 그대로
+export const CAMPUS_SECTIONS = [["worship","예배"],["adults","장년부"],["young_adults","청년부"],["school","교회학교"],["obed_edom","오벧에돔"],["newcomers","새가족 현황"],["welcome","웰컴팀"],["training","새가족 훈련"]] as const;
 export const CAMPUS_OFFERINGS = ["금요", "주일 1부", "주일 2부", "라이프라인", "헌금함"] as const;
 export const CAMPUS_SATURDAY = ["바리타", "곡 연습", "기도회", "안 함"] as const;
 export const CAMPUS_LODGING_NONE = "지출 안 함 (김미정 성도님 집에 묵음)";
@@ -116,6 +117,8 @@ const countSchema = z.union([z.number().int().min(0).max(99), z.null()]);
 
 export const campusPayload = z.object({
   details: z.object({
+    report_mode:z.enum(["legacy","sections"]).optional(),
+    sections:z.record(z.string().max(40),text(2000)).optional(),
     companion: text(50),
     depart_pangyo: z.union([z.iso.date(), z.literal("")]),
     depart_busan: z.union([z.iso.date(), z.literal("")]),
@@ -151,6 +154,7 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;
+    if(d.report_mode==="sections") return CAMPUS_SECTIONS.some(([k])=>d.sections?.[k]?.trim())?[]:["부산 사역 보고 (한 항목 이상)"];
     const missing: string[] = [];
     if (!d.companion) missing.push("동행 스텝 이름");
     if (!d.depart_pangyo) missing.push("판교 출발 날짜");

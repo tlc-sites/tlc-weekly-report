@@ -10,13 +10,13 @@ export const metadata: Metadata = {
   description: "교육부서, 예배팀, 캠퍼스 보고 시스템",
   // 아이폰은 홈 화면에 추가해야 알림을 받을 수 있다
   appleWebApp: { capable: true, title: "TLC 교회 보고서", statusBarStyle: "default" },
-  icons: { icon: [{ url: "/icons/favicon-32.png?v=weekly-report-1", sizes: "32x32", type: "image/png" }], apple: "/icons/apple-touch-icon.png?v=weekly-report-1" },
+  icons: { icon: [{ url: "/icons/favicon-32.png?v=burgundy-report-20261021", sizes: "32x32", type: "image/png" }], apple: "/icons/apple-touch-icon.png?v=burgundy-report-20261021" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#20365b",
+  themeColor: "#692d2d",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

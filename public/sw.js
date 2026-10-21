@@ -10,8 +10,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "TLC 교회 보고서", {
       body: data.body || "",
-      icon: "/icons/icon-192.png?v=weekly-report-1",
-      badge: "/icons/badge-96.png",
+      icon: "/icons/icon-192.png?v=burgundy-report-20261021",
+      badge: "/icons/badge-96.png?v=burgundy-report-20261021",
       tag: data.tag,
       data: { url: data.url || "/" },
     }),

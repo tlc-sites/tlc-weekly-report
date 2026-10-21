@@ -20,6 +20,7 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
+      <p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배·기술팀 사역 보고입니다. 출결 대신 담당하신 사역, 진행 내용과 필요한 조치를 기록해 주세요. 예배팀 리허설 참석은 별도 메뉴에서 관리합니다.</p>
       <Section title="말씀과 예배위원">
         <Field label="말씀본문"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
         <TextArea label="말씀·예배 내용" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
@@ -50,8 +51,8 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
       <Section title="요청사항">
         <RequestsEditor value={p.details.requests} onChange={(requests) => setP({ ...p, details: { ...p.details, requests } })} />
       </Section>
-      <Section title="특이사항">
-        <TextArea value={p.details.notes} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
+      <Section title="사역 보고">
+        <TextArea label="진행한 사역·주요 내용·다음 주 준비" value={p.details.notes} placeholder="담당하신 사역과 진행 내용, 조치 사항, 다음 주 준비를 적어 주세요." onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
       </Section>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>

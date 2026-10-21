@@ -1,0 +1,15 @@
+import {Suspense} from "react";
+import Link from "next/link";
+import {requireActive,isSenior} from "@/lib/auth";
+import {notFound} from "next/navigation";
+import {Card,Field,PageTitle,Loading,inputClass,smallButtonClass} from "@/components/ui";
+import {saveTeamMember,setTeamMemberActive} from "./actions";
+export default function Page(props:PageProps<"/groups/[id]/team">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
+async function Content({params,searchParams}:PageProps<"/groups/[id]/team">){
+ const {supabase,profile}=await requireActive();const {id}=await params;const query=await searchParams;
+ const [{data:group},{data:rows,error},{data:assigned}]=await Promise.all([supabase.from("groups").select("name").eq("id",id).maybeSingle(),supabase.from("team_directory").select("id,name,duty,is_active").eq("group_id",id).order("created_at"),supabase.rpc("assigned_clergy",{gid:id})]);if(!group)notFound();if(error)throw error;
+ const manage=isSenior(profile)||Boolean(assigned);
+ return <><Link href={"/groups/"+id} className="mb-4 text-sm text-accent">← 팀 보고서</Link><PageTitle sub="명단 등록은 로그인 계정이나 보고 작성 권한을 부여하지 않습니다.">{group.name} · 팀 구성</PageTitle>{query.error?<p role="alert" className="mb-3 text-red-600">저장하지 못했습니다. 담당 교역자 권한을 확인해 주세요.</p>:null}
+ {manage?<Card className="mb-4"><form action={saveTeamMember} className="flex flex-col gap-3"><input type="hidden" name="groupId" value={id}/><Field label="팀원 이름"><input name="name" required maxLength={100} className={inputClass}/></Field><Field label="담당 역할·파트"><input name="duty" maxLength={200} className={inputClass}/></Field><button className={smallButtonClass}>명단에 추가</button></form></Card>:null}
+ {!(rows??[]).length?<p className="text-sm text-muted">등록된 팀원이 없습니다.</p>:<ul className="divide-y divide-border">{(rows??[]).map(m=><li key={m.id} className="flex items-center gap-3 py-4"><div className="flex-1"><strong className={m.is_active?"":"text-muted"}>{m.name}</strong><p className="text-sm text-muted">{m.duty} · {m.is_active?"활동 중":"명단에서 제외됨"}</p></div>{manage?<form action={setTeamMemberActive}><input type="hidden" name="groupId" value={id}/><input type="hidden" name="memberId" value={m.id}/><input type="hidden" name="active" value={String(!m.is_active)}/><button className="rounded-xl border border-border px-3 py-2 text-sm">{m.is_active?"명단에서 제외":"다시 추가"}</button></form>:null}</li>)}</ul>}</>;
+}

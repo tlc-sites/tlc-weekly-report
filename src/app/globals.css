@@ -34,14 +34,14 @@
 
 :root {
   color-scheme: light;
-  --background: #f3f5f9;
-  --surface: #ffffff;
-  --foreground: #1a2436;
-  --muted: #586378;
-  --border: #d8dee9;
-  --accent: #20365b;
-  --accent-soft: #e6ebf3;
-  --focus: #8ea3c6;
+  --background: #f8f4f0;
+  --surface: #fffdf9;
+  --foreground: #352b2b;
+  --muted: #75605c;
+  --border: #e2d4ce;
+  --accent: #692d2d;
+  --accent-soft: #f0e2dc;
+  --focus: #aa6862;
   --accent-foreground: #ffffff;
   --danger: #a0372a;
 }

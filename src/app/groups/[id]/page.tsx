@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
 import { ReportKindFields } from "./report-kind-fields";
 import { NoMeeting } from "./no-meeting";
@@ -63,8 +64,8 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     const children = (await listGroupsOrdered(supabase)).filter((g) => g.parent_id === id);
     return (
       <>
-        <BackLink href="/">홈</BackLink>
-        <PageTitle>{group.name}</PageTitle>
+        <BackLink href="/">홈</BackLink><div className="mb-3 flex flex-wrap gap-3 text-sm text-accent"><Link href={`/groups/${id}/team`}>팀 구성 명단</Link><Link href={`/groups/${id}/schedule`}>모임 시간 설정</Link></div>
+        <PageTitle>{groupDisplayName(group.name)}</PageTitle>
         <Card>
           <ul className="flex flex-col divide-y divide-border">
             {children.map((g) => (
@@ -128,7 +129,8 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
   return (
     <>
       <BackLink href="/">홈</BackLink>
-      <PageTitle>{group.name}</PageTitle>
+      <PageTitle>{groupDisplayName(group.name)}</PageTitle>
+      <nav aria-label="파트 관리" className="mb-3 flex flex-wrap gap-4 text-sm text-accent"><Link href={`/groups/${id}/team`}>팀 구성 명단</Link><Link href={`/groups/${id}/schedule`}>모임 시간 설정</Link></nav>
       <p className="mb-4 text-sm text-muted">일요일~토요일 주간 보고 · 금요일 오후 5시 전달</p>
       <Link href="/notices" className="mb-4 self-start text-sm text-accent underline">공지·소통 확인하기</Link>
       {message ? (

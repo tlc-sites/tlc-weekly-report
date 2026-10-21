@@ -4,14 +4,12 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "./ui";
 
-export function SubmissionReceipt() {
+export function SubmissionReceipt({ returnTo = "/" }: { returnTo?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   useEffect(() => { if (!dialog.current?.open) dialog.current?.showModal(); }, []);
   function dismiss() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("saved");
-    router.replace(url.pathname + url.search, { scroll: false });
+    router.replace(returnTo);
   }
   return <dialog ref={dialog} onClose={dismiss} aria-labelledby="submission-receipt-title" className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-border bg-surface p-6 text-center text-foreground shadow-xl backdrop:bg-foreground/40">
     <span aria-hidden className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-accent/10 text-2xl text-accent">✓</span>

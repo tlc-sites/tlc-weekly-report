@@ -56,7 +56,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
 
   return (
     <section id="comments" className="mt-6">
-      <h2 className="mb-2 text-sm font-semibold">목회 피드백 {comments.length}</h2>
+      <h2 className="mb-2 text-sm font-semibold">보고서 코멘트 {comments.length}</h2>
       <Card className="flex flex-col gap-3">
         {comments.map((c) => (
           <div key={c.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
@@ -80,9 +80,9 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
         ))}
         {canComment ? <form action={addComment} className="flex flex-col gap-2">
           <input type="hidden" name="reportId" value={reportId} />
-          <textarea name="body" required maxLength={1000} rows={2} placeholder="보고에 대한 피드백을 남겨 주세요." className={textareaClass} />
+          <textarea name="body" required maxLength={1000} rows={2} placeholder="보고서에 대한 코멘트를 바로 남겨 주세요." className={textareaClass} />
           <button type="submit" className={`${smallButtonClass} self-end`}>
-            피드백 등록
+            코멘트 등록
           </button>
         </form> : <p className="text-xs text-muted">담임 목사님·담임 사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
       </Card>

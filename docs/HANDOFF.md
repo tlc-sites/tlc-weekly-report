@@ -328,3 +328,34 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 검증: 최종 전체 DB86개 통과, lint 성공, webpack build33경로 성공, tsc --noEmit 성공, diff --check 성공. 신규 tests/prayer-messages.test.mjs에서 모든 권한/미래날짜/빈 본문 원자적 롤백/역할회수/수신인 알림 격리 검증. 최초 thread SELECT helper가 INSERT RETURNING 새행을 보지 못하는 문제를 직접 행 정책으로 수정 후 통과.
 - 운영 DB18/d26327f 유지. DB19 기존 승인 유효. 추가 DB20 운영 적용 승인은 아직 받지 않아 DB19와 함께 묶은 전체 앱을 운영에 배포하지 않았다. 추가 DB20 승인 후 DB19→20 원본 보존 비교 적용, 전체 코드 배포·운영 화면 확인 필요. 실제 브라우저·휴대폰 검증은 아직 없음.
 - 루트/셀케어의 기존 수정과 직전 배포 기록 보존. 변경 파일은 위 신규 페이지/액션/DB20/테스트/package.json 및 홈, 직전39절 수정들이다.
+
+### 2026-10-21 DB19·20 배포 승인 후 연결 장애
+- 사용자가 DB19·20과 전체 앱 배포를 승인했다. 재승인 필요 없음.
+- 이번 확인: root/worktree status와 HANDOFF, diff 검토. 구현 검증86개/lint/webpack build/tsc는 직전 구현 턴 결과이며 이번 실행에서 재실행하지 않았다.
+- Chrome 연결이 여러 번 timeout 후 reset됐다. getBrowser(chrome)는 브라우저3을 반환했으나 새 탭 생성/접근도 timeout. SQL 입력/Run은 실행하지 않았으므로 운영 DB 변경은 수행하지 않았다. 직접 DB/배포 CLI·환경 인증은 현재 작업 환경에 노출되어 있지 않았다. 비밀 값 조회·복사 없음.
+- 준비 코드 3bc9a80 커밋 완료. DB 선적용을 보장하기 위해 원격 푸시하지 않았다. 운영은 d26327f/DB18 유지. staged 검사에서 발견한 DB20 EOF 여분 빈 줄을 로컬에서 정리했다. 이 문서와 공백 정리는 후속 로컬 변경이다.
+- 남은 일: Chrome 확장 연결 복구→Supabase DB19→20 원본행 스냅샷 비교·트랜잭션 적용→후속 기록 커밋→HEAD:master 일반 push→Vercel Ready/운영 화면/알림함 확인. 기존 승인 범위로 재개 가능하며 실제 보고·메시지 시험 발송은 하지 않는다.
+
+### 2026-10-21 사진팀 담당교역자 추가 요청 (운영 대기)
+- 사용자가 본인에게 사진팀 담당교역자 추가를 명시 요청했다. 기존 관리자+교역자와 6개 소속은 유지하고 사진팀 position=담당교역자/role=reviewer 1개만 upsert하는 범위로 승인됐다. 새 역할 정의/마이그레이션 불필요, DB18 선택지에 이미 존재한다.
+- Chrome 재연결을 확인했으나 새 탭 열기/운영 사용자 관리 접근에서 다시 timeout. 실제 계정 재대조/저장/SQL 실행은 하지 않았다. 운영 배정 완료로 표시하지 않는다.
+- 연결 복구 후 본인 로그인 계정과 기존 소속을 확인하여 사진팀 1개만 추가, 타인/기존 소속 보존 후 7개 배정 확인 필요. DB19·20/앱 배포 승인도 유효하게 대기 중이다. 계정 ID는 문서에 기록하지 않았다. 이번 변경은 요청·승인 인수인계 문서뿐이며 코드/DB 검사는 재실행하지 않았다.
+
+## 41. 보고 후 소통·모임별 반복 알림·팀/부산/기도회/명단 정리 (2026-10-21, 로컬)
+- 사용자 8개 요청 반영. 확인 답변: 미제출 시 종료+3시간부터 2시간마다 담당자와 두 분에게 반복, 부서 시간은 담당 교역자가 설정. 중등/고등은 기존 별도 유지하고 출생연도 표시만 추가.
+- DB21 20261104000000_meeting_deadlines_directory.sql: 안내팀/송번역팀 및 공통예배 연결, 기도회 인도자/참석명단 컬럼, 권한과 별개 team_directory(담당 교역자/최상단 관리·활동제외/복귀), 모임 마감 설정과 서비스 전용 중복 claim RPC. 신규 객체 모두 report. 원래 보고·소속·그룹 이름/ID·public/auth는 변경하지 않는다.
+- DB21 스케줄은 알려진 예배 종료 시각을 반영하며 금요 월 주차 및 KST/익일을 따른다. 부서 미설정 시간은 추측하지 않는다. 설정 이후 종료 건부터 미제출 작성자/담당 교역자별 검사, 초안은 미제출, 제출/확인과 모임 없음은 중단. 시간 재설정/재활성화 시 시작점 갱신. 일반 로그인 사용자는 claim RPC 접근 불가. 명단 등록만 한 비계정 팀원은 제출 의무/권한 부여 없음.
+- UI: 보고 하단 코멘트/답글 유지·명칭 명확화; 제출 성공 팝업 종료 후 해당 팀 주차 메인 이동; 학교 표시 이름에 출생연도; 부산 8개 접힘 영역+기존 방문경비 자료 보존(기존 필수 항목을 신규 sections 모드 제출에 강제하지 않음); 기도회 인도자/참석명단; groups/[id]/team·schedule 추가, 담당 교역자가 명단/시간 관리. 예배/기술팀 사역 보고 안내와 입력란 수정도 포함.
+- 반복 알림 /api/cron/meeting-deadlines, lib/meeting-reminders, .github/workflows/meeting-reminders.yml 준비. Vercel Hobby 일단위 제한 공식문서 확인. GitHub 변수 REPORT_MEETING_REMINDERS_ENABLED=true + Secret REPORT_CRON_SECRET(운영 CRON_SECRET과 동일)을 승인 후 안전하게 설정해야 한다. 현재는 변수 기본 미설정으로 실행 비활성. 5분 폴링·예약 지연 가능, 3시간 기준 2시간 bucket 중복방지. 실제 알림 발송/설정 변경은 하지 않음.
+- 테스트: 최종 전체 DB88개 통과, lint 오류/경고 없음, tsc --noEmit 성공, webpack build35경로 성공. 그 이후 읽기 화면 라벨·schedule 재시작 트리거 변경 후 DB88/lint/tsc 재통과. diff 확인. 신규 테스트에서 종료2시간59분 미전송/3시간 발송/같은구간 중복차단/2시간 직전 미반복/2시간 뒤 반복/제출자 즉시중단/모두제출 최상단 중단, 명단 무관교역자·관리자·작성자 변경 차단과 권한 부여 없음, 새 팀/부산필수/학년 표시 검증. 테스트 Node 모듈 형식 및 stripTypeScriptTypes 실험 경고는 남음.
+- 변경 파일: 위 DB21·workflow, lib/meeting-reminders·group-display·report-forms, group-picker·submission-receipt, groups/[id]/page·team·schedule, prayer-meetings/actions·page, reports/[id]/page·campus-form·review·worship-form, cron route, tests/deadlines-directory.test.mjs, package.json, docs/MEETING_REPORT_UPDATES.md. 직전 DB20 EOF 공백 정리·사진팀 배정/배포 대기 기록도 보존.
+- 운영: 마지막 확인 운영 d26327f/DB18, 3bc9a80은 로컬 커밋. DB19·20 및 사진팀 본인 추가 승인 유효. 추가 DB21·새 Actions 설정/활성화는 새 운영 승인 필요. 이번 DB/배포/역할/실제 보고/알림 변경 없음. 브라우저 연결은 직전 실패 이후 이번에 다시 시도하지 않았으며 실화면 미검증. 셀케어/루트 다른 도구 수정 보존.
+
+## 42. 버건디 로고·파비콘·설치 아이콘·테마 (2026-10-21, 로컬)
+- 사용자가 첨부한 버건디 바탕/흰색 TLC Report 로고와 동일한 원본을 확인했다. public/icons/weekly-report.png에 원본을 그대로 복사했고 SHA256 동일성을 확인했다. 로고 재해석/재생성 없이 기존 sharp 스크립트로 표준 아이콘을 축소 생성했다.
+- 생성: 192/512 앱 아이콘, 180 apple-touch, 32 favicon PNG, 16/32/48 ICO, 버건디 여백의 maskable512. 알림 배지는 기존 흰색 십자가 유지. manifest/layout/SW 아이콘 URL 버전 burgundy-report-20261021로 갱신했다.
+- 테마: accent #692d2d, background #f8f4f0, surface #fffdf9, foreground #352b2b, muted #75605c, border #e2d4ce, accent-soft #f0e2dc, focus #aa6862. 버튼·톤 아이콘은 기존 accent 변수를 따르며 manifest/viewport의 앱 테마도 일치시켰다. 글꼴·이름·기능·권한은 보존했다.
+- 변경 파일: public/icons의 원본/생성물, src/app/favicon.ico, globals.css, layout.tsx, manifest.ts, public/sw.js, scripts/generate-icons.mjs. 직전 기능/DB/문서 변경과 셀케어 다른 작업은 보존했다.
+- 이번 검증: icon 192/512/maskable512/apple180/favicon32/badge96 크기 확인, 원본 파일 해시 동일, 흰색 버튼 글자 대비10.43:1/본문12.53:1/보조문구5.35:1, lint 성공, webpack build35경로 성공, tsc --noEmit 성공, diff --check 통과. DB 로직 변경이 없어 DB 테스트는 재실행하지 않았다.
+- 미리보기 outputs/report-theme/theme-preview.png 생성 후 직접 확인했다. 실제 앱 화면 캡처가 아닌 색상·로고/버튼 견본이며 개인정보는 없다. SVG 렌더링 중 fontconfig 캐시 쓰기 경고가 있었으나 PNG 결과는 정상 확인했다. 실브라우저/설치 기기 동작은 미검증.
+- 운영 반영: 이번 아이콘·테마는 로컬만 변경. push/배포/DB/계정·사진팀 배정/새 알림 활성화 없음. 마지막 확인 운영 d26327f/DB18. DB19·20/사진팀 승인 대기 작업은 보존, 새 DB21·Actions 활성화와 이번 테마 포함 배포는 구체 승인 후 진행한다.

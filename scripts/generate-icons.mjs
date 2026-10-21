@@ -23,8 +23,8 @@ for (const [file, size] of out) {
   await sharp(source).resize(size, size).png().toFile(file);
   console.log(file);
 }
-await sharp(source).resize(400, 400).flatten({ background: "#ffffff" })
-  .extend({ top: 56, bottom: 56, left: 56, right: 56, background: "#ffffff" })
+await sharp(source).resize(400, 400).flatten({ background: "#692d2d" })
+  .extend({ top: 56, bottom: 56, left: 56, right: 56, background: "#692d2d" })
   .png().toFile("public/icons/icon-maskable-512.png");
 await sharp(Buffer.from(badge)).resize(96, 96).png().toFile("public/icons/badge-96.png");
 

@@ -61,4 +61,3 @@ begin
  return new; end $$;
 revoke all on function report.notify_minister_message() from public,anon,authenticated;
 create trigger minister_message_inbox after insert on report.minister_messages for each row execute function report.notify_minister_message();
-

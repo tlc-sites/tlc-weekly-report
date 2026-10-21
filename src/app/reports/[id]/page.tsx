@@ -13,6 +13,7 @@ import type { Group } from "@/lib/groups";
 import {
   CAMPUS_COUNTS,
   CAMPUS_TEXTS,
+  CAMPUS_SECTIONS,
   ISSUE_STATUS_LABEL,
   REPORT_STATUS_LABEL,
   RESULT_LABEL,
@@ -215,7 +216,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
               (i) => [`이슈 · ${i.category}`, `${i.content}${i.action ? `\n→ ${i.action}` : ""} (${ISSUE_STATUS_LABEL[i.status]})`] as [string, string],
             ),
             ["요청사항", requests.map((r) => `[${r.category}] ${r.content}`).join("\n")],
-            ["특이사항", str("notes")],
+            [group.type === "worship" ? "사역 보고·다음 주 준비" : "특이사항", str("notes")],
           ]}
         />
       );
@@ -233,6 +234,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         lodging: prev.lodging ?? "",
         saturday: prev.saturday ?? [],
         saturday_other: prev.saturday_other ?? "",
+        report_mode:"sections",
+        sections:prev.sections??{},
         texts: Object.fromEntries(CAMPUS_TEXTS.map(([k]) => [k, prev.texts?.[k] ?? ""])) as CampusPayload["details"]["texts"],
       },
       messages,
@@ -256,6 +259,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           ["경비", CAMPUS_COUNTS.map(([k, label]) => `${label.replace(" 횟수", "")} ${dd.counts[k] ?? "-"}`).join(", ")],
           ["숙소", dd.lodging],
           ["토요일 예배팀 모임", [...dd.saturday, dd.saturday_other].filter(Boolean).join(", ")],
+          ...CAMPUS_SECTIONS.map(([k,label])=>[label,dd.sections?.[k]??""] as [string,string]),
           ...CAMPUS_TEXTS.map(([k, label]) => [label, dd.texts[k]] as [string, string]),
         ]}
       />
@@ -279,7 +283,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       <div className="mb-4 flex flex-col gap-2">
         {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}
-        {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt/> : null}
+        {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt returnTo={`/groups/${group.id}?week=${weekOf(report.meeting_date)}`}/> : null}
         {message ? <ErrorText>{message}</ErrorText> : null}
         {existing ? <p className="rounded-lg bg-border/60 px-3 py-2 text-sm">이미 작성 중인 같은 보고가 있어서 이어서 엽니다.</p> : null}
         {saved ? (

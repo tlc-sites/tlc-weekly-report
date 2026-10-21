@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Field, inputClass } from "@/components/ui";
 import {
   CAMPUS_COUNTS,
+  CAMPUS_SECTIONS,
   CAMPUS_LODGING_NONE,
   CAMPUS_OFFERINGS,
   CAMPUS_SATURDAY,
@@ -28,7 +29,7 @@ export function CampusForm({
   showMessages: boolean;
   authorName: string;
 }) {
-  const [p, setP] = useState(initial);
+  const [p, setP] = useState<CampusPayload>({...initial,details:{...initial.details,report_mode:"sections" as const}});
   const d = p.details;
   const set = (patch: Partial<Details>) => setP({ ...p, details: { ...d, ...patch } });
   const toggle = <T extends string>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
@@ -37,6 +38,9 @@ export function CampusForm({
 
   return (
     <ReportForm action={action} reportId={reportId} type="campus" payload={p}>
+      <p className="mb-4 text-sm text-muted">보고할 항목을 펼쳐 작성해 주세요. 작성한 항목만 제출됩니다.</p>
+      {CAMPUS_SECTIONS.map(([key,label])=><details key={key} className="mb-3 rounded-xl border border-border bg-surface p-4"><summary className="cursor-pointer font-semibold">{label}{d.sections?.[key]?.trim()?" · 작성됨":""}</summary><div className="mt-3"><TextArea label={`${label} 보고`} rows={4} maxLength={2000} value={d.sections?.[key]??""} onChange={value=>set({sections:{...d.sections,[key]:value}})}/></div></details>)}
+      <details className="mb-4 rounded-xl border border-border p-4"><summary className="cursor-pointer text-sm font-semibold">기존 방문·경비·사역 기록</summary>
       <Section title="방문 정보" hint="* 표시는 제출할 때 꼭 채워야 하는 항목입니다.">
         <Field label="교역자 이름">
           <input value={authorName} readOnly className={`${inputClass} text-muted`} />
@@ -144,6 +148,7 @@ export function CampusForm({
         ))}
       </Section>
 
+      </details>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
   );

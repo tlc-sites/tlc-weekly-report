@@ -1,4 +1,5 @@
 "use client";
+import {groupDisplayName} from "@/lib/group-display";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -16,7 +17,7 @@ export function GroupPicker({ groups, base = "/groups", suffix = "", defaultCate
     </label>
     {category ? <ul className="divide-y divide-border">{groups.filter(g => groupCategory(g) === category).map(g =>
       <li key={g.id}><Link className="flex min-h-12 items-center justify-between gap-2 py-2" href={`${base}/${g.id}${suffix}`}>
-        <span className={g.is_active ? "" : "text-muted line-through"}>{g.name}</span><span aria-hidden>›</span>
+        <span className={g.is_active ? "" : "text-muted line-through"}>{groupDisplayName(g.name)}</span><span aria-hidden>›</span>
       </Link></li>)}{!groups.some(g => groupCategory(g) === category) ? <li className="py-3 text-sm text-muted">배정된 그룹이 없습니다.</li> : null}</ul> : null}
   </div>;
 }

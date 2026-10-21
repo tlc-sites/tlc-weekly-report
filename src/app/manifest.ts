@@ -7,13 +7,13 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "교육부서, 예배팀, 캠퍼스 보고",
     start_url: "/",
     display: "standalone",
-    background_color: "#f3f5f9",
-    theme_color: "#20365b",
+    background_color: "#f8f4f0",
+    theme_color: "#692d2d",
     lang: "ko",
     icons: [
-      { src: "/icons/icon-192.png?v=weekly-report-1", sizes: "192x192", type: "image/png" },
-      { src: "/icons/icon-512.png?v=weekly-report-1", sizes: "512x512", type: "image/png" },
-      { src: "/icons/icon-maskable-512.png?v=weekly-report-1", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icons/icon-192.png?v=burgundy-report-20261021", sizes: "192x192", type: "image/png" },
+      { src: "/icons/icon-512.png?v=burgundy-report-20261021", sizes: "512x512", type: "image/png" },
+      { src: "/icons/icon-maskable-512.png?v=burgundy-report-20261021", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

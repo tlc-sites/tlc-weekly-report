@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "node --test tests/rls.test.mjs tests/upgrade.test.mjs tests/reminders.test.mjs tests/service-schedule.test.mjs tests/report-week.test.mjs tests/report-identity.test.mjs tests/roles.test.mjs tests/scoped-reports.test.mjs tests/ministry-round2.test.mjs tests/admin-submissions.test.mjs tests/admin-author.test.mjs tests/positions.test.mjs tests/inbox-replies.test.mjs tests/push-navigation.test.mjs tests/prayer-messages.test.mjs"
+    "test:db": "node --test tests/rls.test.mjs tests/upgrade.test.mjs tests/reminders.test.mjs tests/service-schedule.test.mjs tests/report-week.test.mjs tests/report-identity.test.mjs tests/roles.test.mjs tests/scoped-reports.test.mjs tests/ministry-round2.test.mjs tests/admin-submissions.test.mjs tests/admin-author.test.mjs tests/positions.test.mjs tests/inbox-replies.test.mjs tests/push-navigation.test.mjs tests/prayer-messages.test.mjs tests/deadlines-directory.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
