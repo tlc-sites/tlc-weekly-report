@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import type { Member } from "@/lib/members";
 import { MemberPhoto } from "./member-photo";
 

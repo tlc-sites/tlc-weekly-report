@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { requireActive, canManage, isSenior } from "@/lib/auth";
 import { groupCategory, listGroupsOrdered } from "@/lib/groups";
 import { reportWeek, formatWeek, todayKST } from "@/lib/week";

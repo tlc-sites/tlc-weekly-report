@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { requireActive } from "@/lib/auth";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, buttonClass } from "@/components/ui";
 import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";

@@ -1,6 +1,6 @@
 import {meetingDisplayName} from "@/lib/group-display";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { requireAdmin } from "@/lib/auth";
 import { loadAdminSubmissions } from "@/lib/admin-submissions";
 import { addDays, formatWeek, reportWeek, todayKST } from "@/lib/week";

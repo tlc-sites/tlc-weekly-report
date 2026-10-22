@@ -1,5 +1,5 @@
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {requireActive,isSenior} from "@/lib/auth";
 import {notFound,redirect} from "next/navigation";
 import {Card,Field,PageTitle,Loading,inputClass,smallButtonClass} from "@/components/ui";

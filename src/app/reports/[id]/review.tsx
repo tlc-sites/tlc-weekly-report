@@ -1,7 +1,8 @@
+import {SubmitButton} from "@/components/submit-button";
 import {loadFeedbackReplies} from "@/lib/feedback-replies";
 import {AutoTranslation} from "@/components/auto-translation";
 import { FeedbackReplies } from "@/components/feedback-replies";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { Card, buttonClass, secondaryButtonClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { addComment, deleteComment, setReviewStatus } from "./actions";
@@ -84,9 +85,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
         {canComment ? <form action={addComment} className="flex flex-col gap-2">
           <input type="hidden" name="reportId" value={reportId} />
           <textarea name="body" required maxLength={1000} rows={2} placeholder="보고서에 대한 코멘트를 바로 남겨 주세요." className={textareaClass} />
-          <button type="submit" className={`${smallButtonClass} self-end`}>
-            코멘트 등록
-          </button>
+          <SubmitButton className={`${smallButtonClass} self-end`} pendingText="코멘트 등록 중…">코멘트 등록</SubmitButton>
         </form> : <p className="text-xs text-muted">담임 목사님·담임 사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
       </Card>
     </section>

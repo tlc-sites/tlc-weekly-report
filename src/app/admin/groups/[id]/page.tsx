@@ -1,6 +1,6 @@
 import { ArchiveGroupButton } from "@/components/archive-group-button";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { notFound } from "next/navigation";
 import {
   BackLink,

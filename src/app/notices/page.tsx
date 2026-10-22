@@ -1,6 +1,6 @@
 import {MinisterMessageComposer} from "@/components/minister-message-composer";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { BackLink, Card, Field, Loading, PageTitle, inputClass, selectClass, textareaClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { requireActive, canManage, isClergy } from "@/lib/auth";

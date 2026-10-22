@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {ReportReadStatus} from "@/components/report-read-status";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import {AutoTranslation} from "@/components/auto-translation";

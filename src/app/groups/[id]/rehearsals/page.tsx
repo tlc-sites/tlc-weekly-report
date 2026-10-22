@@ -1,6 +1,6 @@
 import {z} from "zod";
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {notFound} from "next/navigation";
 import {requireActive} from "@/lib/auth";
 import {getGroupAccess} from "@/lib/access";

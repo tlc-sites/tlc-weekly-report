@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/pending-link";
 
 const ITEMS = [
   { href: "/admin/submissions", label: "제출현황" },

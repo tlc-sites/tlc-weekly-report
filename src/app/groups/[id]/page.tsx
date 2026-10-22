@@ -5,7 +5,7 @@ import { NoMeeting } from "./no-meeting";
 import { SubmitButton } from "@/components/submit-button";
 import { serviceOccursOn } from "@/lib/service-schedule";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {
   BackLink,
   Badge,

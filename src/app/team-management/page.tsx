@@ -1,5 +1,5 @@
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {redirect} from "next/navigation";
 import {requireActive,isClergy,isSenior} from "@/lib/auth";
 import {listGroupsOrdered,NAV_CATEGORY_LABEL,groupCategory} from "@/lib/groups";

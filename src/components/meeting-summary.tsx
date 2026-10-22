@@ -1,5 +1,5 @@
 import { getReportIdentity } from "@/lib/report-identity";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { Badge, Card } from "./ui";
 import { reportTitle, type MeetingReport } from "@/lib/meeting";
 import { RESULT_LABEL } from "@/lib/report-forms";

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { AccountNotifications } from "@/components/account-notifications";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { MenuIcon } from "@/components/menu-heading";
 import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
 import {BottomNavigation} from "@/components/bottom-navigation";

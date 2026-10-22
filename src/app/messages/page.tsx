@@ -1,6 +1,6 @@
 import {MinisterMessageComposer} from "@/components/minister-message-composer";
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {requireActive,isClergy} from "@/lib/auth";
 import {redirect} from "next/navigation";
 import {PageTitle,Loading} from "@/components/ui";

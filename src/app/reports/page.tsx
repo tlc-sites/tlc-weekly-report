@@ -1,6 +1,6 @@
 import {meetingDisplayName} from "@/lib/group-display";
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {requireActive} from "@/lib/auth";
 import {getReportIdentity} from "@/lib/report-identity";
 import {reportWeek,addDays,formatWeek,todayKST} from "@/lib/week";

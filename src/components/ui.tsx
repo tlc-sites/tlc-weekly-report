@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -51,7 +51,7 @@ export function ErrorText({ children }: { children: ReactNode }) {
 }
 
 export function Loading() {
-  return <p className="py-10 text-center text-sm text-muted">불러오는 중…</p>;
+  return <div role="status" aria-live="polite" className="rounded-2xl border border-border bg-surface p-5"><div className="flex items-center gap-3 text-sm font-medium text-accent"><span aria-hidden className="size-5 shrink-0 rounded-full border-2 border-accent border-r-transparent motion-safe:animate-spin"/>화면을 불러오고 있습니다</div><p className="mt-2 text-xs text-muted">잠시만 기다려 주세요.</p><div aria-hidden className="mt-5 space-y-3 motion-safe:animate-pulse"><div className="h-4 w-2/3 rounded bg-accent/10"/><div className="h-16 rounded-xl bg-accent/5"/><div className="h-16 rounded-xl bg-accent/5"/></div></div>;
 }
 
 export const buttonClass =

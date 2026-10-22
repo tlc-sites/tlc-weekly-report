@@ -1,7 +1,7 @@
 "use client";
 import {groupDisplayName} from "@/lib/group-display";
 
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { useState } from "react";
 import { NAV_CATEGORY_LABEL, groupCategory, type OrderedGroup } from "@/lib/groups";
 import { selectClass } from "./ui";

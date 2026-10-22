@@ -1,4 +1,4 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {usePathname} from "next/navigation";
 export function BottomNavigationLinks({management}:{management:boolean}){const path=usePathname();const managing=path==="/manage"||path.startsWith("/admin/")||path.startsWith("/team-management");return <nav data-print-hide aria-label="하단 메뉴" className="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur"><div className="mx-auto grid w-full max-w-2xl grid-cols-2 gap-2 px-4 pt-2"><Link href="/write" aria-current={!managing?"page":undefined} className={"flex min-h-12 items-center justify-center rounded-xl px-3 text-sm font-semibold "+(!managing?"bg-accent text-accent-foreground":"text-muted")}>보고서 작성</Link><Link href={management?"/manage":"/reports"} aria-current={managing?"page":undefined} className={"flex min-h-12 items-center justify-center rounded-xl px-3 text-sm font-semibold "+(managing?"bg-accent text-accent-foreground":"text-muted")}>{management?"관리":"내 보고서"}</Link></div></nav>;}

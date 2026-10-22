@@ -1,5 +1,5 @@
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {notFound,redirect} from "next/navigation";
 import {requireActive} from "@/lib/auth";
 import {todayKST,isIsoDate} from "@/lib/week";

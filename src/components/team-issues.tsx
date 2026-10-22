@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { IncidentFeedback } from "./incident-feedback";
 import { Card, Badge, ErrorText } from "./ui";
 import { IncidentForm } from "@/app/incidents/incident-form";

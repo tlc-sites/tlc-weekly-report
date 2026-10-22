@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {useEffect,useState} from "react";
 import {loadUnreadNotificationCount} from "@/app/notifications/actions";
 export function NotificationBell(){

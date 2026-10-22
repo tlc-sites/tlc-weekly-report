@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { requireActive, isSenior } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
 import { BackLink, Card, Loading, PageTitle } from "@/components/ui";

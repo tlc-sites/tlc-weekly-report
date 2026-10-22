@@ -1,6 +1,6 @@
 import {AutoTranslation} from "@/components/auto-translation";
 import {Suspense} from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import {redirect} from "next/navigation";
 import {requireActive,isClergy,isSenior} from "@/lib/auth";
 import {Loading,Card,PageTitle,Badge} from "@/components/ui";

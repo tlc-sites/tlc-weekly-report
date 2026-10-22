@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { redirect } from "next/navigation";
 import { Card, Loading, PageTitle } from "@/components/ui";
 import { SignOutButton } from "@/components/signout-button";

@@ -3,7 +3,7 @@ import { GroupPicker } from "@/components/group-picker";
 import { HomeOverview, type OverviewReport } from "@/components/home-overview";
 import { MenuHeading, MenuIcon } from "@/components/menu-heading";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { Card, Loading, PageTitle } from "@/components/ui";
 import { PushBanner } from "@/components/push-banner";
 import { SignOutButton } from "@/components/signout-button";

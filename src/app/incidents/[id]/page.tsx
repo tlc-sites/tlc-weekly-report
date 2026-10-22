@@ -1,7 +1,7 @@
 import { IncidentSharing } from "@/components/incident-sharing";
 import { IncidentFeedback } from "@/components/incident-feedback";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { notFound } from "next/navigation";
 import { requireActive } from "@/lib/auth";
 import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";

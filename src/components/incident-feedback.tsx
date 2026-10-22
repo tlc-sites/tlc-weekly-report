@@ -1,3 +1,4 @@
+import {SubmitButton} from "@/components/submit-button";
 import {loadFeedbackReplies} from "@/lib/feedback-replies";
 import { FeedbackReplies } from "@/components/feedback-replies";
 import { requireActive, isClergy, isSenior } from "@/lib/auth";
@@ -15,6 +16,6 @@ export async function IncidentFeedback({ incidentId }: { incidentId: string }) {
         {isSenior(profile) || (isClergy(profile) && c.author_id===profile.id) ? <form action={deleteIncidentFeedback}><input type="hidden" name="incidentId" value={incidentId}/><input type="hidden" name="commentId" value={c.id}/><button className="underline">삭제</button></form>:null}
       </div><p className="mt-1 whitespace-pre-wrap text-sm">{c.body}</p><FeedbackReplies kind="incident" commentId={c.id} items={replies}/>
     </div>)}
-    {isClergy(profile) ? <form action={addIncidentFeedback} className="flex flex-col gap-2"><input type="hidden" name="incidentId" value={incidentId}/><textarea name="body" required maxLength={1000} rows={2} placeholder="이 이슈에 대한 피드백을 남겨 주세요." className={textareaClass}/><button className={`${smallButtonClass} self-end`}>피드백 등록</button></form>:<p className="text-xs text-muted">교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
+    {isClergy(profile) ? <form action={addIncidentFeedback} className="flex flex-col gap-2"><input type="hidden" name="incidentId" value={incidentId}/><textarea name="body" required maxLength={1000} rows={2} placeholder="이 이슈에 대한 피드백을 남겨 주세요." className={textareaClass}/><SubmitButton className={`${smallButtonClass} self-end`} pendingText="등록 중…">피드백 등록</SubmitButton></form>:<p className="text-xs text-muted">교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
   </Card></section>;
 }

@@ -1,7 +1,7 @@
 import { groupIncidentEvents } from "@/lib/incident-events";
 import { MeetingSummary } from "@/components/meeting-summary";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { redirect } from "next/navigation";
 import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
 import { requireActive, isClergy } from "@/lib/auth";

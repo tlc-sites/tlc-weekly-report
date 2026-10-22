@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 
 // 이 기기에서 알림을 아직 켜지 않았으면 설정 화면으로 안내한다 (지원하지 않는 환경에서도 안내)
 async function shouldShow() {

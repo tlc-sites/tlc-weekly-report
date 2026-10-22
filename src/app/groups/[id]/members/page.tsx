@@ -1,6 +1,6 @@
 import { MemberCards } from "@/components/member-cards";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { notFound } from "next/navigation";
 import {
   BackLink,

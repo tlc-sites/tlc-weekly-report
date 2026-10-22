@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { Card, smallButtonClass } from "./ui";
 import { ReportStatusBadge } from "./report-status";
 import type { ReportStatus } from "@/lib/report-forms";

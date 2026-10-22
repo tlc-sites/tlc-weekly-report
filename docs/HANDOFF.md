@@ -577,3 +577,20 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-22 DB31 운영 적용·직접확인/답글/알림목록 앱 배포 시작
 - 사용자 신규승인 DB31 적용과 앱배포진행. outputs/report-deploy/apply-db31.sql 단일DO배치 PGlite 검증성공후 운영SQL실행. 사전3테이블false, 실행후 confirmations_ready/confirm_function_ready/prayer_replies_ready/notice_replies_ready 전부true. 증빙 outputs/report-deploy/db31-applied.png. 계정역할지정은승인범위에서명시제외/미실행.
 - 누적기능(직접확인, 메시지폼, 기도/공지답글, 피드백문구, 인증/답글조회최적화, 알림목록카드전체이동) 운영master반영예정. 앞선102테스트와최종lint/tsc/webpack41경로 성공후 이번배포중코드변경없음. 이번에테스트전부재실행한것은아니며 DB배치실행검증만새로수행. 메일/푸시/유료번역 발송없음.
+
+
+### 2026-10-22 DB31·직접확인/답글/알림목록 운영 배포 완료
+- e810d0254c98a075ce2f501d3de5bea996fd91f0 정상push: 54d1c29→e810d02 origin/master. Vercel EH3xRRJWDWh7S8Fp4YSyD668cSvw Production Ready43초, 운영 tlc-weekly-report.vercel.app 연결확인. 증빙 outputs/report-deploy/e810d02-production-ready.png. 운영DB31 적용완료.
+- 운영 /notifications 로그인없는브라우저접근 시 정상로그인화면으로이동 확인. 로그인된사용자의 카드읽음·이동/직접확인/답글은 운영실사용기록을남기는검증 미실행. 앞선102테스트·최종41경로빌드 통과상태로배포, 이번에는전체검증재실행없음. 이번DB31배치 PGlite 검증은 새로성공.
+- 실제계정역할지정은 사용자승인범위에서제외되었으므로미실행, 최상단활성계정0이라는 직전조회이후 변경없음. 담임목사님 계정아직없음, 담임사모님 지정은별도남음. 직접확인/교역자메시지는최상단역할배정후표시됨을사용자에게안내. 실제메일/푸시/유료번역 발송없음. 운영현재e810d02/DB31. 종료기록은로컬문서만추가, 추가빌드트리거하지않음. 루트/사용자타작업보존.
+
+
+### 2026-10-22 클릭·등록 즉시 진행상태 표시 (로컬)
+- 사용자 불확실한클릭반응 개선. 현재Next16.4의 loading/useLinkStatus 로컬문서 확인. components/pending-link.tsx 공통Link는 실제 Next내비게이션 pending동안 화면을여는중 상태+스피너표시, 완료시자동해제. 기존NextLink import를 동일props wrapper로 app/components에서교체(외부/새탭/뒤로이동 기본Link동작유지). app/loading.tsx 새경로fallback, ui.Loading 스피너·설명·skeleton으로보강.
+- SubmitButton 공통버튼 aria-busy/스피너보강. feedback-replies, incident-feedback, 보고서코멘트, prayer-meetings 등록/코멘트, messages답장에공통SubmitButton적용, 실제서버액션pending동안진행문구/disabled로중복방지. 이미보고서SubmitBar/직접확인/예배위원저장pending은그대로유지. notification-list 새로고침에useTransition진행상태추가.
+- 개인정보없는개발전용 /auth/ui-preview와 /next fixture(3.5초지연)에서실제Chrome검증: 등록클릭직후 disabled버튼/status등록중, 완료후버튼복귀. Link클릭직후 status화면을여는중 표시, 목적화면표시후해제. 증빙 outputs/mobile-ui/action-saving.png·action-navigation.png. fixture원본 interaction-preview-page/interaction-next-page 보존, 임시앱페이지둘삭제/생성타입정리/dev서버종료. 지연fixture에서Next개발경고표시는있었으나실제상태전환확인, 최종앱빌드에fixture없음.
+- 이번최종lint/tsc/webpack41경로/diffcheck성공. DB/권한변경없는UI작업이라DB테스트재실행없음. 실제운영지연시간개선율을측정한것아니며처리상태표시개선임. 운영배포없음, 운영e810d02/DB31유지. 담임계정역할지정미완료/사용자타작업보존.
+
+
+### 2026-10-22 클릭 진행상태 앱 배포 시작
+- 사용자 배포승인. 이번은 app/loading·pending-link·SubmitButton 진행표시 및 적용부만 변경, DB마이그레이션/계정변경 없음. 직전lint/tsc/webpack41경로와3.5초실브라우저대기상태테스트 통과 후 코드수정없이 배포. 운영master 정상push 및 VercelReady확인예정.

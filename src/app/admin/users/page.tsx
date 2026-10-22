@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/components/pending-link";
 import { AdminNav } from "@/components/admin-nav";
 import { Card, ErrorText, Loading, PageTitle, buttonClass, secondaryButtonClass } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
