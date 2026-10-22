@@ -207,7 +207,7 @@ export function EducationForm({
       </Section>
 
       <Section title="예배·교육">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="설교 본문">
             <input
               value={p.details.sermon_passage}

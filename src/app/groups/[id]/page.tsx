@@ -1,4 +1,4 @@
-import {groupDisplayName} from "@/lib/group-display";
+import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
 import { ReportKindFields } from "./report-kind-fields";
 import { NoMeeting } from "./no-meeting";
@@ -124,7 +124,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     weekday === null ? maxDate : dateInWeek(week, weekday);
   const options = [
     ...services.filter(s => serviceOccursOn(defaultDate(s.weekday), s)).filter(s => defaultDate(s.weekday) <= today).map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday), fixedDate: s.weekday !== null })),
-    ...meetingTypes.filter(m => defaultDate(m.weekday) <= today).map((m) => ({ value: `meeting:${m.id}`, label: m.name, date: defaultDate(m.weekday), fixedDate: m.weekday !== null })),
+    ...meetingTypes.filter(m => defaultDate(m.weekday) <= today).map((m) => ({ value: `meeting:${m.id}`, label: meetingDisplayName(m.name), date: defaultDate(m.weekday), fixedDate: m.weekday !== null })),
   ];
 
   return (
@@ -163,7 +163,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               <li key={r.id}>
                 <Link href={`/reports/${r.id}`} className="flex items-center justify-between gap-2 py-3">
                   <span>
-                    <span className="font-medium">{r.service?.name ?? r.meeting?.name ?? r.meeting_label}</span>
+                    <span className="font-medium">{meetingDisplayName(r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "보고")}</span>
                     <span className="ml-2 text-xs text-muted">
                       {formatDate(r.meeting_date)} · {getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""}
                     </span>

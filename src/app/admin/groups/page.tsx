@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { GroupPicker } from "@/components/group-picker";
 import { Suspense } from "react";
 
@@ -59,7 +60,7 @@ async function AdminGroupsContent({ searchParams }: Pick<PageProps<"/admin/group
               <option value="">없음 (최상위 그룹)</option>
               {roots.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.name}
+                  {groupDisplayName(g.name)}
                 </option>
               ))}
             </select>

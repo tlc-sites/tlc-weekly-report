@@ -214,7 +214,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
       </Section>
 
       {data.schools.length ? (
-        <Section title="학교 예배·교육">
+        <Section title="채플·교육">
           <div className="flex flex-col gap-5 text-sm">
             {data.schools.map((r) => (
               <article key={r.id} className="break-inside-avoid">

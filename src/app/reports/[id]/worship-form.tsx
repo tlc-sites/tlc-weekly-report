@@ -21,10 +21,10 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
       <p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배·기술팀 사역 보고입니다. 출결 대신 담당하신 사역, 진행 내용과 필요한 조치를 기록해 주세요. 예배팀 리허설 참석은 별도 메뉴에서 관리합니다.</p>
-      <Section title="말씀과 예배위원">
+      <Section title="말씀">
         <Field label="말씀본문"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
         <TextArea label="말씀·예배 내용" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
-        <p className="text-sm text-muted">예배위원은 위의 공유 명단에서 교역자가 등록하면 모든 팀에 함께 표시됩니다.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
+        <p className="text-sm text-muted">예배위원은 이 보고서 위쪽에서 입력할 수 있습니다. 같은 날짜·예배의 다른 팀 보고서에도 함께 표시됩니다.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
       <Section title="진행 결과">
         <div className="grid grid-cols-3 gap-2">
@@ -64,11 +64,11 @@ export function OtherForm({ action, reportId, initial, showMessages, internship=
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
-      <Section title={internship ? "스데반 인턴십 · 예배 보고":"학교 예배·교육"}>
+      <Section title={internship ? "스데반 인턴십 · 예배 보고":"채플·교육"}>
         <TextArea label="예배 송리스트" value={p.details.song_list} maxLength={2000}
           placeholder="곡 제목을 순서대로 한 줄에 하나씩 적어 주세요."
           onChange={(song_list) => setP({ ...p, details: { ...p.details, song_list } })} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="설교본문">
             <input className={inputClass} maxLength={100} value={p.details.sermon_passage}
               placeholder="예: 요한복음 3:16"

@@ -490,3 +490,62 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-22 DB25~28 운영 적용 및 앱 배포 시작
 - 사용자 신규 승인: DB25~28 적용과 앱 배포 진행. 운영 Supabase SQL Editor의 report 스키마에 단일 DO 배치 적용 성공, autosave_ready/worship_staff_ready/clergy_default_read_ready 모두true 확인. 사전 조회는 DB26~28 모두false. 배치 로컬 PGlite 실행도 true3개 확인. 증빙 outputs/report-deploy/db25-db28-applied.png.
 - 앱 누적 변경은 직전 턴98/98·lint·tsc·webpack40경로 검증 완료 상태. 이번 배포 준비 중 코드 수정 없음. 번역 유료 API 환경 변수는 미설정 상태 유지, 실제 메일·번역·푸시 테스트 발송 없음. 이제 운영 master에 정상 push 후 Vercel Ready 확인 예정.
+
+
+### 2026-10-22 누적 변경 운영 배포 완료
+- 9a7a6de62f7998b71c7cb8f76f4ca81193ba7da6 정상 push: 5279e0a→9a7a6de origin master. Vercel 배포 7QrvoLnvoNDVkGCZrHC3fnMpj31R Production Ready/30초, tlc-weekly-report.vercel.app 도메인 연결 확인. 증빙 outputs/report-deploy/9a7a6de-production-ready.png.
+- 운영 DB25~28 적용 완료(위 영수증 참조). 운영 사이트 실제 브라우저 접속 시 새 보고 내용 번역 언어 전환 버튼과 로그인 화면 정상 표시. 로그인된 사용자의 저장·자동저장·권한별 화면은 이번 운영 세션에서 직접 확인하지 않음. 직전 턴 98테스트/lint/tsc/build 성공 이후 코드 변경 없이 배포했고 이번에는 재실행하지 않음.
+- 번역 API 환경 설정과 실제 번역 활성화, 주간메일 설정, 최상단 계정 지정은 별도 미완료 유지. 실제 메일·푸시 테스트 발송 없음. 이번 작업 종료 기록만 로컬 HANDOFF에 추가하며 문서 때문에 추가 운영 빌드를 만들지 않음.
+
+
+### 2026-10-22 예배위원 보고서 내 입력·관리 메뉴 정리 (로컬)
+- 사용자 정정: 별도 공유예배위원 카테고리가 아니라 같은 날짜·예배의 다른 팀 보고서에 먼저 작성한 예배위원이 표시되길 원함. components/shared-worship-staff.tsx는 별도 화면 이동 링크 대신 보고서 내 입력 폼으로 교체. report-worship-staff-editor.tsx, reports/[id]/worship-staff-actions.ts 신규. 교역자 이상 입력/활성사용자 읽기 기존 DB27 RLS 유지. 실제 날짜·예배는 RLS 열람 가능한 보고서에서 서버 조회, 클라이언트가 임의 예배 전달 불가. 저장 후 이동하지 않고 완료 문구 표시, updated_at 조건 갱신으로 타 화면 수정 덮어쓰기 방지.
+- reports/[id]/page.tsx reportId전달, worship-form.tsx 중복 안내 수정. manage/page.tsx는 공지·소통/비공개 메시지를 상단으로 이동하고 독립 공유예배위원 링크 제거. 기존 /worship-staff 주소 및 DB자료는 삭제하지 않고 호환용 유지. 관리 메뉴에 대한 선택 질문에는 아직 응답이 없어 이 방향을 commentary로 명시하고 구현.
+- 이번 검증 lint/tsc 성공, webpack build40경로 성공, 예배위원 권한 테스트1/1 및 타 팀 수정 후 stale timestamp UPDATE0건 검증 성공, diffcheck 성공(LF안내만). 전체98테스트 재실행은 하지 않음. 실사용 로그인 UI 검증 미실행.
+- 운영은 9a7a6de/DB28 유지. 이번 수정은 로컬만, 추가 DB변경/운영배포 없음. 기존 사용자/문서 수정 보존.
+
+
+### 2026-10-22 관리탭 소통메뉴 제외·공지 분류 (로컬)
+- 사용자 응답으로 앞선 관리탭 방향 정정: 공유예배위원·비공개메시지·공지 모두 관리탭에서 제외. manage/page.tsx 링크 제거, 기존 제출현황/담당자·명단·주간요약 등 유지.
+- notices/page.tsx에 전체 공지와 일부 공개 메시지 URL탭 추가. 전체는 target_group_id=null/audience=all인 분류 공지, 일부는 개별부서 또는 특정직급 공지로 서버 조회 단계에서 분리한 뒤 50건 제한. 전체 공지는 기존 대상분류 전체 구성원 기준임을 안내하며 교회 전체로 RLS범위를 넓히지 않음. 일부탭에 교역자 이상만 기존 minister_threads RLS로 허용된 대화 목록과 기존 메시지 보내기 화면 링크 표시. 새 메시지 권한/대상 기능을 만들거나 기존 비공개를 공개하지 않음.
+- 이번 전체 test:db98/98, lint, tsc, webpack build40경로, diffcheck 성공. 초기 문자열 치환이 CRLF 때문에 누락되어 restricted변수 참조 타입오류 발생, 선언구간 수정 후 전부 재실행 성공. 실제 로그인 UI 미검증. DB변경·배포 없음. 운영9a7a6de/DB28 유지. 직전 보고서 내 예배위원 입력 수정도 로컬 유지.
+
+
+### 2026-10-22 코멘트 명칭·교육부서 출생연도 표시 보완 (로컬)
+- incident-feedback.tsx 제목을 사용자 요청대로 담임목사님, 담임사모님 코멘트로 변경. admin/users/[id]/page.tsx 역할 설명의 목회피드백은 보고서코멘트로 정리. 권한 변경 없음.
+- groupDisplayName은 기존 GroupPicker/부서 상세에만 적용되어 홈 일부 목록·관리자 그룹목록·보고서 부서명에 출생연도가 빠짐. src/app/page.tsx, admin/groups/page.tsx, reports/[id]/page.tsx에도 기존 공통표시 적용. 기존 부서/출생연도 매핑과 중등·고등 분리 유지.
+- 이번 lint, tsc --noEmit, diffcheck 성공. 문구/표시만 변경하여 DB테스트·build 재실행은 안 함(직전 공지탭 작업의98테스트/40경로빌드와 구분). 실제 로그인 UI 미검증. 배포/DB변경 없음, 운영9a7a6de/DB28 유지.
+
+
+### 2026-10-22 담임목사님·담임사모님 보고서 열람 표시 (로컬)
+- reports/[id]/page.tsx 제출/확인 보고서에 두 분의 독립 열람현황 표시. components/report-read-status.tsx는 실제 표시된 탭의 클라이언트 effect에서만 기록 요청(서버 render/prefetch는 기록 안함), role별 시각과 현 버전/이전버전 열람 구분. 기존 검토완료 상태와 분리. 보고서 updated_at이 바뀌면 이전 보고 열람·수정 후 미열람으로 표시, 다시 열면 갱신. 현재는 보고서 상세 화면 열람만 기록, 주간 요약에서 보는 것은 기록하지 않음.
+- DB29 20261112000000_senior_report_reads.sql: report.senior_report_reads 역할별 PK, RLS 보고 열람자만SELECT/직접쓰기 차단. mark_senior_report_read는 활성 최상단 실제 role만 사용, report 행 공유잠금+버전일치 검사, 초안 차단, 같은 버전 재열람은 최초시각 유지. read-actions.ts 서버활성계정/최상단 재검증, 원문이나 비공개 데이터 전송 없음.
+- tests/senior-reads.test.mjs, package test목록 추가: 역할별 기록·일반관리자/작성자/비활성 위조 차단·타인 기록 열람 차단·수정 버전충돌·초안차단 검증. 초기 fixture의 최상단 역할중복 및 Date객체 strict비교 오류 수정 후 성공. 이번 전체 test:db99/99, lint/tsc, webpack40경로, diffcheck 통과. 실제 최상단 로그인 UI 미검증.
+- DB29 파일 작성만, 운영적용/배포/실제 열람기록 변경 없음. 운영9a7a6de/DB28 유지. 운영 반영 시 DB29 별도승인 및 선적용 필요. 이전 로컬 변경 모두 보존.
+
+
+### 2026-10-22 보고 제출·교역자 수정 종 알림 (로컬)
+- 원인: 기존 inbox DB트리거는 코멘트·답글만 처리, 일반 보고 제출/수정은 알림함 저장 경로 없음. DB30 20261113000000_report_lifecycle_inbox.sql에서 reports after insert/update 트리거 추가. 제출 시 활성 담당교역자(상위그룹 소속 상속 포함)+담임 두 분, 교역자가 타인 제출 보고 수정 시 작성자+담당교역자+두 분 대상으로 종 알림. 행동자 자신과 비활성계정 제외, 단독 기능관리자/무관교역자 제외.
+- 임시저장/자동저장과 단순 검토상태 변경은 제외. 보고ID+트랜잭션+수신자 고유키로 같은 저장 중 다중UPDATE 중복 방지. 푸시 허용이 꺼져도 종 알림 저장, 실제 모바일 푸시 발송 연동은 이번 범위에 없음. 본문/기도/비공개메시지는 알림본문에 복사하지 않음. 기존 inbox 보고 RLS와 딥링크 유지.
+- components/notification-bell.tsx 읽지않은알림 배지 추가. 활성화면 최초·60초 간격·창포커스·종열기 시 조회. 기존 읽음 처리 및 내용 바로가기 유지.
+- tests/report-lifecycle-inbox.test.mjs 추가, package test목록 포함. 제출수신자3명/수정시작성자+두분/타인알림RLS/초안무알림/검토처리무알림/본문미노출 검증. 초기 fixture 직책누락 수정 후 전체test:db100/100, lint/tsc, webpack40경로, diffcheck 성공. 로그인 운영 종UI/실제푸시 검증 없음.
+- 운영DB30 적용/앱배포/실제사용자 알림발송 없음. 운영9a7a6de/DB28 유지. 다음 운영배포에는 기존 로컬 DB29 및 이번DB30 별도승인·선적용 필요. 기존 작업과 사용자 변경 보존.
+
+
+### 2026-10-22 채플 명칭·공통 모바일 메뉴 폭 점검 (로컬)
+- 사용자 요청 학교예배→채플: group-display.ts meetingDisplayName로 기존 학교예배/학교 예배 저장명을 UI에서 채플로 표시. groups/[id] 모임선택·보고목록, reports 상세·목록, admin/submissions에 적용. 학교 보고양식/회의자료 제목은 채플·교육. 기존 DB예배종류ID/보고명 원문과 과거마이그레이션·seed는 변경하지 않음.
+- 여러 메뉴 크기 문제 응답 반영: layout 상단 브랜드 flex-1/min-w-0·텍스트 줄바꿈·작은화면 글자크기, 종컨테이너 shrink-0, ui 공통 작은버튼 고정축소금지 대신 max-width·긴문구 줄바꿈, BackLink max폭, 알림긴제목/본문 줄바꿈. 학교·교육부서본문/설교자·부산날짜/경비는 모바일1열(sm이상2열), 부산선택버튼높이는 최소높이로 변경.
+- 컴퓨터 브라우저로 개인정보없는 로컬 /auth/ui-preview 공통 PrayerFields·실제 상단브랜드·공통버튼·메뉴와 채플필드 fixture 320/390폭 실측: overflow0개, viewport320/page305 및390/page375(스크롤바제외). 증빙 outputs/mobile-ui/menus-320.png·menus-390.png, fixture원본 menus-preview-page.tsx 보존. 임시 앱페이지 제거, dev서버종료, viewport reset. 로그인된 종/모든 실사용 메뉴 개별 검증은 아님.
+- 이번 lint/tsc 성공, 최종 webpack40경로빌드 성공, diffcheck성공. 임시페이지 삭제후 .next/dev/types/validator.ts가 남아 첫타입/빌드 실패했으나 해당생성파일정리후 tsc와build 재실행 성공. 문구/CSS만 바꿔 DB테스트는 이번에 재실행 안함(직전100/100과구분). DB/운영배포 없음, 운영9a7a6de/DB28 유지.
+
+
+### 2026-10-22 홈 카드 시각 균형·빈 분류 선택 보완 (로컬)
+- 사용자 스크린샷의 실제 문제 확인: 홈 비공개메시지 링크만 중앙정렬/min-height 누락, 회의자료1개가 고정2열 grid안에 남아 반폭 공백. page.tsx에서 기도회/메시지 동일80px최소높이·중앙정렬, 메시지는 공지 일부공개탭으로 연결, 회의자료는 한줄전체폭 아이콘+화살표 메뉴로 변경. 주간요약/담당명단 링크는 flex-wrap/gap으로 두문구간격 확보.
+- group-picker.tsx는 전달받은 실제작성가능그룹이있는분류만 선택가능. 초기분류가 비어있거나 유효하지않으면 첫 유효분류로 표시, 소속없음은 select 대신 안내문. screenshot처럼 교육부서가 선택됐는데 배정된그룹없음인상태 방지. 기존 RLS/권한 변경 없음.
+- 실제홈상단두카드 JSX 추출+실제 GroupPicker 사용한 개인정보없는 로컬fixture로320/390실측. 두카드높이80 동일/텍스트center/회의메뉴전체폭342.67(390뷰), 배정영상팀만있는fixture defaulteducation→예배기술자동선택 확인. 증빙 outputs/mobile-ui/home-cards-390.png, fixture원본home-cards-preview-page.tsx. 임시페이지제거/서버종료/viewport reset. 실제 로그인전체홈이 아닌 공통부품fixture 검증.
+- 이번 lint/tsc, webpack40경로, diffcheck 성공. CSS·목록표시만수정하여 DB테스트이번재실행없음. 초기편집CRLF문자열불일치로스크립트중단(파일쓰기전), 줄바꿈무관한수정으로재실행완료. 운영배포/DB변경없음, 운영9a7a6de/DB28 유지. 이전로컬요청·DB29/30파일 보존.
+
+
+### 2026-10-22 DB29·30 운영 적용 및 누적 UI 배포 시작
+- 사용자 신규승인 DB29·30 적용과 앱 배포 진행. outputs/report-deploy/apply-db29-db30.sql 단일 DO 배치 로컬 PGlite 성공 후 운영 SQL Editor 적용 완료. 사전 db29_present/db30_present=false, 적용후 reads_ready/read_function_ready/report_notifications_ready=true3개. 증빙 outputs/report-deploy/db29-db30-applied.png.
+- 보고서 내 예배위원 입력·공지분류·관리탭정리·코멘트명칭·연령표시·열람현황·종알림·채플표시·모바일메뉴 크기/정렬/빈분류 수정 누적반영 예정. 직전100테스트 검증 및 마지막 UI변경 lint/tsc/webpack40경로 통과 상태, 이번 배포 중 코드추가변경 없음. 실제 메일/푸시 테스트발송/유료번역API 호출 없음. 운영 master 정상push 후 Vercel Ready 확인 예정.

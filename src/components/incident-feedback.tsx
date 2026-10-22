@@ -7,7 +7,7 @@ export async function IncidentFeedback({ incidentId }: { incidentId: string }) {
   const {supabase,profile}=await requireActive();
   const {data,error}=await supabase.from("incident_comments").select("id,body,author_id,created_at,author:profiles(real_name)").eq("incident_id",incidentId).order("created_at");
   if(error) throw error;
-  return <section id="comments" className="mt-4"><h3 className="mb-2 text-sm font-semibold">목회 피드백</h3><Card className="flex flex-col gap-3">
+  return <section id="comments" className="mt-4"><h3 className="mb-2 text-sm font-semibold">담임목사님, 담임사모님 코멘트</h3><Card className="flex flex-col gap-3">
     {(data ?? []).map(c=><div key={c.id} className="border-b border-border pb-3">
       <div className="flex items-center justify-between gap-2 text-xs text-muted"><span>{(c.author as unknown as {real_name:string|null}|null)?.real_name ?? "교역자"} · {new Date(c.created_at).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}</span>
         {isSenior(profile) || (isClergy(profile) && c.author_id===profile.id) ? <form action={deleteIncidentFeedback}><input type="hidden" name="incidentId" value={incidentId}/><input type="hidden" name="commentId" value={c.id}/><button className="underline">삭제</button></form>:null}

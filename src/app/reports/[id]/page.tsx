@@ -1,3 +1,5 @@
+import {ReportReadStatus} from "@/components/report-read-status";
+import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import {AutoTranslation} from "@/components/auto-translation";
 import {reportSummaryLines} from "@/lib/weekly-summary";
 import {SharedWorshipStaff} from "@/components/shared-worship-staff";
@@ -88,6 +90,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     .eq("id", id)
     .maybeSingle<ReportRow>();
   if (!report?.group) notFound();
+  const reads=report.status!=="draft"?await supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null;
+  if(reads?.error)throw reads.error;
   const group = report.group;
   const serviceName=report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "예배";
   let incidentResult=null;
@@ -120,7 +124,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const messages: Messages = { ...emptyMessages() };
   for (const m of messagesRes.data ?? []) messages[m.recipient as keyof Messages] = m.body;
   const messagesToMe = isAuthor ? [] : (messagesRes.data ?? []);
-  const title = report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "보고";
+  const title = meetingDisplayName(report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "보고");
   const message = pickMessage(MESSAGES, error);
   const d = report.details;
   const str = (key: string) => (typeof d[key] === "string" ? (d[key] as string) : "");
@@ -276,8 +280,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   return (
     <>
-      <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{group.name}</BackLink>
-      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${group.name} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
+      <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{groupDisplayName(group.name)}</BackLink>
+      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
         <span className="flex items-center gap-2">
           {title}
           <Badge tone={report.status === "draft" ? "danger" : report.status === "reviewed" ? "accent" : "muted"}>
@@ -288,7 +292,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
-      <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date}/>
+      {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
+      <SharedWorshipStaff reportId={id} serviceId={report.service_type_id} date={report.meeting_date}/>
       {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">

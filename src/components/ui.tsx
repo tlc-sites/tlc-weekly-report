@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="mb-4 inline-flex min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
+    <Link href={href} className="mb-4 inline-flex max-w-full min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
       ← {children}
     </Link>
   );
@@ -59,7 +59,7 @@ export const buttonClass =
 export const secondaryButtonClass =
   "inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent/50 bg-surface px-[18px] py-3 text-[17px] font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const smallButtonClass =
-  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "inline-flex min-h-11 min-w-0 max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
   "h-12 min-w-0 max-w-full w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =

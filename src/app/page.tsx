@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { GroupPicker } from "@/components/group-picker";
 import { HomeOverview, type OverviewReport } from "@/components/home-overview";
 import { MenuHeading, MenuIcon } from "@/components/menu-heading";
@@ -57,9 +58,9 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
 
       <PushBanner />
-      {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 items-center justify-between rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
-      {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/messages" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">비공개 메시지</Link></div> : null}
-      {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 items-center justify-between rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리 · 담당 팀 명단</span><span>팀원 추가·수정 ›</span></Link> : null}
+      {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
+      {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/notices?tab=restricted" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">비공개 메시지</Link></div> : null}
+      {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리 · 담당 팀 명단</span><span>팀원 추가·수정 ›</span></Link> : null}
       <nav aria-label="주요 메뉴" className="mb-4 grid grid-cols-2 gap-2">
         <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 작성 · 추가</Link>
         {canManage(profile) ? <Link href={`/admin/submissions?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">관리 · 제출현황</Link> : <Link href={`/reports?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">내 보고 목록</Link>}
@@ -73,10 +74,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
           <GroupPicker groups={reportGroups} suffix={`?week=${week}`} defaultCategory={myGroups[0] ? groupCategory(myGroups[0]) : undefined} />
         </Card>
       ) : null}
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        {isClergy(profile) ? <Link href={`/meeting?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="meeting" small />교역자 회의 자료</Link> : null}
-
-      </div>
+      {isClergy(profile)?<Link href={`/meeting?week=${week}`} className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex min-w-0 items-center gap-3"><MenuIcon name="meeting" small/>교역자 회의 자료</span><span aria-hidden className="text-muted">›</span></Link>:null}
 
 
       {canManage(profile) ? (
@@ -137,7 +135,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
                   href={`/groups/${g.id}/members`}
                   className="inline-flex min-h-11 items-center rounded-xl border border-border bg-background/60 px-3 text-sm transition hover:border-accent/40 hover:bg-accent/5 active:scale-[0.98]"
                 >
-                  {g.name}
+                  {groupDisplayName(g.name)}
                 </Link>
               </li>
             ))}

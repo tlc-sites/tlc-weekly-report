@@ -58,7 +58,7 @@ export function CampusForm({
             <button
               type="button"
               onClick={() => set({ companion: companionIsNone ? "" : "없음" })}
-              className={`h-11 shrink-0 rounded-lg border px-4 text-sm ${companionIsNone ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border"}`}
+              className={`min-h-11 shrink-0 rounded-lg border px-4 text-sm ${companionIsNone ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border"}`}
             >
               없음
             </button>
@@ -72,7 +72,7 @@ export function CampusForm({
             />
           </div>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="판교 출발 날짜">
             <input type="date" value={d.depart_pangyo} onChange={(e) => set({ depart_pangyo: e.target.value })} className={inputClass} />
           </Field>
@@ -94,7 +94,7 @@ export function CampusForm({
       </Section>
 
       <Section title="경비">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CAMPUS_COUNTS.map(([key, label]) => (
             <Field key={key} label={label}>
               <input
@@ -160,7 +160,7 @@ function CheckGroup<T extends string>({ options, value, onToggle }: { options: r
           type="button"
           aria-pressed={value.includes(o)}
           onClick={() => onToggle(o)}
-          className={`h-10 rounded-lg border px-3 text-sm ${value.includes(o) ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border"}`}
+          className={`min-h-10 rounded-lg border px-3 py-2 text-sm ${value.includes(o) ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border"}`}
         >
           {o}
         </button>

@@ -1,3 +1,4 @@
+import {meetingDisplayName} from "@/lib/group-display";
 import { Suspense } from "react";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -35,7 +36,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
       <button className={smallButtonClass}>선택 적용</button>
     </form>
     <Card><p className="mb-2 text-sm text-muted">보고 {rows.length}건</p><ul className="divide-y divide-border">{rows.map(r => {
-      const body = <><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{names.get(r.group_id) ?? "이전 파트"} · {r.author_name}</p><ReportStatusBadge status={r.status}/></div><p className="mt-1 text-sm text-muted">{r.meeting_date} · {r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "모임"}</p>{r.submitted_at ? <p className="mt-1 text-xs text-muted">제출 {new Date(r.submitted_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p> : null}<p className="mt-1 text-xs text-muted">{r.can_open ? "보고 내용 열기 →" : "현황만 조회 가능"}</p></>;
+      const body = <><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{names.get(r.group_id) ?? "이전 파트"} · {r.author_name}</p><ReportStatusBadge status={r.status}/></div><p className="mt-1 text-sm text-muted">{r.meeting_date} · {meetingDisplayName(r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "모임")}</p>{r.submitted_at ? <p className="mt-1 text-xs text-muted">제출 {new Date(r.submitted_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p> : null}<p className="mt-1 text-xs text-muted">{r.can_open ? "보고 내용 열기 →" : "현황만 조회 가능"}</p></>;
       return <li key={r.id}>{r.can_open ? <Link href={`/reports/${r.id}`} className="block py-4">{body}</Link> : <div className="py-4">{body}</div>}</li>;
     })}</ul>{!rows.length ? <p>조건에 맞는 보고가 없습니다.</p> : null}</Card>
   </>;

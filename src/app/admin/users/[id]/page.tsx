@@ -74,7 +74,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
 
       {(isSenior(me) || (!isMe && !user.recipient_role)) && user.status === "active" ? <Card className="mb-4"><form action={setMinister} className="flex items-center justify-between gap-3">
         <input type="hidden" name="userId" value={user.id}/><input type="hidden" name="enabled" value={String(!user.is_minister)}/>
-        <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">담당 파트 수정·확인과 목회 피드백 작성. 다른 파트는 동급 작성 보고 또는 공개받은 내용만 열람합니다.</p></div>
+        <div><p className="font-semibold">교역자 역할</p><p className="text-xs text-muted">담당 파트 수정·확인과 보고서 코멘트 작성. 다른 파트는 동급 작성 보고 또는 공개받은 내용만 열람합니다.</p></div>
         <button className={secondaryButtonClass}>{user.is_minister ? "교역자 해제" : "교역자 지정"}</button>
       </form></Card> : null}
       {isSenior(me) && user.status === "active" && !isMe ? <Card className="mb-4"><form action={setRecipientRole} className="flex flex-col gap-2">
