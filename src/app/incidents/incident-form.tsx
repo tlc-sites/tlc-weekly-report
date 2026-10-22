@@ -14,6 +14,7 @@ export function IncidentForm({ incident, groups=[], services=[], initial, today,
   incident?:Incident; groups?:Option[]; services?:Option[]; today:string;
   initial?:{report_id:string;group_id:string;occurred_on:string;service_id:string;service_name:string};
 }) {
+  const [kind,setKind]=useState("service");
   const [detailed,setDetailed]=useState(incident?.detailed ?? !simple);
   const [state,action] = useActionState<FormState,FormData>(async (previous,form) => {
     const result=await saveIncident(previous,form);
@@ -27,10 +28,11 @@ export function IncidentForm({ incident, groups=[], services=[], initial, today,
     {state.error ? <ErrorText>{state.error}</ErrorText> : null}
     {incident ? <><input type="hidden" name="id" value={incident.id}/><input type="hidden" name="version" value={incident.updated_at}/></> : <>
       <input type="hidden" name="report_id" value={initial?.report_id ?? ""}/>
-      {initial ? <><input type="hidden" name="occurred_on" value={initial.occurred_on}/><p className="text-sm text-muted">{initial.occurred_on} · {initial.service_name}</p></> : <Field label="예배 날짜"><input className={inputClass} type="date" name="occurred_on" required max={today} defaultValue={value("occurred_on",today)}/></Field>}
-      {initial ? <><input type="hidden" name="service_id" value={initial.service_id}/><input type="hidden" name="service_name" value={initial.service_name}/></> : <>
-        <Field label="예배 구분"><select name="service_id" defaultValue={value("service_id")} className={selectClass}><option value="">기타 예배 (아래에 이름 입력)</option>{services.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
-        <Field label="기타 예배 이름" hint="목록에서 선택했다면 비워 두셔도 됩니다."><input name="service_name" className={inputClass} maxLength={100} defaultValue={value("service_name")}/></Field>
+      {!initial?<Field label="보고 종류"><select name="report_kind" value={kind} onChange={e=>setKind(e.target.value)} className={selectClass}><option value="service">예배 · 모임</option><option value="other">기타 보고</option></select></Field>:null}
+      {initial ? <><input type="hidden" name="occurred_on" value={initial.occurred_on}/><p className="text-sm text-muted">{initial.occurred_on} · {initial.service_name}</p></> : <Field label="발생 날짜"><input className={inputClass} type="date" name="occurred_on" required max={today} defaultValue={value("occurred_on",today)}/></Field>}
+      {initial ? <><input type="hidden" name="service_id" value={initial.service_id}/><input type="hidden" name="service_name" value={initial.service_name}/></> : kind==="other"?<><input type="hidden" name="service_id" value=""/><input type="hidden" name="service_name" value="기타 보고"/><p className="text-sm text-muted">예배·모임을 선택하지 않고 팀의 일반 이슈를 보고합니다.</p></>:<>
+        <Field label="예배 · 모임 구분"><select name="service_id" defaultValue={value("service_id")} className={selectClass}><option value="">기타 예배·모임 (아래에 이름 입력)</option>{services.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
+        <Field label="예배 · 모임 이름" hint="목록에서 선택했다면 비워 두셔도 됩니다."><input name="service_name" className={inputClass} maxLength={100} defaultValue={value("service_name")}/></Field>
       </>}
       <fieldset><legend className="mb-2 text-[15px] font-medium">작성하는 팀</legend>
         <p className="mb-3 text-xs text-muted">현재 팀의 이슈를 작성합니다. 같은 예배의 이슈는 예배별 목록에 함께 모입니다.</p>

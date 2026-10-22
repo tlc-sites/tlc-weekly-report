@@ -647,3 +647,14 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-22 예배위원 항목·예배인도자 및 앱 배포 시작
 - 사용자 배포 요청 후 추가 요구 반영. 별도 /worship-staff에 안내위원/헌금위원/말씀봉독 입력란, 기존 자유명단은 그 외 예배위원·기존 기록으로 보존. 저장은 기존 staff 텍스트/RLS 사용. 예배팀 보고서에 예배인도자 선택입력 worship_leader 추가, 열람/회의요약 표시. 기술팀 제출 필수항목 추가 없음.
 - 수정파일 src/app/page.tsx, reports/[id] page/worship-form, worship-staff/page, components shared-worship-staff/worship-staff-fields/meeting-summary, lib/report-forms. DB 변경 없음(DB32유지). 이번 lint/타입포함webpack41경로/test:db103/103/diffcheck 성공. 초기 SubmitButton import 오류 수정 후 성공. 운영 실데이터 작성테스트 없음. 승인된 앱 배포 정상push 예정.
+
+### 2026-10-22 예배위원·예배인도자 운영 배포 완료
+- 1223c0c3733564988dabf5906e276b0ba90bf4de 정상push c113808→1223c0c origin/master. Vercel DjgTToZGaxhsyptsf88UYH4N5eU7 Production Ready30초와 운영도메인 연결 확인. 증빙 outputs/report-deploy/1223c0c-production-ready.png.
+- 운영 /worship-staff 비로그인 접근에서 로그인 화면 정상 확인. 실명단 저장/보고 제출/로그인사용자 화면검증은 하지 않음. 이번 DB103/103, lint, 타입포함빌드41경로 통과. DB32유지/운영DB변경 없음. 운영 현재1223c0c, 영수증 로컬문서만 추가. 사용자 루트 변경 보존.
+
+### 2026-10-22 팀 이슈 기타 보고 (로컬)
+- incidents/new가 보고서 선택으로만 안내하던 흐름을 담당 예배·기술팀의 독립 이슈 작성 폼으로 변경. 기존 report 쿼리 연결은 보고서 팀이슈로 리다이렉트 유지. IncidentForm에 예배·모임/기타 보고 선택, 기타는 service_id null + service_name 기타 보고로 기존 스키마 저장, 발생 날짜·팀 필수 유지. 연결된 보고의 이슈는 원래 예배/날짜 유지.
+- 수정 src/app/incidents/new/page.tsx, incident-form.tsx, actions.ts. DB/RLS 변경 없음. 이번 lint/tsc/webpack41경로/test:db103/103/diffcheck 통과. 운영 UI 실제 이슈 생성 검증은 미실행. 배포 미진행, 운영1223c0c/DB32 유지. 기존 사용자 수정 보존.
+
+### 2026-10-22 기타 팀 이슈 배포 시작
+- 사용자 앱 배포 승인. 직전 lint/tsc/webpack41경로/DB103개 통과 후 코드 추가수정 없이 배포. DB변경 없음. 운영 master 정상push 및 Vercel Ready 확인 예정.

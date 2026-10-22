@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import Link from "@/components/pending-link";
+import {IncidentForm} from "../incident-form";
+import {todayKST} from "@/lib/week";
 import { requireActive, isSenior } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
-import { BackLink, Card, Loading, PageTitle } from "@/components/ui";
+import { BackLink, Loading, PageTitle } from "@/components/ui";
 
 export default function NewIncidentPage({searchParams}:PageProps<"/incidents/new">) {
   return <Suspense fallback={<Loading/>}><Content searchParams={searchParams}/></Suspense>;
@@ -21,5 +22,7 @@ async function Content({searchParams}:Pick<PageProps<"/incidents/new">,"searchPa
     if(!r || !groups.some(g=>g.id===r.group_id && g.type==="worship")) notFound();
     redirect(`/reports/${r.id}#team-issues`);
   }
-  return <><BackLink href="/incidents">팀 이슈 모아보기</BackLink><PageTitle sub="담당 팀의 보고서를 열고 ‘팀 이슈’에서 작성해 주세요.">팀 선택</PageTitle><Card>{available.length ? <ul className="divide-y divide-border">{available.map(g=><li key={g.id}><Link href={`/groups/${g.id}`} className="flex min-h-12 items-center justify-between py-3 text-accent">{g.name}<span aria-hidden>›</span></Link></li>)}</ul> : <p className="text-sm text-muted">예배·기술팀 소속 담당자와 관리자가 등록할 수 있습니다. 관리자에게 담당 파트 배정을 요청해 주세요.</p>}</Card></>;
+  const {data:services,error}=await supabase.from("service_types").select("id,name").eq("is_active",true).order("sort_order");
+  if(error)throw error;
+  return <><BackLink href="/incidents">팀 이슈 모아보기</BackLink><PageTitle sub="예배·모임 이슈 또는 예배와 관계없는 기타 보고를 등록할 수 있습니다.">팀 이슈 보고</PageTitle>{available.length?<IncidentForm groups={available} services={services??[]} today={todayKST()} simple/>:<p className="text-sm text-muted">작성할 팀이 없습니다. 관리자에게 담당 파트 배정을 요청해 주세요.</p>}</>;
 }
