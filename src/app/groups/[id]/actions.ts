@@ -87,7 +87,7 @@ export async function setNoMeeting(_previous: { error: string; saved: boolean },
   if (!parsed.success || weekOf(parsed.data.week) !== parsed.data.week) return { error: "입력값을 확인해 주세요.", saved: false };
   const { groupId, week, on, reason } = parsed.data;
   const group = await getGroup(supabase, groupId);
-  if (!group || !group.is_active || !["education", "other"].includes(group.type) || week > latestWeekday(todayKST(), 0)) return { error: "이 주차에는 모임 없음을 등록할 수 없습니다.", saved: false };
+  if (!group || !group.is_active || week > latestWeekday(todayKST(), 0)) return { error: "이 주차에는 모임 없음을 등록할 수 없습니다.", saved: false };
   if (on === "true" && !reason) return { error: "모임이 없는 사유를 적어 주세요.", saved: false };
 
   const { error } =

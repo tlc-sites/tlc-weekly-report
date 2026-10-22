@@ -194,7 +194,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
-                  <Field label="판교 출발 날짜">
+                  <Field label="분당 출발 날짜" hint="금요일·토요일 등 실제 출발한 날짜를 선택해 주세요.">
                     <input name="meetingDate" type="date" min={week} max={maxDate} required defaultValue={maxDate} className={inputClass} />
                   </Field>
                 </>
@@ -206,7 +206,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             </form>
           </Card>
 
-          {canWrite && (group.type === "education" || group.type === "other") ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
+          {canWrite ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
         </>
       ) : null}
 

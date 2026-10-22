@@ -4,13 +4,10 @@ import { useState } from "react";
 import { Field, inputClass } from "@/components/ui";
 import {
   CAMPUS_COUNTS,
-  CAMPUS_SECTIONS,
   CAMPUS_LODGING_NONE,
   CAMPUS_OFFERINGS,
   CAMPUS_SATURDAY,
   CAMPUS_TEXTS,
-  CAMPUS_TEXT_SECTION,
-  campusSectionRows,
   type CampusPayload,
 } from "@/lib/report-forms";
 import { MessagesEditor, ReportForm, Section, TextArea } from "./form-parts";
@@ -31,7 +28,7 @@ export function CampusForm({
   showMessages: boolean;
   authorName: string;
 }) {
-  const [p, setP] = useState<CampusPayload>({...initial,details:{...initial.details,report_mode:"sections" as const}});
+  const [p, setP] = useState<CampusPayload>({...initial,details:{...initial.details,report_mode:"legacy" as const}});
   const d = p.details;
   const set = (patch: Partial<Details>) => setP({ ...p, details: { ...d, ...patch } });
   const toggle = <T extends string>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
@@ -40,20 +37,15 @@ export function CampusForm({
 
   return (
     <ReportForm action={action} reportId={reportId} type="campus" payload={p}>
-      <p className="mb-4 text-sm text-muted">보고할 항목을 펼쳐 작성해 주세요. 작성한 항목만 제출됩니다.</p>
-      {CAMPUS_SECTIONS.map(([key,label])=><details key={key} className="mb-3 rounded-xl border border-border bg-surface p-4">
-        <summary className="cursor-pointer font-semibold">{label}{campusSectionRows(d).find(([title])=>title===label)?.[1]?.trim()?" · 작성됨":""}</summary>
-        <div className="mt-3 space-y-3">
-          <TextArea label={key==="worship"?"예배 보고":"진행 내용"} rows={4} maxLength={2000} value={d.sections?.[key]??""} onChange={value=>set({sections:{...d.sections,[key]:value}})}/>
-          {CAMPUS_TEXTS.filter(([name])=>CAMPUS_TEXT_SECTION[name]===key).map(([name,title,placeholder])=><TextArea key={name} label={title} value={d.texts[name]} onChange={value=>set({texts:{...d.texts,[name]:value}})} placeholder={placeholder}/>)}
-        </div>
-      </details>)}
-      <details className="mb-4 rounded-xl border border-border p-4"><summary className="cursor-pointer text-sm font-semibold">방문·헌금·경비 기록 (선택)</summary>
-      <Section title="방문 정보" hint="필요한 항목만 작성해 주세요.">
+      <p className="mb-4 text-sm text-muted">사역 방향 · 스탭 · 재정 · 부서별 소식 순서로 작성해 주세요. 해당 사항이 없으면 0 또는 ‘없음’을 입력해 주세요.</p>
+      <div className="mb-5">
+        <TextArea label="교회 전체적인 사역 중점 사항 및 방향" required value={d.texts.direction} onChange={value=>set({texts:{...d.texts,direction:value}})} placeholder="이번주 다녀오면서 전체적으로 케어했던 방향이나 중점 사안을 적어주세요" />
+      </div>
+      <Section title="스탭" hint="교역자·동행 스탭과 출발 날짜를 입력해 주세요.">
         <Field label="교역자 이름">
           <input value={authorName} readOnly className={`${inputClass} text-muted`} />
         </Field>
-        <Field label="동행 스텝 이름" hint="없으면 '없음'을 고르고, 있으면 이름을 적어 주세요.">
+        <Field label="동행 스탭 이름" hint="없으면 '없음'을 고르고, 있으면 이름을 적어 주세요.">
           <div className="flex gap-2">
             <button
               type="button"
@@ -67,13 +59,13 @@ export function CampusForm({
               disabled={companionIsNone}
               onChange={(e) => set({ companion: e.target.value })}
               maxLength={50}
-              placeholder="동행 스텝 이름"
+              placeholder="동행 스탭 이름"
               className={inputClass}
             />
           </div>
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="판교 출발 날짜">
+          <Field label="분당 출발 날짜">
             <input type="date" value={d.depart_pangyo} onChange={(e) => set({ depart_pangyo: e.target.value })} className={inputClass} />
           </Field>
           <Field label="부산 출발 날짜">
@@ -82,7 +74,7 @@ export function CampusForm({
         </div>
       </Section>
 
-      <Section title="헌금 챙김">
+      <Section title="헌금 챙김" hint="필수 항목입니다. 챙긴 헌금이 없으면 기타에 ‘없음’을 입력해 주세요.">
         <CheckGroup options={CAMPUS_OFFERINGS} value={d.offerings} onToggle={(o) => set({ offerings: toggle(d.offerings, o) })} />
         <input
           value={d.offerings_other}
@@ -93,7 +85,7 @@ export function CampusForm({
         />
       </Section>
 
-      <Section title="경비">
+      <Section title="경비" hint="모두 필수입니다. 지출하지 않은 항목은 0을 입력해 주세요.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CAMPUS_COUNTS.map(([key, label]) => (
             <Field key={key} label={label}>
@@ -145,7 +137,21 @@ export function CampusForm({
 
 
 
-      </details>
+      {[
+        ["adults", "장년부", "adults", null],
+        ["young_adults", "청년부", "young_adults", null],
+        ["school", "교회학교", "youth", "영 · 유아 · 유치 · 초등소식"],
+        ["obed_edom", "오벧에돔", null, "진행 내용"],
+        ["newcomers", "새가족 현황", "visitors", null],
+        ["welcome", "웰컴팀", null, "방문자 관련 보고"],
+        ["training", "새가족 교육", null, "진행 내용"],
+      ].map(([key,title,textKey,sectionLabel]) => <Section key={key!} title={title!}>
+        {sectionLabel ? <TextArea label={sectionLabel} value={d.sections?.[key!]??""} maxLength={2000} onChange={value=>set({sections:{...d.sections,[key!]:value}})} placeholder={key==="welcome"?"방문자 관련 특이사항 적어주세요":undefined}/> : null}
+        {textKey ? CAMPUS_TEXTS.filter(([k])=>k===textKey).map(([k,label,placeholder])=><TextArea key={k} label={label} required value={d.texts[k]} onChange={value=>set({texts:{...d.texts,[k]:value}})} placeholder={placeholder}/>) : null}
+        {!sectionLabel && d.sections?.[key!]?.trim() ? <TextArea label="이전에 작성한 추가 기록" value={d.sections[key!]} maxLength={2000} onChange={value=>set({sections:{...d.sections,[key!]:value}})}/> : null}
+      </Section>)}
+      {d.sections?.worship?.trim()?<Section title="이전에 작성한 예배 기록"><TextArea label="예배 기록" value={d.sections.worship} maxLength={2000} onChange={value=>set({sections:{...d.sections,worship:value}})}/></Section>:null}
+      {CAMPUS_TEXTS.filter(([key])=>["facilities","served","others"].includes(key)).map(([key,label,placeholder])=><div key={key} className="mb-5"><TextArea label={label} required value={d.texts[key]} onChange={value=>set({texts:{...d.texts,[key]:value}})} placeholder={placeholder}/></div>)}
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
   );

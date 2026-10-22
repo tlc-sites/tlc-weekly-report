@@ -1,3 +1,4 @@
+import {FailureDialog} from "@/components/form-validation";
 import Link from "@/components/pending-link";
 import {ReportReadStatus} from "@/components/report-read-status";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
@@ -41,6 +42,7 @@ import type { Issue, Messages } from "./form-parts";
 import { OtherForm, WorshipForm } from "./worship-form";
 
 const MESSAGES: Record<string, string> = {
+  "campus-finance":"부산 헌금·경비 항목을 모두 입력해 주세요. 지출하지 않은 항목은 0, 헌금이 없으면 기타에 없음으로 적어 주세요.",
   conflict: "다른 기기에서 보고서가 변경되었습니다. 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.",
   "attendance-assignment": "교육부서 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
   invalid: "입력값이 올바르지 않습니다. 다시 확인해 주세요.",
@@ -125,7 +127,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const canEdit = Boolean(canEditRes.data);
   const canReview = Boolean(canReviewRes.data);
   // 검토자는 기본으로 읽기 화면을 보고, 필요할 때만 수정 화면으로 들어간다
-  const editMode = canEdit && (isAuthor || edit === "1");
+  const editMode = canEdit && (report.status === "draft" || edit === "1" || Boolean(error));
   const messages: Messages = { ...emptyMessages() };
   for (const m of messagesRes.data ?? []) messages[m.recipient as keyof Messages] = m.body;
   const messagesToMe = isAuthor ? [] : (messagesRes.data ?? []);
@@ -252,7 +254,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         lodging: prev.lodging ?? "",
         saturday: prev.saturday ?? [],
         saturday_other: prev.saturday_other ?? "",
-        report_mode:"sections",
+        report_mode:"legacy",
         sections:prev.sections??{},
         texts: Object.fromEntries(CAMPUS_TEXTS.map(([k]) => [k, prev.texts?.[k] ?? ""])) as CampusPayload["details"]["texts"],
       },
@@ -272,7 +274,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       <ReadOnly
         rows={[
           ["동행 스텝", dd.companion],
-          ["판교 출발 / 부산 출발", `${dd.depart_pangyo} / ${dd.depart_busan}`],
+          ["분당 출발 / 부산 출발", `${dd.depart_pangyo} / ${dd.depart_busan}`],
           ["헌금 챙김", [...dd.offerings, dd.offerings_other].filter(Boolean).join(", ")],
           ["경비", CAMPUS_COUNTS.map(([k, label]) => `${label.replace(" 횟수", "")} ${dd.counts[k] ?? "-"}`).join(", ")],
           ["숙소", dd.lodging],
@@ -305,7 +307,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       <div className="mb-4 flex flex-col gap-2">
         {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}
         {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt returnTo={`/groups/${group.id}?week=${weekOf(report.meeting_date)}`}/> : null}
-        {message ? <ErrorText>{message}</ErrorText> : null}
+        {message ? <><ErrorText>{message}</ErrorText><FailureDialog message={message}/></> : null}
         {existing ? <p className="rounded-lg bg-border/60 px-3 py-2 text-sm">이미 작성 중인 같은 보고가 있어서 이어서 엽니다.</p> : null}
         {saved ? (
           <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
@@ -326,6 +328,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         <ReviewPanel reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
       ) : null}
 
+      {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
       <PrivateSharing reportId={id}/>
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
@@ -337,7 +340,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">서버에 자동저장된 작성 내용을 불러왔습니다.</p>:null}
       <AutosaveContext version={draftVersion} enabled={report.status==="draft" && isAuthor}>{body}</AutosaveContext>
 
-      {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
+      {!editMode && report.status !== "draft" ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
 
       {isAuthor && report.status === "draft" ? (
         <form action={deleteDraft} className="mt-6 flex justify-center">

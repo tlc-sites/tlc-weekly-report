@@ -1,3 +1,4 @@
+import {FieldHighlight} from "./form-validation";
 import type { ReactNode } from "react";
 import Link from "@/components/pending-link";
 
@@ -20,11 +21,11 @@ export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1.5">
+    <FieldHighlight label={label}><label className="flex min-w-0 flex-col gap-1.5">
       <span className="text-[15px] font-medium">{label}</span>
       {children}
       {hint ? <span className="text-xs text-muted">{hint}</span> : null}
-    </label>
+    </label></FieldHighlight>
   );
 }
 

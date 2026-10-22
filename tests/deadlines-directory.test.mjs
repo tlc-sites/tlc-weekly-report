@@ -42,8 +42,8 @@ test('새 팀·담당 교역자 명단·3시간 유예/2시간 재알림/제출 
 });
 test('교회학교 표시와 부산 8개 토글은 기존 데이터 키와 분리',()=>{
  assert.equal(groupDisplayName('영유아부'),'영·유아부 (26~22년생)');assert.equal(groupDisplayName('중등부'),'중등부 (13~08년생)');assert.equal(groupDisplayName('고등부'),'고등부 (13~08년생)');
- assert.deepEqual(CAMPUS_SECTIONS.map(s=>s[1]),['예배','장년부','청년부','교회학교','오벧에돔','새가족 현황','웰컴팀','새가족 훈련']);
+ assert.deepEqual(CAMPUS_SECTIONS.map(s=>s[1]),['예배','장년부','청년부','교회학교','오벧에돔','새가족 현황','웰컴팀','새가족 교육']);
  assert.ok(campusPayload.shape.details.shape.sections);
- assert.deepEqual(missingOnSubmit('campus',{details:{report_mode:'sections',sections:{worship:'사역 내용'}}}),[]);
- assert.equal(missingOnSubmit('campus',{details:{report_mode:'sections',sections:{}}}).length,1);
+ assert.ok(missingOnSubmit('campus',{details:{report_mode:'sections',sections:{worship:'사역 내용'}}}).includes('헌금 챙김'));
+ assert.ok(missingOnSubmit('campus',{details:{report_mode:'sections',sections:{}}}).length>1);
 });

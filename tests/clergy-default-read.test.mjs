@@ -10,12 +10,13 @@ const {campusSectionRows,CAMPUS_TEXTS,missingOnSubmit}=await import('data:text/j
 test('부산 사역 소식을 부서별로 배치하고 기존 원문을 중복·누락 없이 보존한다',()=>{
  const details={report_mode:'sections',sections:{adults:'새 장년부 보고'},texts:Object.fromEntries(CAMPUS_TEXTS.map(([k])=>[k,'원문 '+k]))};
  const before=JSON.stringify(details),rows=campusSectionRows(details);
- assert.equal(rows.length,8);assert.equal(JSON.stringify(details),before);
+ assert.equal(rows.length,12);assert.equal(rows[0][0],"교회 전체적인 사역 중점 사항 및 방향");assert.deepEqual(rows.slice(-3).map(([label])=>label),["시설 관련 사항","성도님들의 섬김 받은 사항","그 외 특기 사항"]);assert.equal(JSON.stringify(details),before);
  for(const [key] of CAMPUS_TEXTS)assert.equal(rows.filter(([,body])=>body.includes('원문 '+key)).length,1,key);
  assert.match(rows.find(([label])=>label==='교회학교')[1],/원문 youth/);
  assert.match(rows.find(([label])=>label==='새가족 현황')[1],/원문 visitors/);
  assert.match(rows.find(([label])=>label==='장년부')[1],/새 장년부 보고/);
- assert.deepEqual(missingOnSubmit('campus',{details:{report_mode:'sections',texts:{visitors:'새가족 소식'}}}),[]);
+ assert.ok(!missingOnSubmit('campus',{details:{report_mode:'sections',texts:{visitors:'새가족 소식'}}}).includes('새가족 관련 보고'));
+ assert.ok(missingOnSubmit('campus',{details:{report_mode:'sections',texts:{visitors:'새가족 소식'}}}).includes('헌금 챙김'));
 });
 test('다른 파트의 제출된 일반 보고는 모든 교역자에게 공개하되 비공개·명단·수정 권한은 유지한다',async()=>{
  const db=new PGlite();try{

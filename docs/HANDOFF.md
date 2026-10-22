@@ -594,3 +594,43 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 
 ### 2026-10-22 클릭 진행상태 앱 배포 시작
 - 사용자 배포승인. 이번은 app/loading·pending-link·SubmitButton 진행표시 및 적용부만 변경, DB마이그레이션/계정변경 없음. 직전lint/tsc/webpack41경로와3.5초실브라우저대기상태테스트 통과 후 코드수정없이 배포. 운영master 정상push 및 VercelReady확인예정.
+
+
+### 2026-10-22 클릭 진행상태 운영 배포 완료
+- bcbc0e2bfc598dc795653c05f212b8c046b832be 정상push: e810d02→bcbc0e2 origin/master. Vercel ACozZuQ36ccppZdDbXj8cKViAu52 Production Ready42초, 운영도메인연결 확인. 증빙 outputs/report-deploy/bcbc0e2-production-ready.png. DB31유지/추가DB변경없음.
+- 실제운영URL 브라우저접속에서 status화면을불러오고있습니다/잠시만기다려주세요 표시후 로그인화면완료 확인. 로그인후저장동작 운영기록생성테스트는없음. 직전로컬lint/tsc/41경로빌드와지연fixture검증후코드수정없이배포, 이번전체테스트재실행없음. 계정지정/실제메일/푸시/유료API전송없음. 운영현재bcbc0e2/DB31. 종료영수증로컬만추가/추가배포트리거안함/사용자타작업보존.
+
+
+### 2026-10-22 부산 원래양식·재정필수·제출불가안내·코멘트수정 (로컬)
+- 사용자6항목 요청. 원본 forms.gle 링크는 web도구접근실패, Chrome 실제구글폼을읽기전용으로열어 전체필드순서/필수여부 확인(제출없음). campus-form.tsx를 스탭→헌금→경비→토요일예배팀→원래사역소식 순서로복원. 출발날짜직접선택유지/판교라벨을분당으로변경, depart_pangyo 저장키는호환유지. 기존 sections기록은원문보존하며있을때만하단추가기록으로수정가능. 원래텍스트필수복원, 헌금/경비는0·없음도명시입력필수. report-forms missingOnSubmit과예전sections면제테스트2개를새요구사항에맞게갱신.
+- DB32 20261115000000_report_workflow_and_comment_edits.sql: report그룹전체의주간해당없음+사유허용(원래can_write_group RLS/미래주차제한유지), 부산제출에헌금/5경비정수/숙소누락차단trigger. 기존보고데이터rewrite없음. groups/[id] 버튼은모든canWrite파트표시, 이번주모임및사역해당사항없음표현. 이기능은파트전체한주기준이며예배별/개인별면제는아님.
+- 기술팀선택항목은기존에도필수가아님을확인. 말씀본문/내용·예배위원선택라벨표시, 이슈없음정상진행버튼은resultnormal+notes기본특이사항없습니다(기존notes보존). ReportForm은자동저장중/충돌때제출버튼을영구비활성으로보이지않게함: 실제전송pending만disabled, 자동저장진행중누르면완료후요청재실행, 충돌이면이유팝업. 실사용보고의기존충돌상태자체를재현한것은아님.
+- components/form-validation FieldErrors/FieldHighlight/FailureDialog, ui.Field와Section/TextArea에공통연결. 필수누락팝업+빨간항목+확인후첫누락항목scroll. 네트워크/예외도원문노출없이실패팝업, 실패후자동저장중지상태복원. reports/actions.ts 부산재정DB오류를별도안내코드로매핑, servererror팝업추가.
+- DB32 코멘트/답글8테이블은본인body만UPDATE허용, 기존넓은UPDATE권한회수후body컬럼만grant/부모열람RLS유지. notifications/edit-actions.ts와feedback-edit.tsx로본인수정폼·완료/오류상태. report/incident/prayer/notice/root/reply에적용. 보고서는제출후작성자도기본열람화면, 수정버튼으로전환. 코멘트는!editMode+제출후에만표시, 수정화면에열람/코멘트바로가기.
+- tests/report-workflow.test.mjs 실제 autosave→save_report_from_draft 정상/빈선택항목제출·전팀해당없음·외부차단·부산재정필수·본인코멘트수정/작성자변조차단. 전체test:db103/103성공. 초기sections면제기대/불완전fixture오류와commentUPDATE기대오류수정, 넓은UPDATE회수검증후성공. 최종lint/tsc/webpack41경로성공, diffcheck의빈줄공백발견후제거.
+- 실제Chrome3 로컬실제WorshipForm/CampusForm fixture로선택항목없이normal+특이사항없습니다 제출pending진입확인(가짜action, 운영제출아님), 부산미입력제출dialogopen=true/redFields19확인, 확인클릭후dialogclose·필드이동확인. 증빙 outputs/mobile-ui/report-validation.png, fixture원본report-workflow-preview.tsx. 임시페이지삭제/생성타입정리/dev서버종료. 최종네트워크예외처리추가는lint/tsc/build검증만, 실제오프라인재현은안함.
+- 운영DB32적용/배포/실제계정·보고·알림변경없음. 운영bcbc0e2/DB31유지, 다음운영반영에는DB32별도승인·선적용필요. 기존사용자/루트/타도구수정보존.
+
+### 2026-10-22 DB32 배포 준비 및 로그인 대기
+- 사용자 앱 배포 요청. DB32 별도 승인 질문 제시, 아직 응답 대기. outputs/report-deploy/apply-db32.sql 전체 배치를 기존 마이그레이션+seed 환경의 PGlite로 실행하여 campus_finance_ready/comment_edit_ready/all_parts_no_meeting_ready 모두 true 확인.
+- Chrome3 운영 SQL Editor 읽기 전용 사전조회 시 Session expired 표시. Sign in again 클릭 후에도 만료 모달 유지, 사용자 재로그인 필요. 운영 SQL 실행/DB32 적용/커밋/push/앱 배포는 아직 하지 않음. 운영 bcbc0e2/DB31 유지.
+- 로컬 변경과 기존 사용자 수정 보존. 다음 단계는 DB32 승인 및 Supabase 재로그인 후 사전조회, DB 적용, 앱 커밋/push와 Vercel Ready 확인.
+
+### 2026-10-22 DB32 승인 확인·운영 로그인 차단
+- 사용자 DB32 적용과 앱 배포 명시 승인 수신. 동일 범위 재승인 불필요.
+- Chrome3 운영 SQL Editor 만료 모달 닫기/새로고침 후에도 Session expired 재발. 사전조회조차 실행되지 않음. 사용자 Supabase 재로그인 필요. 증빙 outputs/report-deploy/db32-session-expired.png.
+- 운영 DB32/앱 미반영, bcbc0e2/DB31 유지. 사용자 로그인 완료 후 승인된 DB32와 앱 배포 이어갈 것. 로컬 검증 결과와 변경 보존.
+
+### 2026-10-22 부산 세부 양식 피드백·배포 전 이미지
+- campus-form/report-forms 변경: 사역 방향을 첫 입력으로, 시설/섬김/기타를 마지막 3항목으로 분리. 장년/청년 중복 진행란 제거(기존 입력이 있으면 추가 기록으로 보존), 청년부 명칭/안내문 변경, 교회학교 영유아유치초등부 소식, 새가족 관련 보고와 방문자 관련 보고 분리, 새가족 교육 명칭 적용. 기존 texts/sections 저장 키와 원문 유지. 분당 출발/재정 필수/DB32 개선 유지.
+- 열람·요약 campusSectionRows에도 상단 방향/하단3항목 분리 적용. 기존 원문 중복·누락 방지 테스트의 변경된 순서와 명칭 갱신. 이번 전체 DB103/103, lint, TypeScript 포함 webpack41경로 빌드, diffcheck 성공. 미리보기 임시페이지 제거 후 생성 validator 잔재 정리하여 빌드 성공.
+- 실제 로컬 CampusForm 캡처 outputs/mobile-ui/busan-campus-top.png, busan-campus-departments.png, busan-campus-bottom.png. 운영 데이터 입력/전송 없음. 전체길이 캡처 타임아웃으로 3화면 분할. fixture원본 busan-preview-page.tsx 보존, dev서버 종료. 사용자 요청대로 이미지 먼저 제시, 배포 안함. DB32 승인 유지, Supabase 재로그인은 여전히 필요. 향후 중고등교사/새가족섬김이 폼 연동은 미구현 요청사항.
+
+### 2026-10-22 부산 제목·중복 박스 후속 수정
+- campus-form.tsx 첫 항목 제목 ‘교회 전체적인 사역 중점 사항 및 방향’과 필수 표시 유지, 안내 placeholder를 사용자 원문 ‘이번주 다녀오면서 전체적으로 케어했던 방향이나 중점 사안을 적어주세요’로 수정. 교회학교 소식 제목 ‘영 · 유아 · 유치 · 초등소식’ 적용.
+- 방향 및 마지막 시설/섬김/기타 단일 입력 항목은 Section+Card 중첩을 제거하고 TextArea의 제목/입력란 하나로 표시. 저장 키와 필수 검증 유지.
+- 이번 lint/tsc/diffcheck 통과. DB/운영 배포 없음, 직전 이미지에는 이번 후속 변경 미포함. DB32 승인과 Supabase 로그인 대기 상태 유지.
+
+### 2026-10-22 DB32 운영 적용·앱 배포 시작
+- 사용자 기존 DB32 승인과 최신 배포 요청으로 진행. Supabase 재연결 성공, 사전 db32_present=false 후 승인된 apply-db32.sql 실행. campus_finance_ready/comment_edit_ready/all_parts_no_meeting_ready 모두 true 확인, outputs/report-deploy/db32-applied.png 증빙. 계정 역할 변경/메일 전송 없음.
+- 최신 부산 단일 제목 수정 포함 webpack41경로 빌드 성공. 직전 전체DB103/103 및 최신lint/tsc 성공 유지. 이제 앱 master 정상push 및 Vercel Ready 확인 예정.

@@ -1,3 +1,4 @@
+import {FeedbackEdit} from "@/components/feedback-edit";
 import {SubmitButton} from "@/components/submit-button";
 import {loadFeedbackReplies} from "@/lib/feedback-replies";
 import {AutoTranslation} from "@/components/auto-translation";
@@ -79,7 +80,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
                 </form>
               ) : null}
             </div>
-            <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id} items={replies}/>
+            <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p>{c.author_id===myId?<FeedbackEdit kind="report" id={c.id} body={c.body}/>:null}<FeedbackReplies kind="report" commentId={c.id} items={replies} myId={myId}/>
           </div>
         ))}
         {canComment ? <form action={addComment} className="flex flex-col gap-2">

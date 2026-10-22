@@ -13,7 +13,7 @@ export const ISSUE_STATUS_LABEL = { open: "미해결", temporary: "임시 조치
 export const RESULT_LABEL = { normal: "정상", minor: "경미한 문제", incident: "사고" } as const;
 
 // 부산 캠퍼스 보고: 기존 구글 폼 항목 그대로
-export const CAMPUS_SECTIONS = [["worship","예배"],["adults","장년부"],["young_adults","청년부"],["school","교회학교"],["obed_edom","오벧에돔"],["newcomers","새가족 현황"],["welcome","웰컴팀"],["training","새가족 훈련"]] as const;
+export const CAMPUS_SECTIONS = [["worship","예배"],["adults","장년부"],["young_adults","청년부"],["school","교회학교"],["obed_edom","오벧에돔"],["newcomers","새가족 현황"],["welcome","웰컴팀"],["training","새가족 교육"]] as const;
 export const CAMPUS_OFFERINGS = ["금요", "주일 1부", "주일 2부", "라이프라인", "헌금함"] as const;
 export const CAMPUS_SATURDAY = ["바리타", "곡 연습", "기도회", "안 함"] as const;
 export const CAMPUS_LODGING_NONE = "지출 안 함 (김미정 성도님 집에 묵음)";
@@ -26,9 +26,9 @@ export const CAMPUS_COUNTS = [
 ] as const;
 export const CAMPUS_TEXTS = [
   ["youth", "중고등부 소식", "학생, 교사, 장소, 일정 등 이슈를 적어주세요"],
-  ["young_adults", "청년부 모임", "모임 개괄 적어주세요"],
+  ["young_adults", "청년부 모임과 성도 소식, 대화", "청년부 관련 특이사항 적어주세요"],
   ["adults", "장년부 관련 소식이나 대화", "장년부 관련 특이사항 적어주세요. 성도 개인/가정/셀 등"],
-  ["visitors", "방문자, 새가족 관련 보고", "방문자, 새가족 관련 특이사항 적어주세요."],
+  ["visitors", "새가족 관련 보고", "새가족 관련 특이사항 적어주세요"],
   ["direction", "교회 전체적인 사역 중점 사항 및 방향", "이번주 다녀오면서 전체적으로 케어했던 방향이나 중점 사안을 적어주세요"],
   ["facilities", "시설 관련 사항", "보수/폐기/구매/관리/이관 등이 필요한 부분 적어주세요"],
   ["served", "성도님들의 섬김 받은 사항", "차량 이동/픽업 등이나 식사 섬김 등 있었을 때 적어주세요"],
@@ -36,9 +36,10 @@ export const CAMPUS_TEXTS = [
 ] as const;
 
 // 기존 사역 소식의 저장 키를 보존하면서 부서별 입력·열람에 함께 배치한다.
-export const CAMPUS_TEXT_SECTION = { youth:"school", young_adults:"young_adults", adults:"adults", visitors:"newcomers", direction:"worship", facilities:"worship", served:"adults", others:"worship" } as const;
+export const CAMPUS_TEXT_SECTION = { youth:"school", young_adults:"young_adults", adults:"adults", visitors:"newcomers", direction:null, facilities:null, served:null, others:null } as const;
 export function campusSectionRows(details: {sections?:Record<string,string>;texts?:Partial<Record<keyof typeof CAMPUS_TEXT_SECTION,string>>}): [string,string][] {
-  return CAMPUS_SECTIONS.map(([key,label])=>[label,[details.sections?.[key]??"",...CAMPUS_TEXTS.filter(([name])=>CAMPUS_TEXT_SECTION[name]===key).map(([name,title])=>details.texts?.[name]?.trim()?title+": "+details.texts[name]:"")].filter(Boolean).join("\n\n")]);
+  const sections: [string,string][] = CAMPUS_SECTIONS.map(([key,label])=>[label,[details.sections?.[key]??"",...CAMPUS_TEXTS.filter(([name])=>CAMPUS_TEXT_SECTION[name]===key).map(([name,title])=>details.texts?.[name]?.trim()?title+": "+details.texts[name]:"")].filter(Boolean).join("\n\n")]);
+  return [["교회 전체적인 사역 중점 사항 및 방향",details.texts?.direction??""],...sections,...CAMPUS_TEXTS.filter(([key])=>["facilities","served","others"].includes(key)).map(([key,label]):[string,string]=>[label,details.texts?.[key]??""])];
 }
 
 const text = (max: number) => z.string().trim().max(max);
@@ -160,16 +161,16 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;
-    if(d.report_mode==="sections") return campusSectionRows(d).some(([,body])=>body.trim())?[]:["부산 사역 보고 (한 항목 이상)"];
+
     const missing: string[] = [];
-    if (!d.companion) missing.push("동행 스텝 이름");
-    if (!d.depart_pangyo) missing.push("판교 출발 날짜");
+    if (!d.companion) missing.push("동행 스탭 이름");
+    if (!d.depart_pangyo) missing.push("분당 출발 날짜");
     if (!d.depart_busan) missing.push("부산 출발 날짜");
-    if (!d.offerings.length && !d.offerings_other) missing.push("헌금 챙김");
-    for (const [key, label] of CAMPUS_COUNTS) if (d.counts[key] === null) missing.push(label);
+    if (!d.offerings?.length && !d.offerings_other) missing.push("헌금 챙김");
+    for (const [key, label] of CAMPUS_COUNTS) if (d.counts?.[key] == null) missing.push(label);
     if (!d.lodging) missing.push("숙소 지출 여부");
-    if (!d.saturday.length && !d.saturday_other) missing.push("토요일 예배팀 모임");
-    for (const [key, label] of CAMPUS_TEXTS) if (!d.texts[key]) missing.push(label);
+    if (!d.saturday?.length && !d.saturday_other) missing.push("토요일 예배팀 모임");
+    for (const [key, label] of CAMPUS_TEXTS) if (!d.texts?.[key]?.trim()) missing.push(label);
     return missing;
   }
   return [];
