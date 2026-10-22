@@ -35,6 +35,12 @@ export const CAMPUS_TEXTS = [
   ["others", "그 외 특기 사항", "그 외 특기할 만한 사항 있으면 적어주세요. 특별행사라던지, 개인면담, 세부적 사안 등"],
 ] as const;
 
+// 기존 사역 소식의 저장 키를 보존하면서 부서별 입력·열람에 함께 배치한다.
+export const CAMPUS_TEXT_SECTION = { youth:"school", young_adults:"young_adults", adults:"adults", visitors:"newcomers", direction:"worship", facilities:"worship", served:"adults", others:"worship" } as const;
+export function campusSectionRows(details: {sections?:Record<string,string>;texts?:Partial<Record<keyof typeof CAMPUS_TEXT_SECTION,string>>}): [string,string][] {
+  return CAMPUS_SECTIONS.map(([key,label])=>[label,[details.sections?.[key]??"",...CAMPUS_TEXTS.filter(([name])=>CAMPUS_TEXT_SECTION[name]===key).map(([name,title])=>details.texts?.[name]?.trim()?title+": "+details.texts[name]:"")].filter(Boolean).join("\n\n")]);
+}
+
 const text = (max: number) => z.string().trim().max(max);
 const longText = text(1000);
 
@@ -154,7 +160,7 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;
-    if(d.report_mode==="sections") return CAMPUS_SECTIONS.some(([k])=>d.sections?.[k]?.trim())?[]:["부산 사역 보고 (한 항목 이상)"];
+    if(d.report_mode==="sections") return campusSectionRows(d).some(([,body])=>body.trim())?[]:["부산 사역 보고 (한 항목 이상)"];
     const missing: string[] = [];
     if (!d.companion) missing.push("동행 스텝 이름");
     if (!d.depart_pangyo) missing.push("판교 출발 날짜");

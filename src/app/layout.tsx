@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { AccountNotifications } from "@/components/account-notifications";
 import Link from "next/link";
 import { MenuIcon } from "@/components/menu-heading";
+import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
+import {BottomNavigation} from "@/components/bottom-navigation";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,16 +24,17 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full">
+      <body className="min-h-full"><TranslationLanguage>
         <header data-print-hide className="border-b border-border/70 bg-background">
           <div className="mx-auto flex min-h-16 w-full max-w-2xl items-center px-4 sm:px-5">
             <Link href="/" className="app-brand inline-flex items-center gap-2.5 text-base text-accent">
               <MenuIcon name="report" small />TLC 교회 보고서
-            </Link><Suspense fallback={null}><AccountNotifications /></Suspense>
+            </Link><LanguageSwitch/><Suspense fallback={null}><AccountNotifications /></Suspense>
           </div>
         </header>
-        <main className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col px-4 py-6 sm:px-5 sm:py-7">{children}</main>
-      </body>
+        <main className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-2xl min-w-0 flex-col px-4 py-6 sm:px-5 sm:py-7">{children}</main>
+        <Suspense fallback={null}><BottomNavigation/></Suspense>
+      </TranslationLanguage></body>
     </html>
   );
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../";
 
 @font-face {
   font-family: "Gowun Batang";
@@ -151,3 +152,11 @@ input, select, textarea {
     margin: 14mm;
   }
 }
+
+/* 하단 메뉴와 저장 버튼이 겹치지 않도록 기기 안전영역을 포함한다. */
+:root { --bottom-nav-height: calc(4rem + env(safe-area-inset-bottom, 0px)); }
+main { padding-bottom: calc(var(--bottom-nav-height) + 1.5rem); }
+.app-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + .5rem); }
+.report-submit-bar { bottom: var(--bottom-nav-height); }
+input[type="date"], input[type="time"], select, textarea { min-width: 0; max-width: 100%; }
+@media print { main { padding-bottom: 0; } }

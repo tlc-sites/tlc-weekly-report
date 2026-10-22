@@ -40,13 +40,14 @@ export async function saveReport(formData: FormData) {
   if(isTeamSession(report.details) && (parsed.data.details as Record<string,unknown>).session_type!==report.details.session_type) redirect(`${back}?error=invalid`);
   if (intent === "submit" && missingOnSubmit(type, parsed.data).length) redirect(`${back}?error=missing`);
 
-  const { error } = await supabase.rpc("save_report", {
+  const { error } = await supabase.rpc("save_report_from_draft", {
     p_report: reportId.data,
+    p_expected_draft_updated_at: String(formData.get("draftVersion")??"") || null,
     p_payload: {...parsed.data,details:{...parsed.data.details,_report_meta:preserveReportIdentity(report.details,report.author?.real_name,{id:profile.id,name:profile.real_name})}},
     p_status: intent === "submit" ? "submitted" : "draft",
   });
   if (error) {
-    redirect(`${back}?error=${/education attendance assignment/.test(error.message) ? "attendance-assignment" : /consent/.test(error.message) ? "consent" : /forbidden|not found/.test(error.message) ? "forbidden" : "save"}`);
+    redirect(`${back}?error=${/autosave conflict/.test(error.message) ? "conflict" : /education attendance assignment/.test(error.message) ? "attendance-assignment" : /consent/.test(error.message) ? "consent" : /forbidden|not found/.test(error.message) ? "forbidden" : "save"}`);
   }
   redirect(`${back}?saved=${intent}`);
 }

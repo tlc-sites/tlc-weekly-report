@@ -24,7 +24,7 @@ export function WorshipForm({ action, reportId, initial, showMessages }: Props<W
       <Section title="말씀과 예배위원">
         <Field label="말씀본문"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
         <TextArea label="말씀·예배 내용" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
-        <TextArea label="예배위원" value={p.details.service_staff} placeholder="예: 인도 / 대표기도 / 봉독 / 헌금 / 안내 담당자" onChange={service_staff=>setP({...p,details:{...p.details,service_staff}})}/>
+        <p className="text-sm text-muted">예배위원은 위의 공유 명단에서 교역자가 등록하면 모든 팀에 함께 표시됩니다.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
       <Section title="진행 결과">
         <div className="grid grid-cols-3 gap-2">

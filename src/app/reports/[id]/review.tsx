@@ -1,3 +1,4 @@
+import {AutoTranslation} from "@/components/auto-translation";
 import { FeedbackReplies } from "@/components/feedback-replies";
 import Link from "next/link";
 import { Card, buttonClass, secondaryButtonClass, smallButtonClass, textareaClass } from "@/components/ui";
@@ -75,7 +76,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
                 </form>
               ) : null}
             </div>
-            <p className="whitespace-pre-wrap text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id}/>
+            <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id}/>
           </div>
         ))}
         {canComment ? <form action={addComment} className="flex flex-col gap-2">

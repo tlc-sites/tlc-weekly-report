@@ -1,3 +1,7 @@
+import {AutoTranslation} from "@/components/auto-translation";
+import {reportSummaryLines} from "@/lib/weekly-summary";
+import {SharedWorshipStaff} from "@/components/shared-worship-staff";
+import { AutosaveContext } from "./autosave-context";
 import { getReportIdentity } from "@/lib/report-identity";
 import { SubmissionReceipt } from "@/components/submission-receipt";
 import {TeamSessionForm} from "./team-session-form";
@@ -13,7 +17,7 @@ import type { Group } from "@/lib/groups";
 import {
   CAMPUS_COUNTS,
   CAMPUS_TEXTS,
-  CAMPUS_SECTIONS,
+  campusSectionRows,
   ISSUE_STATUS_LABEL,
   REPORT_STATUS_LABEL,
   RESULT_LABEL,
@@ -34,6 +38,7 @@ import type { Issue, Messages } from "./form-parts";
 import { OtherForm, WorshipForm } from "./worship-form";
 
 const MESSAGES: Record<string, string> = {
+  conflict: "다른 기기에서 보고서가 변경되었습니다. 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.",
   "attendance-assignment": "교육부서 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
   invalid: "입력값이 올바르지 않습니다. 다시 확인해 주세요.",
   missing: "제출에 필요한 항목이 비어 있습니다.",
@@ -95,6 +100,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   }
 
   const isAuthor = report.author_id === profile.id;
+  const draftResult=isAuthor && report.status==="draft" ? await supabase.from("report_drafts").select("payload,updated_at").eq("report_id",id).maybeSingle():null;
+  if(draftResult?.error)throw draftResult.error;
+  const draftPayload=draftResult?.data?.payload;
+  const draftVersion=draftResult?.data?.updated_at??report.updated_at;
   const [canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes] = await Promise.all([
     supabase.rpc("can_edit_report", { rid: id }),
     supabase.rpc("can_review_report", { rid: id }),
@@ -121,7 +130,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   if(isTeamSession(report.details)) {
     const initial=teamSessionPayload.parse({details:{session_type:report.details.session_type,topic:str("topic"),passage:str("passage"),place:str("place"),content:str("content"),members:Array.isArray(report.details.members)?report.details.members:[]},messages});
-    body=editMode?<TeamSessionForm reportId={id} initial={initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["공과·성경 범위",initial.details.passage],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
+    body=editMode?<TeamSessionForm key={draftVersion} reportId={id} initial={(draftPayload??initial) as typeof initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["공과·성경 범위",initial.details.passage],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
   } else if (group.type === "education") {
     const [{ data: members }, { data: attendance }] = await Promise.all([
       supabase.from("members").select("id, name, kind, class_name, status, photo_data, birth_date").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
@@ -147,10 +156,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     };
     body = editMode ? (
       <EducationForm
-        key={report.updated_at}
+        key={draftVersion}
         action={saveReport}
         reportId={id}
-        initial={initial}
+        initial={(draftPayload??initial) as typeof initial}
         roster={roster}
         canEditPrayer={Boolean(privateRes.data)}
         guardianCheck={Boolean(group.settings?.guardian_check)}
@@ -187,10 +196,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       const result = str("result") as WorshipPayload["details"]["result"];
       body = (
         <WorshipForm
-          key={report.updated_at}
+          key={draftVersion}
           action={saveReport}
           reportId={id}
-          initial={{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff") }, issues, messages }}
+          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff") }, issues, messages }) as WorshipPayload}
           showMessages={isAuthor}
         />
       );
@@ -199,7 +208,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         details: { song_list: str("song_list"), sharing_topic:str("sharing_topic"),sharing_passage:str("sharing_passage"),sharing_place:str("sharing_place"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests },
         issues, messages,
       };
-      body = <OtherForm internship={group.settings?.report_category==="internship"} key={report.updated_at} action={saveReport} reportId={id} initial={initial} showMessages={isAuthor} />;
+      body = <OtherForm internship={group.settings?.report_category==="internship"} key={draftVersion} action={saveReport} reportId={id} initial={(draftPayload??initial) as typeof initial} showMessages={isAuthor} />;
     } else {
       body = (
         <ReadOnly
@@ -243,10 +252,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     const dd = initial.details;
     body = editMode ? (
       <CampusForm
-        key={report.updated_at}
+        key={draftVersion}
         action={saveReport}
         reportId={id}
-        initial={initial}
+        initial={(draftPayload??initial) as typeof initial}
         showMessages={isAuthor}
         authorName={getReportIdentity(report.details,report.author?.real_name).author_name}
       />
@@ -259,8 +268,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           ["경비", CAMPUS_COUNTS.map(([k, label]) => `${label.replace(" 횟수", "")} ${dd.counts[k] ?? "-"}`).join(", ")],
           ["숙소", dd.lodging],
           ["토요일 예배팀 모임", [...dd.saturday, dd.saturday_other].filter(Boolean).join(", ")],
-          ...CAMPUS_SECTIONS.map(([k,label])=>[label,dd.sections?.[k]??""] as [string,string]),
-          ...CAMPUS_TEXTS.map(([k, label]) => [label, dd.texts[k]] as [string, string]),
+          ...campusSectionRows(dd),
         ]}
       />
     );
@@ -279,6 +287,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </PageTitle>
 
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
+      {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
+      <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date}/>
       {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
@@ -313,7 +323,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         </Card>
       ))}
 
-      {body}
+      {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">서버에 자동저장된 작성 내용을 불러왔습니다.</p>:null}
+      <AutosaveContext version={draftVersion} enabled={report.status==="draft" && isAuthor}>{body}</AutosaveContext>
 
       {report.status !== "draft" || isAuthor ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
 

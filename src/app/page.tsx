@@ -53,10 +53,13 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
   return (
     <>
+      <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
+
       <PushBanner />
       {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 items-center justify-between rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
-      {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">주중 기도회 보고</Link><Link href="/messages" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">비공개 메시지</Link></div> : null}
+      {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/messages" className="rounded-xl border border-border bg-surface p-4 font-semibold text-accent">비공개 메시지</Link></div> : null}
+      {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 items-center justify-between rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리 · 담당 팀 명단</span><span>팀원 추가·수정 ›</span></Link> : null}
       <nav aria-label="주요 메뉴" className="mb-4 grid grid-cols-2 gap-2">
         <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 작성 · 추가</Link>
         {canManage(profile) ? <Link href={`/admin/submissions?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">관리 · 제출현황</Link> : <Link href={`/reports?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">내 보고 목록</Link>}
@@ -72,9 +75,9 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       ) : null}
       <div className="mb-4 grid grid-cols-2 gap-2">
         {isClergy(profile) ? <Link href={`/meeting?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="meeting" small />교역자 회의 자료</Link> : null}
-        <Link href={`/incidents?week=${week}`} className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-surface p-3 text-sm font-semibold"><MenuIcon name="report" small />예배·팀 이슈</Link>
+
       </div>
-      <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
+
 
       {canManage(profile) ? (
         <Card className="mb-4">
@@ -142,6 +145,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         </Card>
       ) : null}
 
+      <Link href={`/incidents?week=${week}`} className="mt-6 flex min-h-14 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold"><MenuIcon name="report" small/>예배·팀 이슈</Link>
       <div className="mt-auto flex items-center justify-between pt-8">
         <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
           <MenuIcon name="bell" small />알림 설정

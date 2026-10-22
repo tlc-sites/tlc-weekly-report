@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Card, buttonClass, inputClass, secondaryButtonClass, selectClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { ISSUE_STATUS_LABEL, REQUEST_CATEGORIES, missingOnSubmit } from "@/lib/report-forms";
+
+import {autosaveReport} from "./autosave-actions";
+import {useAutosaveContext} from "./autosave-context";
 
 export type Messages = { pastor: string; pastor_wife: string };
 export type Request = { category: (typeof REQUEST_CATEGORIES)[number]; content: string };
@@ -74,6 +77,28 @@ export function ReportForm({
 }) {
   const [error, setError] = useState<string | null>(null);
 
+  const sync=useAutosaveContext();
+  const serialized=JSON.stringify(payload);
+  const [version,setVersion]=useState(sync.version);
+  const [savedPayload,setSavedPayload]=useState(serialized);
+  const [saving,setSaving]=useState(false);
+  const [failed,setFailed]=useState<string|null>(null);
+  const [conflict,setConflict]=useState(false);
+  const [manual,setManual]=useState(false);
+  const [savedTime,setSavedTime]=useState("");
+  useEffect(()=>{
+    if(!sync.enabled||manual||saving||conflict||failed===serialized||savedPayload===serialized)return;
+    const timer=setTimeout(async()=>{
+      setSaving(true);
+      try{const result=await autosaveReport(reportId,version,JSON.parse(serialized));
+        if(result.ok){setVersion(result.version);setSavedPayload(serialized);setFailed(null);setSavedTime(new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}));}
+        else{setFailed(serialized);if(result.reason==="conflict")setConflict(true);}
+      }catch{setFailed(serialized);}finally{setSaving(false);}
+    },1200);
+    return ()=>clearTimeout(timer);
+  },[serialized,savedPayload,saving,failed,conflict,manual,sync.enabled,reportId,version]);
+  useEffect(()=>{const guard=(event:BeforeUnloadEvent)=>{if(sync.enabled&&serialized!==savedPayload&&!manual){event.preventDefault();}};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[serialized,savedPayload,sync.enabled,manual]);
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const extra = extraCheck?.();
@@ -90,12 +115,15 @@ export function ReportForm({
         return;
       }
     }
+    if(saving||conflict){event.preventDefault();return;}
+    setManual(true);
     setError(null);
   }
 
   return (
     <form action={action} onSubmit={onSubmit}>
       <input type="hidden" name="reportId" value={reportId} />
+      <input type="hidden" name="draftVersion" value={sync.enabled?version:""} />
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       {children}
       {error ? (
@@ -103,19 +131,20 @@ export function ReportForm({
           {error}
         </p>
       ) : null}
-      <SubmitBar />
+      {sync.enabled?<p role="status" aria-live="polite" className="my-3 text-sm text-muted">{conflict?"다른 기기에서 보고서가 변경되었거나 제출되었습니다. 현재 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.":saving?"서버에 자동저장 중…":failed===serialized?"자동저장하지 못했습니다. 입력 내용은 화면에 유지됩니다. 인터넷 연결과 입력값을 확인해 주세요.":savedPayload!==serialized?"변경 내용을 자동저장할 예정입니다.":savedTime?"자동저장 완료 · "+savedTime+" · 다른 기기에서 이어 쓸 수 있습니다.":"입력하면 자동저장됩니다. 기기를 바꾸기 전 저장 완료를 확인해 주세요."}{failed===serialized&&!conflict?<button type="button" onClick={()=>setFailed(null)} className="ml-2 underline">다시 저장</button>:null}</p>:null}
+      <SubmitBar blocked={saving||conflict} />
     </form>
   );
 }
 
-function SubmitBar() {
+function SubmitBar({blocked=false}:{blocked?:boolean}) {
   const { pending } = useFormStatus();
   return (
-    <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
-      <button type="submit" name="intent" value="draft" disabled={pending} className={`${secondaryButtonClass} flex-1`}>
+    <div className="report-submit-bar sticky -mx-4 flex gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <button type="submit" name="intent" value="draft" disabled={pending||blocked} className={`${secondaryButtonClass} flex-1`}>
         임시저장
       </button>
-      <button type="submit" name="intent" value="submit" disabled={pending} className={`${buttonClass} flex-1`}>
+      <button type="submit" name="intent" value="submit" disabled={pending||blocked} className={`${buttonClass} flex-1`}>
         {pending ? "저장 중…" : "제출"}
       </button>
     </div>

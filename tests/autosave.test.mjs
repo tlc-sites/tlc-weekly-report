@@ -1,0 +1,20 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFileSync,readdirSync} from 'node:fs';
+import {randomUUID} from 'node:crypto';
+import {SUPABASE_STUB} from './stub.mjs';
+test('다른 기기 초안 복원·충돌 차단·비공개 격리·실제 명단 중복 방지',async()=>{const db=new PGlite();try{
+ await db.exec(SUPABASE_STUB);for(const f of readdirSync('supabase/migrations').sort())await db.exec(readFileSync('supabase/migrations/'+f,'utf8'));await db.exec(readFileSync('supabase/seed.sql','utf8'));
+ const ids={};for(const n of ['writer','other','senior']){ids[n]=randomUUID();await db.query('insert into auth.users(id,email) values($1,$2)',[ids[n],n+'@example.com']);await db.query("insert into report.profiles(id,status,real_name,recipient_role) values($1,'active',$2,$3)",[ids[n],n,n==='senior'?'pastor':null]);}
+ const gid=(await db.query("select g.id from report.groups g where type='education' and not exists(select 1 from report.groups c where c.parent_id=g.id) limit 1")).rows[0].id;await db.query("insert into report.memberships(user_id,group_id,role) values($1,$2,'writer')",[ids.writer,gid]);
+ const row=(await db.query("insert into report.reports(group_id,author_id,author_name,meeting_date,meeting_label,details) values($1,$2,'작성자',current_date,'모임','{\"notes\":\"기존\"}') returning id,updated_at::text version",[gid,ids.writer])).rows[0];
+ async function as(n,sql,args=[]){return db.transaction(async tx=>{await tx.exec('set local role authenticated');await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[ids[n]]);return tx.query(sql,args);});}
+ const payload={details:{notes:'자동저장 내용'},attendance:[],newcomers:[{name:'새친구',grade:'',guardian_name:'',guardian_contact:'',consent:false}],prayer:'비공개 기도',messages:{pastor:'비공개 글',pastor_wife:''}};
+ async function save(version,p=payload){return (await as('writer','select report.autosave_report($1,$2,$3::jsonb)::text version',[row.id,version,JSON.stringify(p)])).rows[0].version;}
+ const v1=await save(row.version);assert.equal((await as('writer','select payload from report.report_drafts where report_id=$1',[row.id])).rows[0].payload.prayer,'비공개 기도');assert.equal((await as('other','select * from report.report_drafts')).rows.length,0);assert.equal((await as('senior','select * from report.report_drafts')).rows.length,0);await assert.rejects(as('other','select report.autosave_report($1,$2,$3::jsonb)',[row.id,v1,JSON.stringify(payload)]),/forbidden/);
+ await assert.rejects(save(row.version),/conflict/);const v2=await save(v1);assert.equal((await db.query("select count(*)::int n from report.members where group_id=$1 and name='새친구'",[gid])).rows[0].n,0);assert.equal((await db.query('select details from report.reports where id=$1',[row.id])).rows[0].details.notes,'기존');assert.equal((await db.query('select count(*)::int n from report.report_messages where report_id=$1',[row.id])).rows[0].n,0);
+ await assert.rejects(save(v2,{...payload,newcomers:[{...payload.newcomers[0],guardian_contact:'010-0000-0000',consent:false}]}),/consent/);
+ await assert.rejects(as('writer',"select report.save_report_from_draft($1,$2::jsonb,'draft',$3)",[row.id,JSON.stringify(payload),v1]),/conflict/);await as('writer',"select report.save_report_from_draft($1,$2::jsonb,'draft',$3)",[row.id,JSON.stringify(payload),v2]);assert.equal((await db.query("select count(*)::int n from report.members where group_id=$1 and name='새친구'",[gid])).rows[0].n,1);assert.equal((await db.query('select count(*)::int n from report.report_drafts where report_id=$1',[row.id])).rows[0].n,0);
+ const version=(await db.query("update report.reports set status='submitted' where id=$1 returning updated_at::text version",[row.id])).rows[0].version;await assert.rejects(save(version),/requires draft/);await assert.rejects(as('writer',"select report.save_report_from_draft($1,$2::jsonb,'draft',$3)",[row.id,JSON.stringify(payload),v2]),/conflict/);assert.equal((await db.query("select has_function_privilege('anon','report.autosave_report(uuid,timestamp with time zone,jsonb)','execute') ok")).rows[0].ok,false);
+ }finally{await db.close();}});

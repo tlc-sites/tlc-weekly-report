@@ -404,3 +404,89 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-21 운영 적용 상태 확인 필요
 - 사용자가 수정 합본의 already present 사전 검사 오류를 제공. 최소 DB22 테이블 또는 DB23 컬럼이 이미 존재함이 확인되며, 운영을 DB21만이라고 단정할 수 없다. 이전 최초 합본이 부분 실행되었거나 이미 적용됐을 수 있으며 전체 적용 여부는 미확인이다. 재적용/삭제는 하지 않는다.
 - outputs/report-deploy/check-db22-db23.sql 읽기 전용 검사 준비: 신규 테이블/컬럼/함수/트리거 존재, RLS·정책, 변경 함수 정의, FK, 스데반 반 이름만 조회. 계정·보고 본문·비밀 값은 조회하지 않는다. 사용자가 결과를 제공하면 누락 부분만 판단 후 앱 배포한다. 이번에는 코드 변경/검증 재실행/운영 변경 없음.
+
+
+### 2026-10-21 재배포 준비 커밋
+- 사용자 재배포 요청. Chrome 탭 조회 timeout 지속. 기존 공개 API 키를 runtime에서 읽어 limit=0 읽기 전용 조회를 시도했고 외부망 허용 후6개 요청 모두401/42501로 거절됐다. 본문/개인정보/키 출력 없음. 서버 secret key는 로컬 미설정으로 관리자 조회 불가. 이 응답만으로 신규 객체 완전 적용을 확인할 수 없다.
+- 변경29파일을 fc8eaf4 로컬 커밋으로 확정, staged diff --check 성공. push/운영 앱 배포 없음. 이전91개 테스트 및 합본1개 테스트 결과는 앞선 턴 결과. 운영DB는 스데반3반 존재만 사용자 화면으로 확인, 나머지는 미확인.
+- 사용자 실행 혼동을 줄이기 위해 첫 상태 조회만 포함한 outputs/report-deploy/check-db22-db23-status.sql 별도 준비. 그 결과 확인 후 HEAD:master push 및 Vercel 배포 확인 필요.
+
+
+### 2026-10-21 DB 상태 확인 후 운영 브랜치 푸시 완료
+- 사용자 스크린샷으로14개 검사 항목 present=true, 신규4테이블 RLS=true 확인. 앞선 스데반3반 생성 화면도 확인됨. 세부 정책/변경함수 본문/기존행 보존 검증 성공 결과는 미수령이므로 그 부분 검증 완료라고 표현하지 않는다. DB22·23 필수 객체는 존재한다.
+- fc8eaf4f8a68902440cb3f70bce8fe577c419a9b를 origin HEAD:master 정상 push 성공(72f413d→fc8eaf4). 원격 배포 시작 트리거 반영. 이번 새코드 변경/테스트 재실행은 없으며 기존 검증91개+합본1개/37경로 빌드 결과는 이전 턴 결과다.
+- 공개 운영 GET login200, weekly-summary307→login, prayer-meetings307→login 확인. 이 경로 응답은 전체 경로 로그인 미들웨어 특성상 새커밋 반영의 확정 증거는 아니다. GitHub connector combined status는 빈 배열을 반환해 Vercel Ready/배포ID는 미확인.
+- Git credential fill로 인증정보를 직접 읽어 GitHub API 상태를 조회하려던 추가 명령은 자동승인 검토가 credential probing 위험으로 거절. 명령 실행 안 됨, 우회하지 않음. 따라서 인증정보 추출/저장/출력 없음.
+- 남은 일: Vercel에서 fc8eaf4 Production Ready 확인, 로그인 운영 새폼 점검, 담임 사모님 계정 최상단 역할 배정(미실행), 운영 주간메일 자격증명 설정/활성화(미실행). 실제 메일/푸시 수동 전송 없음. 루트·셀케어 다른 작업 보존.
+
+
+### 2026-10-22 교역자 드롭다운 선택 차단 수정 (운영 대기)
+- 사용자가 교역자 직책을 선택 자체가 안 된다고 확인. 기존 MembershipPositionSelect는 대상 is_minister=false일 때 교역자 옵션 disabled여서 별도 역할 버튼을 먼저 눌러야 했다.
+- admin/users/[id]/page.tsx에서 관리자에게 허용된 타인 소속 편집 시 교역자 옵션을 선택 가능하게 하고 설명 수정. actions.ts는 새 set_memberships_with_minister RPC 호출. DB24 20261107000000_assign_minister_memberships.sql은 기존 관리자 권한/자기 소속 금지/최상단 제한을 유지하며 활성 대상 행 잠금 후 필요한 교역자 지정과 기존 set_memberships를 한 트랜잭션으로 실행한다. 실패 시 교역자 지정도 롤백.
+- tests/minister-assignment.test.mjs 추가: 역할+소속 저장, 비관리자/자기승격/anon 차단, 중복 소속 실패 시 역할 및 소속 롤백. package.json test:db에 포함. 이번 npm run test:db92/92, lint, tsc --noEmit, webpack build37경로 모두 성공. UI 운영 검증 없음.
+- 운영 DB 적용/배포/계정 변경은 아직 하지 않았다. DB24 수동 실행용 outputs/report-deploy/apply-db24.sql 준비. DB24+앱 변경에 대한 운영 반영 승인 필요. 이전 fc8eaf4 원격 master 푸시는 완료이며 VercelReady 확인은 여전히 미완료. 다른 로컬 수정 보존.
+
+
+### 2026-10-22 DB24 및 앱 반영 승인 후 연결 차단
+- 사용자 진행으로 DB24+앱 배포 승인됨. 운영 SQL 편집기 새탭 연결이 다시 약30초 timeout. DB24를 적용하지 못했으므로 의존 앱은 push하지 않았다. 승인 유지, 재승인 불필요.
+- 교역자 선택 수정5파일은 로컬 커밋 확정(staged diff check 성공). 사용자 문서 변경과 다른 작업 보존. 운영 DB/실제 계정은 변경하지 않았다.
+- outputs/report-deploy/apply-db24.sql은 단일DO로 함수 생성·권한 설정을 원자적으로 실행하고 db24_ready/authenticated_allowed/anon_blocked를 한 결과로 확인한다. 현재 사용자가 SQL Editor에서 전체 실행 후3항목true 확인이 필요하다. DB24 완료 확인 뒤 준비된 커밋 HEAD:master push 및 배포상태 확인. 이번 턴 테스트 재실행 없음,92개/37경로 검증은 앞선 구현 턴 결과.
+
+
+### 2026-10-22 교역자 지정 수정 운영 브랜치 반영
+- 사용자 DB24 결과 화면 db24_ready/authenticated_allowed/anon_blocked 모두true 확인. DB24 함수 존재와 authenticated실행/anon차단 확인됨. 사용자가 실제 타인 교역자 지정 저장까지 성공했는지는 미확인.
+- 승인된5279e0a 커밋을 origin HEAD:master 정상push(fc8eaf4→5279e0a). 프로덕션 login HTTP200. GitHub combined status 조회는 빈배열, Vercel브라우저 연결은32초 timeout이므로 최신커밋 ProductionReady 상태는 아직 확인하지 못했다. push성공과 배포완료를 구분한다.
+- 이번에는 코드/DB 추가수정이나 실제계정 배정 없음. 기존92개테스트/lint/tsc/build37경로 성공은 이전 구현턴 결과로 유지, 이번 재실행하지 않음. docs/HANDOFF만 로컬 영수증 추가, 다른 작업 보존.
+- 남은 일: Vercel5279e0a Ready 확인 후 관리자→타인사용자→소속과역할에서 담당교역자선택/저장 실제확인. 본인소속변경제한은 유지. 주간메일 설정과 담임사모님 최상단 역할 배정은 별도 미완료.
+
+
+### 2026-10-22 배포 생성 재개 중 브라우저 연결 사라짐
+- 직전 턴 Chrome 복구 후 Vercel Deployments→Create Deployment까지 접근, Branch Commit URL에 master 입력. 생성 버튼 클릭은 하지 않았다. 이후 이어서 요청에서 REPL binding 소실, 새 탭 요청은 Browser is not available: chrome. 현재 listBrowsers 결과 빈 배열. 배포 생성/재배포는 실행되지 않았다.
+- 운영 DB24 확인과 origin/master5279e0a 유지. 작업 변경 없음. Chrome을 현재 대화의 브라우저 연결로 다시 제공해야 Create Deployment master 선택부터 재개 가능. 과거 에러 시간초과와 현재 브라우저0개 상태를 구분한다.
+
+
+### 2026-10-22 교역자 선택 수정 운영 배포 완료 확인
+- 사용자가 제공한 Vercel 화면에서5279e0a / Allow direct minister selection / Production / Ready /18초 확인. 최신 교역자 직접 선택 수정이 운영 배포됐음을 확인했다. 앞선 DB24검사3항목true와 함께 DB·앱 필수 반영 완료.
+- 이번 확인은 사용자 화면 증빙이며 직접 브라우저 접속·실제 타인 교역자 선택/저장 성공까지 검증한 것은 아니다. 코드/DB추가변경·수동알림발송·테스트재실행 없음. 실제 관리자→다른사용자→소속과역할→담당교역자선택→소속저장 확인이 남음. 본인소속변경 제한 유지.
+
+
+### 2026-10-22 사진팀 분류·담당 팀 관리 탭 (로컬)
+- 사진팀은 groupCategory에서 예배/기술팀으로 명시 분류. DB25 20261108000000_photo_worship_category.sql은 잘못된 사진팀 type만 worship으로 보정, ID/소속/보고/명단 보존. 기존DB18 생성시 이미worship이라 정상데이터는 무변경.
+- src/app/team-management/page.tsx 신규: 홈 교역자 관리 링크에서 진입, 최상단은 전체·담당교역자는 assigned_clergy RPC가허용한 파트만 표시. 기존 team_directory RLS 재사용, 관리자라는 이유만으로 타팀명단 수정권한 부여하지 않음. 로그인/보고권한과 단순명단 등록 분리 유지.
+- 팀 명단 화면에 이름·역할 수정 및 저장상태 추가, updateTeamMember 서버액션은 기존 UPDATE RLS와 행반환으로 성공 검증. 변경 src/app/page.tsx, src/lib/groups.ts, groups/[id]/team/page.tsx·actions.ts. tests/team-management.test.mjs와package test목록 추가.
+- 이번검증 lint/tsc성공, webpack build38경로성공, test:db93/93성공, diffcheck성공. 첫 신규테스트는 사진팀을other로바꾼뒤 담당교역자직책을 넣어 기존직책검증에 실패; 픽스처를 정상배정 후 분류변경순으로 수정하고 전체93개 재실행 성공. 운영DB25적용/앱배포/실제명단변경 미실행.
+- 추가 사용자 제안: 관리자에게 파트·희망직책·사유를 전달하는 담당배정요청 및 문의하기 기능. 배정요청과일반문의 분리, 관리자 종알림·상태추적, 승인시에만실제권한반영 방향을 제안했으며 아직 미구현. 본인승격 우회나 자동승인 금지.
+
+
+### 2026-10-22 보고서 서버 자동저장·기기 간 이어쓰기 (로컬)
+- 사용자 요청: 모바일→PC 이어쓰기 자동저장, 팀원 추가 및 역할 지정. 팀 명단 추가/이름·담당역할파트수정은 직전 담당팀관리 변경에서 구현됨(보고권한과 별개).
+- DB26 20261109000000_report_autosave.sql: report_drafts 작성자전용 SELECT RLS, 크기제한262144바이트, 본인미제출초안+can_edit_report 검사 RPC. payload는 별도비공개초안에만 저장하며 canonical보고/새친구/출결/기도/비공개메시지에 자동입력 부수효과없음. 보호자연락처 동의도 검사. report행잠금과 draft timestamp+기준report timestamp로 기기충돌 차단.
+- save_report_from_draft는 원래invoker save_report의 RLS를 유지하고 초안version확인→실제저장→본인자동저장사본정리를 한트랜잭션 처리. 다른기기에서 이미제출된 보고를 오래된초안페이지가 다시draft로내리는 것도차단.
+- reports/[id]/autosave-actions.ts·autosave-context.tsx 추가, form-parts.tsx 입력중단1.2초후자동저장, 저장상태·실패재시도·충돌안내·미저장페이지닫기경고, 저장중/충돌시제출차단. 모든기존일반보고유형 및팀회의공과양식은 서버초안으로복원. page.tsx에서작성자만snapshot조회/복원, actions.ts에버전있는실제저장RPC연결. 이미제출된보고 수정·주중기도회 간단폼은자동저장대상아님.
+- tests/autosave.test.mjs 추가 및package test:db반영: 다른기기조회·stale version충돌·타인/최상단비공개초안격리·anon차단·동의검사·자동저장시새친구0명→실제저장시1명·저장후사본정리·제출후자동저장/오래된수동저장거부.
+- 이번검증 전체test:db94/94성공, lint/tsc/webpack build38경로성공. 이후제출후오래된수동저장방지및hidden version조건추가후대상test1/1+lint+tsc재실행성공. diffcheck성공(LF안내만). 실제모바일/PC브라우저UI검증미실행. DB함수이전초안에서save_report를자동호출하면새친구중복문제가있어최종구현은별도초안저장으로설계교체했음.
+- 운영DB25·26적용/배포/실제사용자데이터변경없음. 마지막확인운영5279e0a/DB24. 담당배정요청·문의하기는제안단계로미구현유지. 운영반영에는DB25·26과앱배포승인필요. 루트/셀케어다른도구수정보존.
+
+
+### 2026-10-22 하단 작성/관리·전체 사역 대시보드·공유 예배위원·자동번역·모바일 정리 (로컬)
+- 하단 메뉴 components/bottom-navigation·bottom-navigation-links 추가, 활성사용자 작성/관리(일반팀원은내보고서) 전환. /manage 신규: 관리자승인·그룹·예배·제출현황, 교역자담당명단, 최상단전체주간보고/예배별이슈 펼쳐보기 및이전주이동. 기존RLS와canManage/isClergy/isSenior 구분유지.
+- 홈 공지·소통을 인사말보다위로 이동, 예배·팀이슈를 하단으로이동, 주중기도회/비공개메시지 두카드 중앙정렬. 기도회필드를 prayer-fields.tsx공통컴포넌트로분리하고모바일1열/큰화면2열, 입력최소폭과긴문장줄바꿈, 관리자탭줄바꿈, 하단메뉴안전영역/보고저장바간격반영.
+- DB27 20261110000000_shared_worship_staff.sql: 예배종류+날짜별공유위원, 승인사용자전체읽기/교역자이상쓰기, 작성자불변/수정자자동기록, RLS강제. worship-staff/page·actions, shared-worship-staff컴포넌트추가. 기존보고service_staff원문보존/중복입력대신공유명단링크, 모든동일예배보고에공통패널표시.
+- 셀케어 api/translate.js읽기참고, 셀케어수정없음. translation-provider 서버API+translation-actions의사용자RLS재조회+일반보고허용필드만전송. 최상단영어보기시보고/관리요약자동영어번역, 영어보고코멘트는한국어자동번역. 원문유지, 보호자/기도/비공개메시지는일반보고번역대상제외. ANTHROPIC_API_KEY·TRANSLATE_MODEL·TRANSLATION_ENABLED 설정필요(자리표시자만.env.example추가). 실제유료API전송안함, provider테스트는mock만사용.
+- 모바일실측중 누락된postcss설정으로webpack에서Tailwind유틸리티가생성되지않음을발견. @tailwindcss/postcss(dev)추가, postcss.config.mjs, globals.css @source ../ 명시. 프로덕션CSS의flex/grid/text-center생성=true, raw @theme미잔존확인. npm설치가5high취약점안내를출력했으나자동force업그레이드는하지않음.
+- 검증: test:db96/96성공(공유예배위원교역자쓰기·타팀읽기·일반관리자쓰기차단·작성자/수정자보호, 번역요청/실패/잘린응답/비공개필드제외포함), 최종lint/tsc성공, 최종webpack build40경로성공, diffcheck성공(LF안내만). 초기빌드는언어제네릭타입오류→수정, 임시미리보기삭제후남은생성타입1파일참조오류→해당생성파일정리후최종성공.
+- 실제Chrome1에서개인정보없는공통PrayerFields 로컬fixture를320/390폭검증. 카드text-align:center/display:flex, 가로넘침없음(390폭page375,320폭page305스크롤바제외), 320폭하단스크롤후등록버튼bottom617<하단메뉴top675확인. 스크린샷 outputs/mobile-ui/prayer-390.png·prayer-320.png. 개발fixture원본outputs/mobile-ui/preview-page.tsx에보존, 앱의임시auth/ui-preview페이지는제거, 최종build에없음. viewport reset완료, 로컬dev서버종료.
+- 운영반영/커밋·push/DB25~27적용/계정배정/실제번역API·메일·푸시전송없음. 현재운영5279e0a/DB24유지. 새기능은로컬검증상태이며운영반영승인필요. 문의·담당배정요청은이전제안단계미구현. 루트와셀케어타도구수정보존.
+
+
+### 2026-10-22 일반 보고 교역자 기본 공개·부산 사역 소식 통합 (로컬)
+- 사용자 최신 요청에 따라 제출/확인된 일반 보고는 모든 활성 교역자에게 기본 공개한다. DB28 20261111000000_clergy_default_report_read.sql에 SELECT 정책과 can_view_report/can_view_group 보강. 기존 직급/담당/본인/임시셋업 열람 예외 보존, 신규 교역자 기본 공유는 초안 제외. 기도제목·비공개 메시지·명단·수정/검토 권한 변경 없음.
+- reports/[id]/sharing.tsx는 일반 보고 개별 공개 선택을 없애고 기본 공개 설명 및 기도제목·비공개 글 공개 설정으로 정리. 기존 report 공유 데이터는 삭제하지 않음.
+- campus-form.tsx의 별도 사역 소식 묶음을 없애고 저장 키를 유지한 채 각 펼침 항목 안에 배치: 중고등부→교회학교, 청년부→청년부, 장년부/성도 섬김→장년부, 방문자→새가족 현황, 사역 방향/시설/기타→예배. 방문·헌금·경비는 별도 선택 항목 유지. report-forms.ts campusSectionRows를 입력 상태·제출 검증·읽기 화면(page.tsx)에 재사용해 기존/신규 원문을 부서별로 함께 표시. 빈 신규 sections라도 기존 사역 소식이 있으면 제출 가능.
+- tests/clergy-default-read.test.mjs 및 package test 목록 추가. 이번 전체 test:db 98/98, lint, tsc --noEmit 통과. webpack build 40경로 통과. git diff --check 통과(LF/CRLF 안내만). 이번 변경 UI의 실제 로그인 브라우저 검증은 미실행.
+- 배포/운영 DB 적용/실제 계정·보고 데이터 변경 없음. 운영은 5279e0a/DB24 유지. DB25~28 및 누적 앱 변경은 로컬 상태이며 운영 적용은 별도 승인 후 진행. 다른 도구·루트·셀케어 변경 보존.
+
+
+### 2026-10-22 DB25~28 운영 적용 및 앱 배포 시작
+- 사용자 신규 승인: DB25~28 적용과 앱 배포 진행. 운영 Supabase SQL Editor의 report 스키마에 단일 DO 배치 적용 성공, autosave_ready/worship_staff_ready/clergy_default_read_ready 모두true 확인. 사전 조회는 DB26~28 모두false. 배치 로컬 PGlite 실행도 true3개 확인. 증빙 outputs/report-deploy/db25-db28-applied.png.
+- 앱 누적 변경은 직전 턴98/98·lint·tsc·webpack40경로 검증 완료 상태. 이번 배포 준비 중 코드 수정 없음. 번역 유료 API 환경 변수는 미설정 상태 유지, 실제 메일·번역·푸시 테스트 발송 없음. 이제 운영 master에 정상 push 후 Vercel Ready 확인 예정.

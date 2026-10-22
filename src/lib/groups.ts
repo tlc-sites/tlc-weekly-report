@@ -23,7 +23,7 @@ export const GROUP_TYPE_LABEL: Record<Group["type"], string> = {
 };
 
 export const NAV_CATEGORY_LABEL={...GROUP_TYPE_LABEL,internship:"스데반 인턴십"};
-export const groupCategory=(g:Pick<Group,"type"|"settings">)=>g.settings?.report_category==="internship" ? "internship" : g.type;
+export const groupCategory=(g:Pick<Group,"type"|"settings"> & {name?:string})=>g.name==="사진팀" ? "worship" : g.settings?.report_category==="internship" ? "internship" : g.type;
 
 export const SCHEDULE_LABEL: Record<Group["schedule"], string> = {
   weekly: "주간",

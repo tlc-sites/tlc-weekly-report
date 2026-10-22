@@ -9,7 +9,7 @@ const ITEMS = [
 
 export function AdminNav({ current }: { current: (typeof ITEMS)[number]["href"] }) {
   return (
-    <nav aria-label="관리 메뉴" className="mb-5 flex gap-1 rounded-2xl border border-border bg-accent/5 p-1.5 text-[15px]">
+    <nav aria-label="관리 메뉴" className="mb-5 flex flex-wrap gap-1 rounded-2xl border border-border bg-accent/5 p-1.5 text-[15px]">
       {ITEMS.map((item) => (
         <Link
           key={item.href}

@@ -9,6 +9,8 @@ import {
   CAMPUS_OFFERINGS,
   CAMPUS_SATURDAY,
   CAMPUS_TEXTS,
+  CAMPUS_TEXT_SECTION,
+  campusSectionRows,
   type CampusPayload,
 } from "@/lib/report-forms";
 import { MessagesEditor, ReportForm, Section, TextArea } from "./form-parts";
@@ -39,13 +41,19 @@ export function CampusForm({
   return (
     <ReportForm action={action} reportId={reportId} type="campus" payload={p}>
       <p className="mb-4 text-sm text-muted">보고할 항목을 펼쳐 작성해 주세요. 작성한 항목만 제출됩니다.</p>
-      {CAMPUS_SECTIONS.map(([key,label])=><details key={key} className="mb-3 rounded-xl border border-border bg-surface p-4"><summary className="cursor-pointer font-semibold">{label}{d.sections?.[key]?.trim()?" · 작성됨":""}</summary><div className="mt-3"><TextArea label={`${label} 보고`} rows={4} maxLength={2000} value={d.sections?.[key]??""} onChange={value=>set({sections:{...d.sections,[key]:value}})}/></div></details>)}
-      <details className="mb-4 rounded-xl border border-border p-4"><summary className="cursor-pointer text-sm font-semibold">기존 방문·경비·사역 기록</summary>
-      <Section title="방문 정보" hint="* 표시는 제출할 때 꼭 채워야 하는 항목입니다.">
+      {CAMPUS_SECTIONS.map(([key,label])=><details key={key} className="mb-3 rounded-xl border border-border bg-surface p-4">
+        <summary className="cursor-pointer font-semibold">{label}{campusSectionRows(d).find(([title])=>title===label)?.[1]?.trim()?" · 작성됨":""}</summary>
+        <div className="mt-3 space-y-3">
+          <TextArea label={key==="worship"?"예배 보고":"진행 내용"} rows={4} maxLength={2000} value={d.sections?.[key]??""} onChange={value=>set({sections:{...d.sections,[key]:value}})}/>
+          {CAMPUS_TEXTS.filter(([name])=>CAMPUS_TEXT_SECTION[name]===key).map(([name,title,placeholder])=><TextArea key={name} label={title} value={d.texts[name]} onChange={value=>set({texts:{...d.texts,[name]:value}})} placeholder={placeholder}/>)}
+        </div>
+      </details>)}
+      <details className="mb-4 rounded-xl border border-border p-4"><summary className="cursor-pointer text-sm font-semibold">방문·헌금·경비 기록 (선택)</summary>
+      <Section title="방문 정보" hint="필요한 항목만 작성해 주세요.">
         <Field label="교역자 이름">
           <input value={authorName} readOnly className={`${inputClass} text-muted`} />
         </Field>
-        <Field label="동행 스텝 이름 *" hint="없으면 '없음'을 고르고, 있으면 이름을 적어 주세요.">
+        <Field label="동행 스텝 이름" hint="없으면 '없음'을 고르고, 있으면 이름을 적어 주세요.">
           <div className="flex gap-2">
             <button
               type="button"
@@ -65,16 +73,16 @@ export function CampusForm({
           </div>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="판교 출발 날짜 *">
+          <Field label="판교 출발 날짜">
             <input type="date" value={d.depart_pangyo} onChange={(e) => set({ depart_pangyo: e.target.value })} className={inputClass} />
           </Field>
-          <Field label="부산 출발 날짜 *">
+          <Field label="부산 출발 날짜">
             <input type="date" value={d.depart_busan} onChange={(e) => set({ depart_busan: e.target.value })} className={inputClass} />
           </Field>
         </div>
       </Section>
 
-      <Section title="헌금 챙김 *">
+      <Section title="헌금 챙김">
         <CheckGroup options={CAMPUS_OFFERINGS} value={d.offerings} onToggle={(o) => set({ offerings: toggle(d.offerings, o) })} />
         <input
           value={d.offerings_other}
@@ -85,7 +93,7 @@ export function CampusForm({
         />
       </Section>
 
-      <Section title="경비 *">
+      <Section title="경비">
         <div className="grid grid-cols-2 gap-3">
           {CAMPUS_COUNTS.map(([key, label]) => (
             <Field key={key} label={label}>
@@ -124,7 +132,7 @@ export function CampusForm({
         </Field>
       </Section>
 
-      <Section title="토요일 예배팀 모임 *">
+      <Section title="토요일 예배팀 모임">
         <CheckGroup options={CAMPUS_SATURDAY} value={d.saturday} onToggle={(o) => set({ saturday: toggle(d.saturday, o) })} />
         <input
           value={d.saturday_other}
@@ -135,18 +143,7 @@ export function CampusForm({
         />
       </Section>
 
-      <Section title="사역 소식 *">
-        {CAMPUS_TEXTS.map(([key, label, placeholder]) => (
-          <TextArea
-            key={key}
-            label={label}
-            required
-            value={d.texts[key]}
-            onChange={(v) => set({ texts: { ...d.texts, [key]: v } })}
-            placeholder={placeholder}
-          />
-        ))}
-      </Section>
+
 
       </details>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}

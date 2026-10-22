@@ -20,7 +20,7 @@ export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <span className="text-[15px] font-medium">{label}</span>
       {children}
       {hint ? <span className="text-xs text-muted">{hint}</span> : null}
@@ -61,7 +61,7 @@ export const secondaryButtonClass =
 export const smallButtonClass =
   "inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
-  "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
+  "h-12 min-w-0 max-w-full w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =
   "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const textareaClass =
