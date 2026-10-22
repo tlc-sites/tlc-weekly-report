@@ -1,3 +1,5 @@
+import {FeedbackReplies} from "@/components/feedback-replies";
+import {loadFeedbackReplies} from "@/lib/feedback-replies";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { BackLink, Card, Loading, PageTitle, textareaClass } from "@/components/ui";
@@ -19,6 +21,7 @@ async function Content({ params, searchParams }: PageProps<"/notices/[id]">) {
   if (loadError) throw loadError;
   if (!notice) notFound();
   if (comments.error) throw comments.error;
+ const replies=await loadFeedbackReplies(supabase,"notice",(comments.data??[]).map(c=>c.id));
   // 이름 열람도 기존 프로필 RLS를 거친다. 보이지 않는 이름은 역할을 추정하지 않는다.
   const authors = [...new Set((comments.data ?? []).map(c => c.author_id))];
   const profiles = authors.length ? await supabase.from("profiles").select("id,real_name").in("id",authors) : { data: [] };
@@ -30,7 +33,7 @@ async function Content({ params, searchParams }: PageProps<"/notices/[id]">) {
     <Card className="mb-6"><p className="mb-3 text-xs text-muted">{new Date(notice.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p><p className="whitespace-pre-wrap">{notice.body}</p></Card>
     <h2 id="comments" className="mb-2 font-semibold">댓글 {comments.data?.length ?? 0}개</h2>
     <Card><ul className="divide-y divide-border">{(comments.data ?? []).map(c => <li key={c.id} className="py-3">
-      <p className="mb-1 text-xs text-muted">{profiles.data?.find(p => p.id === c.author_id)?.real_name ?? "구성원"} · {new Date(c.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p><p className="whitespace-pre-wrap text-sm">{c.body}</p>
+      <p className="mb-1 text-xs text-muted">{profiles.data?.find(p => p.id === c.author_id)?.real_name ?? "구성원"} · {new Date(c.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p><p className="whitespace-pre-wrap text-sm">{c.body}</p><FeedbackReplies kind="notice" commentId={c.id} items={replies}/>
     </li>)}</ul>
     <form action={addNoticeComment} className="mt-4 flex flex-col gap-3"><input type="hidden" name="noticeId" value={id} />
       <label className="flex flex-col gap-2 text-sm">댓글 작성<textarea name="body" required rows={3} maxLength={1000} className={textareaClass} /></label>

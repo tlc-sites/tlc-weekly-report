@@ -1,3 +1,4 @@
+import {MinisterMessageComposer} from "@/components/minister-message-composer";
 import { Suspense } from "react";
 import Link from "next/link";
 import { BackLink, Card, Field, Loading, PageTitle, inputClass, selectClass, textareaClass } from "@/components/ui";
@@ -48,6 +49,7 @@ async function Content({ searchParams }: PageProps<"/notices">) {
         <SubmitButton pendingText="공지 보내는 중…">공지 보내기</SubmitButton>
       </form>
     </details> : null}
+    {restricted?<MinisterMessageComposer supabase={supabase} profile={profile}/>:null}
     {restricted&&isClergy(profile)?<Card className="mb-4"><h2 className="font-medium">비공개 대화</h2><p className="mt-2 text-xs text-muted">담임 목사님·담임 사모님과 지정 수신자만 볼 수 있습니다.</p><Link href="/messages" className="my-3 inline-block text-sm font-semibold text-accent underline">비공개 메시지 확인 · 보내기</Link><ul className="divide-y divide-border">{(threads.data??[]).map(thread=><li key={thread.id}><Link href={"/messages/"+thread.id} className="block py-3 text-sm">{thread.subject}</Link></li>)}</ul>{!threads.data?.length?<p className="text-sm text-muted">아직 받은 비공개 메시지가 없습니다.</p>:null}</Card>:null}
     <Card><h2 className="mb-2 font-medium">{restricted?"대상 지정 소식":"최근 공지"}</h2><ul className="divide-y divide-border">
       {(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="flex flex-col gap-1 py-3 transition active:bg-accent/10">

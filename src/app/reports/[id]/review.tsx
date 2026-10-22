@@ -1,3 +1,4 @@
+import {loadFeedbackReplies} from "@/lib/feedback-replies";
 import {AutoTranslation} from "@/components/auto-translation";
 import { FeedbackReplies } from "@/components/feedback-replies";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
     .order("created_at")
     .returns<CommentRow[]>();
   const comments = data ?? [];
+ const replies=await loadFeedbackReplies(supabase,"report",(comments).map(c=>c.id));
 
   return (
     <section id="comments" className="mt-6">
@@ -76,7 +78,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
                 </form>
               ) : null}
             </div>
-            <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id}/>
+            <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p><FeedbackReplies kind="report" commentId={c.id} items={replies}/>
           </div>
         ))}
         {canComment ? <form action={addComment} className="flex flex-col gap-2">

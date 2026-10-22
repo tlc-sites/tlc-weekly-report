@@ -1,3 +1,4 @@
+import {cache} from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 
@@ -14,7 +15,8 @@ export type Profile = {
 
 const PROFILE_COLUMNS = "id, email, real_name, requested_group_ids, status, is_admin, is_minister, recipient_role";
 
-export async function getSessionProfile() {
+// 같은 화면 요청 안에서만 인증 조회를 공유한다. 사용자 간에는 재사용하지 않는다.
+export const getSessionProfile = cache(async function getSessionProfile() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
@@ -31,7 +33,7 @@ export async function getSessionProfile() {
     ({ data: profile } = await fetchProfile());
   }
   return { supabase, profile };
-}
+});
 
 // 승인된 사용자만 통과시키고, 아니면 상태에 맞는 화면으로 보낸다
 export async function requireActive() {

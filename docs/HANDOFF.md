@@ -549,3 +549,31 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-22 DB29·30 운영 적용 및 누적 UI 배포 시작
 - 사용자 신규승인 DB29·30 적용과 앱 배포 진행. outputs/report-deploy/apply-db29-db30.sql 단일 DO 배치 로컬 PGlite 성공 후 운영 SQL Editor 적용 완료. 사전 db29_present/db30_present=false, 적용후 reads_ready/read_function_ready/report_notifications_ready=true3개. 증빙 outputs/report-deploy/db29-db30-applied.png.
 - 보고서 내 예배위원 입력·공지분류·관리탭정리·코멘트명칭·연령표시·열람현황·종알림·채플표시·모바일메뉴 크기/정렬/빈분류 수정 누적반영 예정. 직전100테스트 검증 및 마지막 UI변경 lint/tsc/webpack40경로 통과 상태, 이번 배포 중 코드추가변경 없음. 실제 메일/푸시 테스트발송/유료번역API 호출 없음. 운영 master 정상push 후 Vercel Ready 확인 예정.
+
+
+### 2026-10-22 열람·종알림·UI 누적 변경 운영 배포 완료
+- 54d1c29116453ab6877baa6ef97f6a4e7c31e8c8 정상push: 9a7a6de→54d1c29 origin/master. Vercel 75fzyPWpiz6zreD2wRWP1sLE8osq Production Ready/43초, tlc-weekly-report.vercel.app 도메인 연결 확인. 증빙 outputs/report-deploy/54d1c29-production-ready.png. 운영 DB29·30 적용 완료(위 기록).
+- 실제 브라우저 운영URL 로그인화면 정상 응답 확인. 로그인된 사용자로 보고작성/열람표시/종알림 실제운영기록 생성은 하지 않음. 이번 배포는 앞선100테스트 및 마지막UI lint/tsc/build40검증 이후 코드변경 없이 진행, 검증재실행 주장하지 않음. DB배치 PGlite 실행 성공은 이번 실행.
+- 담당 최상단 계정 배정, 주간메일 설정, 유료번역 활성화 및 실제모바일푸시테스트는 별도미완료 유지. 이번 제출/수정 알림은 앱 종알림함이며 별도모바일푸시 연동은 없음. 운영현재54d1c29/DB30. 작업종료영수증은 로컬문서만갱신하고 문서때문에추가배포하지않음. 다른사용자/루트작업 보존.
+
+
+### 2026-10-22 직접 확인·교역자 메시지·전체 코멘트 답글·조회 최적화 (로컬)
+- DB31 20261114000000_confirmations_and_comment_replies.sql 신규. senior_report_confirmations/confirm_senior_report는 기존 자동열람과 별도 직접확인, 최상단 본인역할만/제출보고/버전일치 검사 재사용. 보고서마다 본인 확인했습니다 버튼과 역할별 확인완료/수정후재확인 표시. 자동열람만으로 직접확인 기록 생성 안함. 보고서 열람/확인 조회2개 병렬화.
+- MinisterMessageComposer 공통서버컴포넌트 추가, 기존 messages와 공지 일부공개탭에 접히지않는 수신교역자선택/메시지폼 제공. 보고서에 최상단전용 메시지 바로가기. 기존 start_minister_thread RPC 비공개제한/작성권한 유지. 실제 메시지 전송·계정변경 없음.
+- 운영 read-only SQL로 활성 recipient_role=pastor/pastor_wife 계정수가 모두0임을 확인. 기능이 안보이는 실제 권한원인으로 사용자에게 알림. 담임목사님 로그인 이메일 요청중, 담임사모님은 이전제공계정으로 역할지정안준비예정. 이메일은 문서에복사하지않음. 실제역할배정/승격은 미실행.
+- DB31 prayer_comment_replies/notice_comment_replies RLS 및 답글알림트리거 추가. 기존 report/incident 답글에 더해 기도회·공지 코멘트마다 답글 UI 제공. 기존 부모열람범위 보존/작성자위조차단. 새로운 DB알림문구 목회피드백→피드백, 이전 저장알림도 loadNotifications의 표시제목만 정규화(원문저장값변경없음).
+- 지연개선: feedback-replies.ts 일괄로드 helper로 댓글별 N조회→화면1조회, 댓글0개면조회0. report/incident/prayer/notice 부모에서 일괄로딩. getSessionProfile React cache로 동일서버요청 안에서만 인증조회공유(사용자간·요청간캐시없음). 20댓글→1조회 unit검증.
+- 이번 전체 test:db102/102, 최종lint/tsc/webpack40경로/diffcheck 성공. 추가권한테스트 직접확인위조/버전/개별확인, 기도·공지답글범위/알림 포함. 초기스크립트 parse/CRLF누락과 Link import 오류 수정후재검증. 운영공개로그인 응답200 약385/323ms 측정(처음 sandbox fetch 실패후승인된읽기전용네트워크로재측정). 로그인후화면 실제개선율/전체체감속도는 미측정이며 개선완료로단정하지않음.
+- 운영DB31적용/배포없음. 운영54d1c29/DB30유지. 이번코드는로컬검증상태, 최상단배정과운영DB31별도승인 필요. 실제유료번역/메일/푸시 전송없음. 사용자/다른작업보존.
+
+
+### 2026-10-22 종→알림 목록·카드 전체 직접 이동 (로컬)
+- 사용자 참고이미지에 맞춰 notification-bell.tsx를 /notifications 링크로 변경, 팝오버/관련내용보기링크 제거. notifications/page.tsx 서버RLS목록, notification-list.tsx 전체카드링크·새알림배지·KST날짜·새로고침·이동중표시 추가. 카드클릭 시 기존 read_notification RPC 호출후 해당딥링크 이동, 읽음실패라도 이동. ctrl/meta 새탭 동작유지, 목록의 보고서 prefetch는 비활성화해 불필요한50개화면조회 방지.
+- notifications/actions.ts 목록조회 created_at 포함, loadUnreadNotificationCount는 head exact count로 종배지만갱신. 종60초/포커스조회 시 본문50개를 불러오던 비용제거. 기존 RLS/개인열람범위 유지, 새DB변경없음(이전로컬DB31은미적용유지).
+- 이번 lint/tsc/diffcheck/webpack41경로빌드 성공. 처음 npx.ps1 실행정책오류로 독립tsc호출이막혔으나 npx.cmd로 재실행 성공. 실제로그인 UI/읽음→이동브라우저 조작 미검증, DB테스트이번재실행안함(직전102개와구분). 운영배포없음, 운영54d1c29/DB30.
+- 담임목사님 계정은 아직 없다는 사용자 응답 확인. 담임사모님 최상단역할 지정은 아직미실행. 이번변경은기존소스/개인정보/사용자수정 보존하며 진행.
+
+
+### 2026-10-22 DB31 운영 적용·직접확인/답글/알림목록 앱 배포 시작
+- 사용자 신규승인 DB31 적용과 앱배포진행. outputs/report-deploy/apply-db31.sql 단일DO배치 PGlite 검증성공후 운영SQL실행. 사전3테이블false, 실행후 confirmations_ready/confirm_function_ready/prayer_replies_ready/notice_replies_ready 전부true. 증빙 outputs/report-deploy/db31-applied.png. 계정역할지정은승인범위에서명시제외/미실행.
+- 누적기능(직접확인, 메시지폼, 기도/공지답글, 피드백문구, 인증/답글조회최적화, 알림목록카드전체이동) 운영master반영예정. 앞선102테스트와최종lint/tsc/webpack41경로 성공후 이번배포중코드변경없음. 이번에테스트전부재실행한것은아니며 DB배치실행검증만새로수행. 메일/푸시/유료번역 발송없음.

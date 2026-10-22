@@ -7,13 +7,21 @@ test('최상단 실제 열람 기록: 두 역할 독립·위조 차단·버전 �
  async function as(name,sql,args=[]){return db.transaction(async tx=>{await tx.exec('set local role authenticated');await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[ids[name]]);return tx.query(sql,args);});}
  const mark=(name,version=r.updated_at)=>as(name,'select report.mark_senior_report_read($1,$2) seen',[r.id,version]);
  for(const name of ['writer','admin','disabled'])await assert.rejects(mark(name),/senior required/);
+ assert.equal((await db.query('select * from report.senior_report_confirmations')).rows.length,0);
+ await assert.rejects(as('writer','select report.confirm_senior_report($1,$2)',[r.id,r.updated_at]),/senior required/);
+ await as('pastor','select report.confirm_senior_report($1,$2)',[r.id,r.updated_at]);
+ assert.equal((await as('writer','select * from report.senior_report_confirmations')).rows.length,1);
+ assert.equal((await as('outsider','select * from report.senior_report_confirmations')).rows.length,0);
  const first=(await mark('pastor')).rows[0].seen;assert.deepEqual((await mark('pastor')).rows[0].seen,first);
  assert.equal((await as('writer','select * from report.senior_report_reads')).rows.length,1);
  assert.equal((await as('outsider','select * from report.senior_report_reads')).rows.length,0);
  await mark('pastor_wife');assert.equal((await as('writer','select * from report.senior_report_reads')).rows.length,2);
  await assert.rejects(as('pastor',"delete from report.senior_report_reads"),/permission/);
  const next=(await db.query("update report.reports set details='{\"notes\":\"수정\"}' where id=$1 returning updated_at",[r.id])).rows[0].updated_at;
+ await assert.rejects(as('pastor','select report.confirm_senior_report($1,$2)',[r.id,r.updated_at]),/version changed/);
+ assert.deepEqual((await db.query('select report_version from report.senior_report_confirmations')).rows[0].report_version,r.updated_at);
+ await as('pastor_wife','select report.confirm_senior_report($1,$2)',[r.id,next]);
  await assert.rejects(mark('pastor'),/version changed/);await mark('pastor',next);
- const rows=(await as('writer','select recipient_role,report_version from report.senior_report_reads')).rows;assert.deepEqual(rows.find(x=>x.recipient_role==='pastor').report_version,next);assert.deepEqual(rows.find(x=>x.recipient_role==='pastor_wife').report_version,r.updated_at);
+ const rows=(await as('writer','select recipient_role,report_version from report.senior_report_reads')).rows;assert.deepEqual(rows.find(x=>x.recipient_role==='pastor').report_version,next);assert.deepEqual(rows.find(x=>x.recipient_role==='pastor_wife').report_version,next);
  await db.query("update report.reports set status='draft' where id=$1",[r.id]);await assert.rejects(mark('pastor',next),/submitted report/);
  }finally{await db.close();}});

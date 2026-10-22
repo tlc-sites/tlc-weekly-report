@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {ReportReadStatus} from "@/components/report-read-status";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import {AutoTranslation} from "@/components/auto-translation";
@@ -90,8 +91,12 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     .eq("id", id)
     .maybeSingle<ReportRow>();
   if (!report?.group) notFound();
-  const reads=report.status!=="draft"?await supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null;
+  const [reads,confirmations]=await Promise.all([
+    report.status!=="draft"?supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null,
+    report.status!=="draft"?supabase.from("senior_report_confirmations").select("recipient_role,report_version,confirmed_at").eq("report_id",id):null,
+  ]);
   if(reads?.error)throw reads.error;
+  if(confirmations?.error)throw confirmations.error;
   const group = report.group;
   const serviceName=report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "예배";
   let incidentResult=null;
@@ -292,7 +297,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
-      {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
+      {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
+      {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
       <SharedWorshipStaff reportId={id} serviceId={report.service_type_id} date={report.meeting_date}/>
       {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
