@@ -4,7 +4,7 @@ import { Badge, Card } from "./ui";
 import { reportTitle, type MeetingReport } from "@/lib/meeting";
 import { RESULT_LABEL } from "@/lib/report-forms";
 
-const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",passage:"공과·성경 범위",place:"진행 장소",notes:"특이사항"};
+const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",worship_leader:"예배인도자",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",passage:"공과·성경 범위",place:"진행 장소",notes:"특이사항"};
 export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];groupName:Map<string,string>}) {
   const sent=reports.filter(r=>r.status!=="draft");
   const events=new Map<string,MeetingReport[]>();

@@ -207,10 +207,11 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       const result = str("result") as WorshipPayload["details"]["result"];
       body = (
         <WorshipForm
+          worshipTeam={group.name==="예배팀"}
           key={draftVersion}
           action={saveReport}
           reportId={id}
-          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff") }, issues, messages }) as WorshipPayload}
+          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff"),worship_leader:str("worship_leader") }, issues, messages }) as WorshipPayload}
           showMessages={isAuthor}
         />
       );
@@ -230,7 +231,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
               ["설교자", str("preacher")],
               ["예배·교육 내용", str("content")],
               ["나눔 주제",str("sharing_topic")],["나눔 범위",str("sharing_passage")],["나눔 장소",str("sharing_place")],
-            ] as [string, string][] : [["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
+            ] as [string, string][] : [["예배인도자",str("worship_leader")], ["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
             ["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
             ...issues.map(
               (i) => [`이슈 · ${i.category}`, `${i.content}${i.action ? `\n→ ${i.action}` : ""} (${ISSUE_STATUS_LABEL[i.status]})`] as [string, string],
@@ -301,7 +302,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
       {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
       {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
-      <SharedWorshipStaff reportId={id} serviceId={report.service_type_id} date={report.meeting_date}/>
+      <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date}/>
       {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">

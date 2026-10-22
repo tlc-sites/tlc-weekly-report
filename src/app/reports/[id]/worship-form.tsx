@@ -16,15 +16,16 @@ const personHint = (category: string) =>
   category === "인력" || category === "인력·관계" ? "특정인을 비난하기보다 상황과 개선 방안 위주로 적어 주세요." : null;
 
 // 예배팀: 진행 결과, 이슈, 요청사항
-export function WorshipForm({ action, reportId, initial, showMessages }: Props<WorshipPayload>) {
+export function WorshipForm({ action, reportId, initial, showMessages, worshipTeam=false }: Props<WorshipPayload> & {worshipTeam?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
       <p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배·기술팀 사역 보고입니다. 출결 대신 담당하신 사역, 진행 내용과 필요한 조치를 기록해 주세요. 예배팀 리허설 참석은 별도 메뉴에서 관리합니다.</p>
+      {worshipTeam?<Section title="예배인도자"><Field label="예배인도자 (선택)"><input value={p.details.worship_leader??""} maxLength={100} placeholder="이 예배의 예배인도자 이름" onChange={e=>setP({...p,details:{...p.details,worship_leader:e.target.value}})} className={inputClass}/></Field></Section>:null}
       <Section title="말씀 (선택)" hint="팀마다 반복 입력하지 않아도 제출할 수 있습니다.">
         <Field label="말씀본문 (선택)"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
         <TextArea label="말씀·예배 내용 (선택)" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
-        <p className="text-sm text-muted">예배위원은 이 보고서 위쪽에서 입력할 수 있습니다. 같은 날짜·예배의 다른 팀 보고서에도 함께 표시됩니다.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
+        <p className="text-sm text-muted">예배위원은 별도 ‘예배위원’ 메뉴에서 관리하며, 위쪽의 공유 명단을 확인해 주세요.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
       <Section title="진행 결과"><button type="button" className="min-h-11 rounded-xl border border-border px-3 text-sm text-accent" onClick={()=>setP({...p,details:{...p.details,result:"normal",notes:p.details.notes||"특이사항 없습니다."}})}>이슈 없음 · 정상 진행으로 작성</button>
         <div className="grid grid-cols-3 gap-2">

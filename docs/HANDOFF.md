@@ -634,3 +634,16 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-22 DB32 운영 적용·앱 배포 시작
 - 사용자 기존 DB32 승인과 최신 배포 요청으로 진행. Supabase 재연결 성공, 사전 db32_present=false 후 승인된 apply-db32.sql 실행. campus_finance_ready/comment_edit_ready/all_parts_no_meeting_ready 모두 true 확인, outputs/report-deploy/db32-applied.png 증빙. 계정 역할 변경/메일 전송 없음.
 - 최신 부산 단일 제목 수정 포함 webpack41경로 빌드 성공. 직전 전체DB103/103 및 최신lint/tsc 성공 유지. 이제 앱 master 정상push 및 Vercel Ready 확인 예정.
+
+### 2026-10-22 부산·제출안내·코멘트 수정 운영 배포 완료
+- c1138085003d86e72286f5b9fc01627ab8bc7cc2 정상push bcbc0e2→c113808 origin/master. Vercel 2XmuWA3VsH2pnK4EkDMmeJejRPC8 Production Ready31초, tlc-weekly-report.vercel.app 도메인 연결 확인. 증빙 outputs/report-deploy/c113808-production-ready.png. 운영 DB32 적용 완료.
+- 실제 운영 URL 로그인 화면 정상 응답 확인. 로그인 후 실제 보고 제출/수정과 알림 생성은 미실행. 최신 빌드41경로 이번 성공, 전체DB103/103 및 lint/tsc는 직전 실행 결과와 구분. 계정 역할 변경/메일·푸시 전송 없음. 운영 현재 c113808/DB32. 배포 완료 영수증은 로컬 문서만 갱신, 추가배포 트리거 안함. 사용자 루트 변경 보존.
+
+### 2026-10-22 예배위원 별도 메뉴 분리 (로컬)
+- 사용자 동의로 홈에 /worship-staff 예배위원 메뉴 추가. 기존 날짜·예배별 명단 등록 화면 재사용, 제목 예배위원/홈 돌아가기, 보고서 링크에서 해당 예배 앵커 이동. 기존 교역자 입력·승인사용자 열람 RLS 유지.
+- shared-worship-staff는 보고서 안 편집기를 제거하고 공유 명단 열람+날짜/예배 메뉴 링크만 표시. worship-form 안내 변경, 기존 보고의 service_staff 원문 보존. 저장·제출 로직 및 DB 변경 없음.
+- 이번 lint/tsc/webpack41경로빌드/diffcheck 성공. 초기 Card id 타입오류는 앵커용 div 래핑으로 해결. 운영로그인 실데이터 UI 확인과 DB테스트 재실행 없음(UI만 변경). 배포 미진행, 운영 c113808/DB32 유지. 기존 사용자 변경 보존.
+
+### 2026-10-22 예배위원 항목·예배인도자 및 앱 배포 시작
+- 사용자 배포 요청 후 추가 요구 반영. 별도 /worship-staff에 안내위원/헌금위원/말씀봉독 입력란, 기존 자유명단은 그 외 예배위원·기존 기록으로 보존. 저장은 기존 staff 텍스트/RLS 사용. 예배팀 보고서에 예배인도자 선택입력 worship_leader 추가, 열람/회의요약 표시. 기술팀 제출 필수항목 추가 없음.
+- 수정파일 src/app/page.tsx, reports/[id] page/worship-form, worship-staff/page, components shared-worship-staff/worship-staff-fields/meeting-summary, lib/report-forms. DB 변경 없음(DB32유지). 이번 lint/타입포함webpack41경로/test:db103/103/diffcheck 성공. 초기 SubmitButton import 오류 수정 후 성공. 운영 실데이터 작성테스트 없음. 승인된 앱 배포 정상push 예정.

@@ -97,6 +97,7 @@ export const worshipPayload = z.object({
     sermon_passage: text(100).default(""),
     sermon_content: text(2000).default(""),
     service_staff: text(1000).default(""),
+    worship_leader: text(100).optional(),
     result: z.union([z.enum(["normal", "minor", "incident"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
