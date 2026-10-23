@@ -33,12 +33,14 @@ export async function createReport(formData: FormData) {
       reportWeek: formData.get("reportWeek"),
     });
   if (!parsed.success) redirect(`/groups/${formData.get("groupId")}?error=invalid`);
-  const { groupId, meeting, customLabel, meetingDate } = parsed.data;
-  const back = `/groups/${groupId}?week=${weekOf(meetingDate)}`;
-  if (weekOf(meetingDate) !== parsed.data.reportWeek || meetingDate > todayKST() || weekOf(meetingDate) > latestWeekday(todayKST(), 0)) redirect("/groups/" + groupId + "?error=invalid");
-
+  const { groupId, meeting, customLabel } = parsed.data;
   const group = await getGroup(supabase, groupId);
   if (!group || !group.is_active) redirect("/");
+  // 부산의 실제 출발일은 보고 주차와 다를 수 있으므로 별도 보관한다.
+  const campusDeparture=group.type==="campus" && meeting==="campus" && parsed.data.reportKind==="standard";
+  const meetingDate=campusDeparture?parsed.data.reportWeek:parsed.data.meetingDate;
+  const back = `/groups/${groupId}?week=${weekOf(meetingDate)}`;
+  if (weekOf(meetingDate) !== parsed.data.reportWeek || meetingDate > todayKST() || weekOf(meetingDate) > latestWeekday(todayKST(), 0)) redirect("/groups/" + groupId + "?error=invalid");
 
   const [kind, id] = meeting.split(":");
   if (kind === "service") {
@@ -61,7 +63,7 @@ export async function createReport(formData: FormData) {
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ group_id: groupId, author_id: profile.id, author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart, details:{session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
+    .insert({ group_id: groupId, author_id: profile.id, author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart, details:{...(campusDeparture?{depart_pangyo:parsed.data.meetingDate}:{}),session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
     .select("id")
     .single();
   if (error || !data) redirect(`${back}&error=save`);

@@ -4,7 +4,7 @@ import { Badge, Card } from "./ui";
 import { reportTitle, type MeetingReport } from "@/lib/meeting";
 import { RESULT_LABEL } from "@/lib/report-forms";
 
-const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",worship_leader:"예배인도자",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",passage:"공과·성경 범위",place:"진행 장소",notes:"특이사항"};
+const FIELDS:Record<string,string>={song_list:"예배 송리스트",sermon_passage:"설교본문",preacher:"설교자",sermon_content:"말씀·예배 내용",rotation:"부서 로테이션",worship_leader:"예배인도자",service_staff:"예배위원",activity:"공과·활동",content:"사역 내용",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소",topic:"모임 주제",passage:"공과·성경 범위",place:"진행 장소",notes:"특이사항"};
 export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];groupName:Map<string,string>}) {
   const sent=reports.filter(r=>r.status!=="draft");
   const events=new Map<string,MeetingReport[]>();
@@ -14,6 +14,7 @@ export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];grou
   }
   return <section className="mb-5"><h2 className="mb-2 font-semibold">이번 주 사역 종합 요약</h2><Card>
     <p className="mb-4 text-sm text-muted">열람 가능한 {new Set(sent.map(r=>r.group_id)).size}개 파트 · {events.size}개 예배·모임 · 제출 보고 {sent.length}건. 담당자별 보고를 같은 예배 아래 모았습니다.</p>
+    {sent.some(r=>r.details.needs_attention===true&&r.details.attention_status!=="resolved")?<div className="mb-5 rounded-xl border border-accent/30 p-3"><h3 className="font-semibold">확인·조치 필요한 보고</h3>{sent.filter(r=>r.details.needs_attention===true&&r.details.attention_status!=="resolved").map(r=><Link key={r.id} href={"/reports/"+r.id} className="mt-2 block text-sm text-accent underline">{groupName.get(r.group_id)} · {reportTitle(r)} · {getReportIdentity(r.details,r.author?.real_name).author_name} · {r.details.attention_status==="temporary"?"조치 중":"확인 필요"}</Link>)}</div>:null}
     <div className="flex flex-col gap-5">{[...events].map(([key,items])=><article key={key} className="break-inside-avoid border-t border-border pt-3">
       <h3 className="font-semibold">{groupName.get(items[0].group_id)} · {reportTitle(items[0])} · {items[0].meeting_date}</h3>
       {items.map(r=><div key={r.id} className="mt-3 rounded-xl border border-border p-3 text-sm">

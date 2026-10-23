@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import {MinisterMessageComposer} from "@/components/minister-message-composer";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
@@ -40,7 +41,7 @@ async function Content({ searchParams }: PageProps<"/notices">) {
         <Field label="받는 부서"><select name="target" required className={selectClass} defaultValue="">
           <option value="" disabled>대상을 선택해 주세요</option>
           {canSend ? <optgroup label="분류 전체">{Object.entries(GROUP_TYPE_LABEL).map(([type,label]) => <option key={type} value={`type:${type}`}>{label} 전체</option>)}</optgroup> : null}
-          {restricted?<optgroup label="개별 부서·팀">{targets.map(g => <option key={g.id} value={`group:${g.id}`}>{g.name}</option>)}</optgroup>:null}
+          {restricted?<optgroup label="개별 부서·팀">{targets.map(g => <option key={g.id} value={`group:${g.id}`}>{groupDisplayName(g.name)}</option>)}</optgroup>:null}
         </select></Field>
         <Field label="받는 사람"><select name="audience" defaultValue={restricted?"minister":"all"} className={selectClass}><option value="all">전체 구성원</option><option value="senior">담임 목사님·담임 사모님</option><option value="minister">담당 교역자</option><option value="lead">파트총괄·기술팀 담당자</option><option value="member">팀원</option></select></Field>
         <Field label="제목"><input name="title" required maxLength={100} className={inputClass} /></Field>

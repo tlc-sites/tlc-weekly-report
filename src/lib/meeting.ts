@@ -77,7 +77,7 @@ export async function loadMeeting(supabase: ReportClient, profile: Profile, week
   const reportIds = sentReports.map((r) => r.id);
   const educationIds = new Set(visible.filter((g) => g.type === "education").map((g) => g.id));
 
-  // 교육부서 출석: 그 주 보고 중 출석이 가장 많은 모임을 대표로, 지난주와 비교
+  // 교회학교 출석: 그 주 보고 중 출석이 가장 많은 모임을 대표로, 지난주와 비교
   const bestAttend = (list: { group_id: string; attend_snapshot: number | null; enrolled_snapshot: number | null }[], groupId: string) =>
     list
       .filter((r) => r.group_id === groupId && r.attend_snapshot !== null)

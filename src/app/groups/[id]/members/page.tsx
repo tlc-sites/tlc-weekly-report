@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { MemberCards } from "@/components/member-cards";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
@@ -53,7 +54,7 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   const members = (data ?? []) as Member[];
 
   const canManageRoster=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
-  const guardians=canReview && members.length>0 ? await supabase.from("member_guardians").select("member_id,name,relation,contact").in("member_id",members.map(m=>m.id)).eq("consent",true) : {data:[]};
+  const guardians=group.type!=="worship" && canReview && members.length>0 ? await supabase.from("member_guardians").select("member_id,name,relation,contact").in("member_id",members.map(m=>m.id)).eq("consent",true) : {data:[]};
   const students = members.filter((m) => m.status === "active" && m.kind === "student");
   const teachers = members.filter((m) => m.status === "active" && m.kind === "teacher");
   const newcomers = members.filter((m) => m.status === "newcomer");
@@ -63,8 +64,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   return (
     <>
       <BackLink href="/">홈</BackLink>
-      <PageTitle sub={`${parent ? `${parent.name} · ` : ""}재적 학생 ${students.length + newcomers.length}명 · 교사 ${teachers.length}명`}>
-        {group.name} 명단
+      <PageTitle sub={`${parent ? `${groupDisplayName(parent.name)} · ` : ""}${group.type==="worship"?`팀원 ${members.filter(m=>m.status!=="inactive").length}명`:`재적 학생 ${students.length + newcomers.length}명 · 교사 ${teachers.length}명`}`}>
+        {groupDisplayName(group.name)} 명단
       </PageTitle>
 
       <div className="mb-4 flex flex-col gap-2">
@@ -77,11 +78,11 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
         ) : null}
       </div>
 
-      <Link href={`/groups/${id}#new-report`} className={`${buttonClass} mb-4`}>출결 관리 · 예배 선택</Link>
+      <Link href={`/groups/${id}#new-report`} className={`${buttonClass} mb-4`}>{group.type==="worship"?"팀 보고서 · 예배 선택":"출결 관리 · 예배 선택"}</Link>
       <MemberCards members={members} groupId={id} guardians={guardians.data??[]} team={group.type==="worship"}/>
-      <MemberSection title="학생" members={students} groupId={id} />
-      {newcomers.length ? <MemberSection title="새친구" members={newcomers} groupId={id} showFollowUp /> : null}
-      <MemberSection title={group.type==="worship" ? "팀원":"교사"} members={teachers} groupId={id} />
+      {group.type!=="worship"?<MemberSection title="학생" members={students} groupId={id}/>:null}
+      {group.type!=="worship" && newcomers.length ? <MemberSection title="새친구" members={newcomers} groupId={id} showFollowUp /> : null}
+      <MemberSection title={group.type==="worship" ? "팀원":"교사"} members={group.type==="worship"?members.filter(m=>m.status!=="inactive").map(m=>({...m,class_name:null,grade:null})):teachers} groupId={id} />
 
       {inactive.length ? (
         <details className="mb-6">
@@ -121,15 +122,15 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
                 <textarea name="names" required rows={6} placeholder={"김하늘\n이바다\n박나무"} className={textareaClass} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="구분">
-                  <select name="kind" defaultValue={group.type==="worship" ? "teacher":"student"} className={selectClass}>
+                {group.type==="worship"?<><input type="hidden" name="kind" value="teacher"/><Field label="구분"><input name="teamPosition" defaultValue="팀원" maxLength={100} placeholder="팀장, 부팀장, 팀원 등" className={inputClass}/></Field></>:<Field label="구분">
+                  <select name="kind" defaultValue="student" className={selectClass}>
                     {group.type==="education"?<option value="student">{KIND_LABEL.student}</option>:null}
-                    <option value="teacher">{group.type==="worship"?"팀원":KIND_LABEL.teacher}</option>
+                    <option value="teacher">{KIND_LABEL.teacher}</option>
                   </select>
-                </Field>
-                <Field label="반 (선택)">
+                </Field>}
+                {group.type!=="worship"?<Field label="반 (선택)">
                   <input name="className" maxLength={30} placeholder="예: 1반" className={inputClass} />
-                </Field>
+                </Field>:null}
               </div>
               <button type="submit" className={buttonClass}>
                 등록

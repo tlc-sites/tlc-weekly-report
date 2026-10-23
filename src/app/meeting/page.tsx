@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { groupIncidentEvents } from "@/lib/incident-events";
 import { MeetingSummary } from "@/components/meeting-summary";
 import { Suspense } from "react";
@@ -89,7 +90,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
       </Section>
 
       {data.attendance.length ? (
-        <Section title="2. 교육부서 출석" sub="그 주 보고 중 출석이 가장 많은 모임 기준 · 학생">
+        <Section title="2. 교회학교 출석" sub="그 주 보고 중 출석이 가장 많은 모임 기준 · 학생">
           <table className="w-full text-sm">
             <thead className="text-xs text-muted">
               <tr>
@@ -104,7 +105,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
                 const diff = a.attend !== null && a.prevAttend !== null ? a.attend - a.prevAttend : null;
                 return (
                   <tr key={a.group.id} className="border-t border-border">
-                    <td className="py-2">{a.group.name}</td>
+                    <td className="py-2">{groupDisplayName(a.group.name)}</td>
                     <td className="py-2 text-right tabular-nums">{a.attend === null ? "-" : `${a.attend}/${a.enrolled}`}</td>
                     <td className="py-2 text-right tabular-nums">
                       {a.attend !== null && a.enrolled ? `${Math.round((a.attend / a.enrolled) * 100)}%` : "-"}

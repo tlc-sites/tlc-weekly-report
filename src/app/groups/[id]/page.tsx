@@ -1,3 +1,4 @@
+import {CampusDepartureField} from "@/components/campus-departure-field";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
 import { ReportKindFields } from "./report-kind-fields";
@@ -72,7 +73,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             {children.map((g) => (
               <li key={g.id}>
                 <Link href={`/groups/${g.id}`} className="flex justify-between py-3">
-                  {g.name}
+                  {groupDisplayName(g.name)}
                   <span className="text-muted">›</span>
                 </Link>
               </li>
@@ -194,9 +195,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
-                  <Field label="분당 출발 날짜" hint="금요일·토요일 등 실제 출발한 날짜를 선택해 주세요.">
-                    <input name="meetingDate" type="date" min={week} max={maxDate} required defaultValue={maxDate} className={inputClass} />
-                  </Field>
+                  <CampusDepartureField defaultDate={maxDate}/>
                 </>
               ) : (
                 <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
@@ -212,7 +211,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
 
       {group.type === "education" ? (
         <Link href={`/groups/${id}/members`} className="mt-6 text-sm text-accent underline underline-offset-4">
-          {group.name} 명단 →
+          {groupDisplayName(group.name)} 명단 →
         </Link>
       ) : null}
     </>

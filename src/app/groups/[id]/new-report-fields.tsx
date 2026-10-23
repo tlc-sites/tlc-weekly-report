@@ -27,12 +27,12 @@ export function NewReportFields({ options, fallbackDate, maxDate, minDate }: { o
               {o.label}
             </option>
           ))}
-          <option value="custom">행사·특별예배 (직접 입력)</option>
+          <option value="custom">기타 보고·행사 (직접 입력)</option>
         </select>
       </Field>
       {meeting === "custom" ? (
-        <Field label="행사 이름">
-          <input name="customLabel" required maxLength={50} placeholder="예: 성탄예배, 수련회" className={inputClass} />
+        <Field label="보고·행사 이름">
+          <input name="customLabel" required maxLength={50} placeholder="예: 장비 점검, 팀 준비, 특별예배" className={inputClass} />
         </Field>
       ) : null}
       {options.find(o => o.value === meeting)?.fixedDate ? <p className="text-sm text-muted">예배일 {date} · 선택한 주차에 자동으로 맞춰집니다.<input type="hidden" name="meetingDate" value={date} /></p> : <Field label="날짜">

@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import { ArchiveGroupButton } from "@/components/archive-group-button";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
@@ -74,8 +75,8 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
   return (
     <>
       <BackLink href="/admin/groups">그룹 관리</BackLink>
-      <PageTitle sub={`${GROUP_TYPE_LABEL[group.type]}${parent ? ` · ${parent.name} 소속` : " · 최상위 그룹"}`}>
-        {group.name}
+      <PageTitle sub={`${GROUP_TYPE_LABEL[group.type]}${parent ? ` · ${groupDisplayName(parent.name)} 소속` : " · 최상위 그룹"}`}>
+        {groupDisplayName(group.name)}
       </PageTitle>
       <div className="mb-4 flex flex-col gap-2">
         {message ? <ErrorText>{message}</ErrorText> : null}
@@ -217,10 +218,10 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
         )}
       </Card>
 
-      {group.is_active ? <ArchiveGroupButton id={group.id} name={group.name} action={archiveGroup} /> : null}
+      {group.is_active ? <ArchiveGroupButton id={group.id} name={groupDisplayName(group.name)} action={archiveGroup} /> : null}
       {group.type === "education" && reportsHere ? (
         <Link href={`/groups/${group.id}/members`} className="text-sm text-accent underline underline-offset-4">
-          {group.name} 명단 관리 →
+          {groupDisplayName(group.name)} 명단 관리 →
         </Link>
       ) : null}
     </>

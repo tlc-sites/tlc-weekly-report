@@ -24,12 +24,14 @@ export async function addMembersBulk(formData: FormData) {
       groupId: z.uuid(),
       names: z.string().max(5000),
       kind: z.enum(["student", "teacher"]),
+      teamPosition: optionalText(100),
       className: optionalText(30),
     })
     .safeParse({
       groupId: formData.get("groupId"),
       names: formData.get("names") ?? "",
       kind: formData.get("kind"),
+      teamPosition: formData.get("teamPosition") ?? "",
       className: formData.get("className") ?? "",
     });
   if (!parsed.success) redirect(`/groups/${formData.get("groupId")}/members?error=invalid`);
@@ -53,7 +55,7 @@ export async function addMembersBulk(formData: FormData) {
   if (fresh.length) {
     const { error } = await supabase
       .from("members")
-      .insert(fresh.map((name) => ({ group_id: groupId, name, kind, class_name: className, status: "active" })));
+      .insert(fresh.map((name) => ({ group_id: groupId, name, kind, team_position:parsed.data.teamPosition, class_name: className, status: "active" })));
     if (error) redirect(`${path}?error=save`);
   }
   redirect(`${path}?added=${fresh.length}&skipped=${taken.size}`);
@@ -65,6 +67,7 @@ const memberSchema = z.object({
   newGroupId: z.uuid(),
   name: z.string().trim().min(1).max(30),
   kind: z.enum(["student", "teacher"]),
+  teamPosition: optionalText(100),
   className: optionalText(30),
   grade: optionalText(20),
   birthYear: z.union([z.coerce.number().int().min(1900).max(2100), z.literal("").transform(() => null)]),
@@ -85,6 +88,7 @@ export async function updateMember(formData: FormData) {
     newGroupId: formData.get("newGroupId"),
     name: formData.get("name"),
     kind: formData.get("kind"),
+    teamPosition: formData.get("teamPosition") ?? "",
     className: formData.get("className") ?? "",
     grade: formData.get("grade") ?? "",
     birthYear: formData.get("birthYear") ?? "",
@@ -99,22 +103,26 @@ export async function updateMember(formData: FormData) {
   if (!parsed.success) redirect(`${back}?error=invalid`);
   const v = parsed.data;
 
-  const { data: current } = await supabase.from("members").select("status, left_at").eq("id", v.id).maybeSingle();
+  const { data: current } = await supabase.from("members").select("status, left_at,group_id").eq("id", v.id).maybeSingle();
   if (!current) redirect(`${back}?error=save`);
 
+  const {data:memberGroup}=await supabase.from("groups").select("type").eq("id",current.group_id).single();
+  const team=memberGroup?.type==="worship";
   const { data, error } = await supabase
     .from("members")
     .update({
       group_id: v.newGroupId,
       name: v.name,
       kind: v.kind,
-      class_name: v.className,
+      team_position:v.teamPosition,
+      status:v.status,
+      ...(team?{}:{class_name: v.className,
       grade: v.grade,
       birth_year: v.birthDate ? Number(v.birthDate.slice(0, 4)) : v.birthYear,
       birth_date: v.birthDate,
       photo_data: v.photoData || null,
       status: v.status,
-      first_visit_date: v.firstVisitDate,
+      first_visit_date: v.firstVisitDate}),
       follow_up_status: v.followUpStatus,
       follow_up_note: v.followUpNote,
       // 비활성으로 바꾸면 그날을 기록하고, 다시 활동으로 돌리면 지운다

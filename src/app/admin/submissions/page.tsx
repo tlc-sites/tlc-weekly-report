@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import {meetingDisplayName} from "@/lib/group-display";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
@@ -19,7 +20,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
   const status = ["draft","submitted","reviewed","sent"].includes(String(params.status)) ? String(params.status) : "all";
   const data = await loadAdminSubmissions(supabase, week);
   const group = typeof params.group === "string" && data.groups.some(g => g.id === params.group) ? params.group : "";
-  const names = new Map(data.groups.map(g => [g.id, g.name]));
+  const names = new Map(data.groups.map(g => [g.id, groupDisplayName(g.name)]));
   const rows = data.reports.filter(r => (!group || r.group_id === group) && (status === "all" || (status === "sent" ? r.status !== "draft" : r.status === status)));
   const href = (value: string) => `/admin/submissions?${new URLSearchParams({week:value,status,group})}`;
   return <>
@@ -31,7 +32,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
     <nav className="mb-4 flex flex-wrap gap-2" aria-label="현황 주차 이동"><Link className={smallButtonClass} href={href(addDays(week,-7))}>← 지난 주</Link>{week < reportWeek(undefined,todayKST()) ? <><Link className={smallButtonClass} href={href(addDays(week,7))}>다음 주 →</Link><Link className={smallButtonClass} href={href(reportWeek(undefined,todayKST()))}>이번 주</Link></> : null}</nav>
     <form method="get" className="mb-4 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
       <input type="hidden" name="week" value={week}/>
-      <Field label="파트"><select name="group" defaultValue={group} className={selectClass}><option value="">전체 파트</option>{data.groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
+      <Field label="파트"><select name="group" defaultValue={group} className={selectClass}><option value="">전체 파트</option>{data.groups.map(g => <option key={g.id} value={g.id}>{groupDisplayName(g.name)}</option>)}</select></Field>
       <Field label="제출 상태"><select name="status" defaultValue={status} className={selectClass}><option value="all">전체 상태</option><option value="draft">작성 중</option><option value="sent">제출 완료 전체</option><option value="submitted">제출 완료 · 확인 대기</option><option value="reviewed">확인 완료</option></select></Field>
       <button className={smallButtonClass}>선택 적용</button>
     </form>

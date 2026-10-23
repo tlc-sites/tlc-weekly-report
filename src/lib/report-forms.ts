@@ -98,6 +98,9 @@ export const worshipPayload = z.object({
     sermon_content: text(2000).default(""),
     service_staff: text(1000).default(""),
     worship_leader: text(100).optional(),
+    rotation: text(1000).optional(),
+    needs_attention: z.boolean().optional(),
+    attention_status: z.enum(["open","temporary","resolved"]).optional(),
     result: z.union([z.enum(["normal", "minor", "incident"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -158,7 +161,7 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   if(session?.session_type==="meeting" || session?.session_type==="curriculum") return [...(!session.topic ? ["모임 주제"]:[]),...(!session.content ? ["진행 내용"]:[])];
   if (type === "worship") {
     const p = payload as WorshipPayload;
-    return p.details.result ? [] : ["진행 결과"];
+    return [...(p.details.result?[]:["진행 결과"]),...(p.details.needs_attention&&!p.details.notes?.trim()?["사역 내용"]:[])];
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;

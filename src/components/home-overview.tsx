@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import Link from "@/components/pending-link";
 import { Card, smallButtonClass } from "./ui";
 import { ReportStatusBadge } from "./report-status";
@@ -21,7 +22,7 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
   const drafts = reports.filter(r => r.status === "draft");
   const pending = sent.filter(r => r.status === "submitted");
   const myDrafts = drafts.filter(r => r.author_id === userId && (!writablePartIds || writablePartIds.includes(r.group_id)));
-  const partNames = new Map(parts.map(g => [g.id, g.name]));
+  const partNames = new Map(parts.map(g => [g.id, groupDisplayName(g.name)]));
   const overdue = new Date() > reportDeadline(week);
   const listBase = adminStatus ? "/admin/submissions" : "/reports";
   return <section className="mb-5" aria-label="주간 제출현황">
@@ -59,7 +60,7 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
         const no = noMeeting.includes(g.id);
         const required = g.type !== "worship" && g.schedule === "weekly";
         return <li key={g.id}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
-          <span className="font-medium">{g.name}</span><span className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-medium">{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
             {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
             {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
             {no ? <span className="text-muted">모임 없음</span> : !rows.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "등록된 보고 없음"}</span> : null}

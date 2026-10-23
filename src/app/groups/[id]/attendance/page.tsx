@@ -1,3 +1,4 @@
+import {groupDisplayName} from "@/lib/group-display";
 import {Suspense} from "react";
 import Link from "@/components/pending-link";
 import {notFound,redirect} from "next/navigation";
@@ -19,7 +20,7 @@ async function Content({params,searchParams}:PageProps<"/groups/[id]/attendance"
  if(error||attendanceError)throw error??attendanceError;
  const active=(people??[]).filter(p=>p.is_active),byId=new Map((attendance??[]).map(a=>[a.participant_id,a]));
  const dates=[...new Set((history??[]).map(r=>r.held_on))];
- return <><Link href={"/groups/"+id} className="mb-4 text-sm text-accent">← 반 보고서</Link><PageTitle sub="참여자를 추가한 뒤 모임 날짜별 출결을 기록해 주세요. 참여자 등록으로 로그인 권한은 생기지 않습니다.">스데반 {group.name} · 출결</PageTitle>
+ return <><Link href={"/groups/"+id} className="mb-4 text-sm text-accent">← 반 보고서</Link><PageTitle sub="참여자를 추가한 뒤 모임 날짜별 출결을 기록해 주세요. 참여자 등록으로 로그인 권한은 생기지 않습니다.">스데반 {groupDisplayName(group.name)} · 출결</PageTitle>
  {query.error?<p role="alert" className="mb-3 text-red-600">저장하지 못했습니다. 명단이 바뀌었거나 출결을 빠뜨렸을 수 있습니다. 새로고침 후 확인해 주세요.</p>:null}{query.saved?<p role="status" className="mb-3 text-accent">출결을 저장했습니다.</p>:null}
  <Card className="mb-4"><form action={addParticipant} className="flex flex-wrap gap-2"><input type="hidden" name="groupId" value={id}/><input name="name" aria-label="참여자 이름" required maxLength={100} placeholder="참여자 이름" className={inputClass}/><button className={smallButtonClass}>참여자 추가</button></form></Card>
  <form method="get" className="mb-4 flex items-end gap-2"><label className="flex-1 text-sm">모임 날짜<input type="date" name="date" defaultValue={day} max={todayKST()} required className={inputClass}/></label><button className={smallButtonClass}>날짜 조회</button></form>

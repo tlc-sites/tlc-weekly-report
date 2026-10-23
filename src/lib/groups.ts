@@ -1,3 +1,4 @@
+import {groupDisplayName} from "./group-display";
 import type { createClient } from "./supabase/server";
 
 export type ReportClient = Awaited<ReturnType<typeof createClient>>;
@@ -16,7 +17,7 @@ export type Group = {
 export type OrderedGroup = Group & { depth: number; label: string; childCount: number };
 
 export const GROUP_TYPE_LABEL: Record<Group["type"], string> = {
-  education: "교육부서",
+  education: "교회학교",
   worship: "예배/기술팀",
   other: "학교",
   campus: "부산캠퍼스",
@@ -54,11 +55,11 @@ export async function listGroupsOrdered(supabase: ReportClient, { includeInactiv
     ordered.push({
       ...root,
       depth: 0,
-      label: children.length ? `${root.name} 전체` : root.name,
+      label: children.length ? `${groupDisplayName(root.name)} 전체` : groupDisplayName(root.name),
       childCount: children.length,
     });
     for (const child of children) {
-      ordered.push({ ...child, depth: 1, label: child.name, childCount: 0 });
+      ordered.push({ ...child, depth: 1, label: groupDisplayName(child.name), childCount: 0 });
     }
   }
   return ordered;

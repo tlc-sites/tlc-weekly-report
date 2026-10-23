@@ -1,3 +1,5 @@
+import {TeamMemberFields} from "@/components/team-member-fields";
+import {groupDisplayName} from "@/lib/group-display";
 import { PhotoInput } from "@/components/photo-input";
 import { MemberPhoto } from "@/components/member-photo";
 import { Suspense } from "react";
@@ -57,7 +59,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
   const [{ data: member }, guardians, groups] = await Promise.all([
     supabase.from("members").select(MEMBER_COLUMNS).eq("id", memberId).eq("group_id", id).maybeSingle<Member>(),
     // 보호자 정보는 검토자만 조회된다 (RLS)
-    canReview
+    canReview && group.type!=="worship"
       ? supabase
           .from("member_guardians")
           .select("id, member_id, slot, name, relation, contact, note, consent")
@@ -74,12 +76,12 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
 
   return (
     <>
-      <BackLink href={`/groups/${id}/members`}>{group.name} 명단</BackLink>
+      <BackLink href={`/groups/${id}/members`}>{groupDisplayName(group.name)} 명단</BackLink>
       <PageTitle>
         <span className="flex items-center gap-2">
           {member.name}
           <Badge tone={member.status === "inactive" ? "danger" : member.status === "newcomer" ? "accent" : "muted"}>
-            {member.kind === "teacher" ? KIND_LABEL.teacher : MEMBER_STATUS_LABEL[member.status]}
+            {group.type==="worship"?MEMBER_STATUS_LABEL[member.status]:member.kind === "teacher" ? KIND_LABEL.teacher : MEMBER_STATUS_LABEL[member.status]}
           </Badge>
         </span>
       </PageTitle>
@@ -93,6 +95,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
           <form action={updateMember} className="flex flex-col gap-3">
             <input type="hidden" name="id" value={member.id} />
             <input type="hidden" name="groupId" value={id} />
+            {group.type==="worship"?<TeamMemberFields member={member}/>:<>
             <PhotoInput initial={member.photo_data} name={member.name} />
             <Field label="생년월일"><input name="birthDate" type="date" min="1900-01-01" max="2100-12-31" defaultValue={member.birth_date ?? ""} className={inputClass} /></Field>
             <Field label="이름">
@@ -143,7 +146,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
                 ))}
               </select>
             </Field>
-            <FollowUpFields member={member} />
+            <FollowUpFields member={member} /></>}
             <button type="submit" className={buttonClass}>
               저장
             </button>
@@ -151,6 +154,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
         </Card>
       ) : (
         <Card className="mb-6 text-sm">
+          {group.type==="worship"?<><p>구분: {member.team_position||"팀원"}</p><p>상태: {MEMBER_STATUS_LABEL[member.status]}</p><p className="whitespace-pre-wrap">후속 메모: {member.follow_up_note||"없음"}</p></>:<>
           <MemberPhoto name={member.name} photo={member.photo_data} large />
           <p className="my-3">생년월일 {member.birth_date ?? (member.birth_year ? member.birth_year + "년" : "미등록")}</p>
           <dl className="grid grid-cols-[5rem_1fr] gap-y-2">
@@ -160,8 +164,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
             <dd>{member.grade ?? "-"}</dd>
             <dt className="text-muted">첫 방문일</dt>
             <dd>{member.first_visit_date ?? "-"}</dd>
-          </dl>
-          {member.status === "newcomer" && canWrite ? (
+          </dl></>}
+          {group.type!=="worship" && member.status === "newcomer" && canWrite ? (
             <form action={updateFollowUp} className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
               <input type="hidden" name="id" value={member.id} />
               <input type="hidden" name="groupId" value={id} />
@@ -174,7 +178,7 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
         </Card>
       )}
 
-      {canReview ? (
+      {canReview && group.type!=="worship" ? (
         <>
           <h2 className="mb-2 text-sm font-semibold">보호자 (선택)</h2>
           <Card>

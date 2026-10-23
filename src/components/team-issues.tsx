@@ -15,8 +15,8 @@ export async function TeamIssues({items,groups,context,today,error,canWrite}:{
   const editable=new Map(rights);
   const returnTo=`/reports/${context.report_id}`;
   return <Card className="mb-5"><section id="team-issues" className="scroll-mt-5">
-    <h2 className="font-semibold">팀 이슈</h2>
-    <p className="mb-4 mt-1 text-sm text-muted">간단한 이슈부터 기록해 주세요. 상세 경위도 같은 이슈에 덧붙입니다. 관련 팀이 같은 예배를 보고할 때 함께 표시됩니다.</p>
+    <h2 className="font-semibold">이전에 등록된 이슈</h2>
+    <p className="mb-4 mt-1 text-sm text-muted">기존 이슈와 코멘트는 그대로 보관됩니다. 새 내용은 사역 보고에 작성하고 ‘확인·조치 필요’를 표시해 주세요.</p>
     {error ? <ErrorText>팀 이슈를 불러오지 못했습니다.</ErrorText> : <div className="mb-4 flex flex-col gap-3">{items.map(i=><article key={i.id} className="rounded-xl border border-border p-4">
       <div className="flex items-start justify-between gap-2"><h3 className="font-semibold">{i.title}</h3><Badge tone={i.status==="resolved" ? "muted" : "accent"}>{INCIDENT_STATUS[i.status]}</Badge></div>
       <p className="mt-1 text-xs text-muted">{i.category} · {groups.filter(g=>i.group_ids.includes(g.id)).map(g=>g.name).join(", ")}{i.detailed ? " · 상세 경위 포함" : ""}</p>

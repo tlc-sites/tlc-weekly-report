@@ -1,5 +1,6 @@
 "use client";
 
+import {ReportAttentionFields} from "@/components/report-attention-fields";
 import { useState } from "react";
 import { Field, inputClass } from "@/components/ui";
 import { OTHER_ISSUE_CATEGORIES, RESULT_LABEL, type OtherPayload, type WorshipPayload } from "@/lib/report-forms";
@@ -27,6 +28,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, worshipTe
         <TextArea label="말씀·예배 내용 (선택)" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
         <p className="text-sm text-muted">예배위원은 별도 ‘예배위원’ 메뉴에서 관리하며, 위쪽의 공유 명단을 확인해 주세요.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
+      <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} maxLength={1000} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section>
       <Section title="진행 결과"><button type="button" className="min-h-11 rounded-xl border border-border px-3 text-sm text-accent" onClick={()=>setP({...p,details:{...p.details,result:"normal",notes:p.details.notes||"특이사항 없습니다."}})}>이슈 없음 · 정상 진행으로 작성</button>
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(RESULT_LABEL).map(([value, label]) => (
@@ -53,8 +55,9 @@ export function WorshipForm({ action, reportId, initial, showMessages, worshipTe
         <RequestsEditor value={p.details.requests} onChange={(requests) => setP({ ...p, details: { ...p.details, requests } })} />
       </Section>
       <Section title="사역 보고">
-        <TextArea label="진행한 사역·주요 내용·다음 주 준비" value={p.details.notes} placeholder="담당하신 사역과 진행 내용, 조치 사항, 다음 주 준비를 적어 주세요." onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
+        <TextArea label="사역 내용" value={p.details.notes} placeholder="진행한 사역, 있었던 일, 필요한 조치와 다음 주 준비를 한 번에 적어 주세요." onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
       </Section>
+      <ReportAttentionFields needed={p.details.needs_attention===true} status={p.details.attention_status??"open"} onChange={(needed,status)=>setP({...p,details:{...p.details,needs_attention:needed,attention_status:status as "open"|"temporary"|"resolved"}})}/>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
   );

@@ -658,3 +658,45 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 
 ### 2026-10-22 기타 팀 이슈 배포 시작
 - 사용자 앱 배포 승인. 직전 lint/tsc/webpack41경로/DB103개 통과 후 코드 추가수정 없이 배포. DB변경 없음. 운영 master 정상push 및 Vercel Ready 확인 예정.
+
+### 2026-10-22 기타 팀 이슈 운영 배포 완료
+- dd17260b67d04e1419d4fd701ff53a9bee59b21b 정상push 1223c0c→dd17260 origin/master. Vercel 9tCpTVbgVi4rg2Ei692Us97Xd54w Production Ready23초, 운영도메인 연결 확인. 증빙 outputs/report-deploy/dd17260-production-ready.png.
+- 운영 incidents/new 비로그인 접근시 로그인화면 정상 확인. 실사용 이슈 생성/알림 발송 없음. 직전103테스트/lint/tsc/41경로빌드 이후 코드변경없이배포, 이번 재실행 주장안함. DB32유지, 현재운영dd17260. 완료영수증 로컬문서만 갱신, 사용자변경보존.
+
+### 2026-10-22 교회학교 명칭·출생연도 자동 표시 (로컬)
+- 교육부서 UI 문구를 교회학교로 변경. group-display.ts 고정출생연도를 한국 현재연도 기준 offset 계산으로 변경(2026범위 유지, 매년+1), 이미 붙은 연도는 제거후 재계산. groups.ts label도 표시함수 사용, 저장용 canonical name과 관리자 이름입력은 원문유지.
+- 홈/제출현황/그룹목록·상세/팀관리/출결·명단/보고서·부모부서/회의·주간요약·메일/공지대상/이슈팀 표시에 공통함수 적용. DB변경없음.
+- 이번 lint/tsc, webpack41경로빌드 통과, DB104/104(연도이동·중복방지추가) 통과. Node직접import의 extensionless오류는 tests/weekly-summary-module.mjs 변환로더로수정. 마지막2개표시후lint/tsc/diffcheck성공, 빌드전체재실행없음.
+- 실제 GroupPicker fixture Chrome2 확인/이미지 outputs/mobile-ui/church-school-birth-years.png. fixture는동적Date를사용한정적미리보기여서개발prerender경고가발생했으나실제production41경로빌드정상. fixture삭제/생성validator정리/dev종료, 원본church-school-preview.tsx보존. 운영로그인UI검증/DB적용/배포없음, 운영dd17260/DB32유지. 다음배포사용자승인필요. 사용자변경보존.
+
+### 2026-10-23 기술팀 명단 간소화·로테이션·예배별 날짜 (로컬)
+- members 목록/상세와 MemberCards를 worship 분기: 이름·상태·팀원구분·후속메모 중심, 학생/교사수 대신 팀원수, 생일/사진/학년/반/보호자 편집과 기술팀반등록 숨김. 기존 보관정보는 기술팀수정시 제외하여 보존. TeamMemberFields 공통폼 추가. 교회학교양식은 유지.
+- DB33 20261116000000_team_member_positions.sql 새 report.members.team_position 컬럼·100자제약, 기존RLS유지. MEMBER_COLUMNS와 bulk/update 반영. tests/report-workflow에서 담당교역자등록과무관교역자수정차단검증추가. 운영적용미실행/별도승인필요.
+- worship payload rotation 선택필드·입력·열람·회의/주간요약 표시. worship-staff 각서비스카드 GET 날짜선택(다른카드선택보존), 선택서비스/날짜별명단조회·저장/앵커복귀. 미래날짜제한유지. 기존전역date링크호환.
+- 이번 lint/tsc/webpack41경로/DB104개/diffcheck 통과. 초기 JSX·import타입오류수정후성공. 실제컴포넌트fixture 이미지 outputs/mobile-ui/team-roster-simplified.png, service-dates-per-card.png, 원본team-roster-preview.tsx보존. 운영실명단/보고서/알림변경없음. fixture삭제/생성validator정리/dev종료. 날짜카드이미지는컴포넌트예시이며운영GET조회검증은미실행.
+- 앞선 교회학교명칭/출생연도자동표시 미배포변경 함께보존. 현재운영dd17260/DB32 유지. 사용자가붙인셀케어public스키마SQL은이번업무대상아니므로수정/실행하지않음. 루트사용자변경보존.
+
+### 2026-10-23 DB33·앱 배포 승인 및 연결 대기
+- 사용자 DB33 적용과 앱 배포 명시승인 수신. 동일범위재승인불필요. outputs/report-deploy/apply-db33.sql 단일DO배치 작성, DB32까지 로컬PGlite+seed에 실행하여 team_position_ready/roster_rls_enabled 모두true 확인.
+- 현재연결Chrome1에서 Supabase sql/new 신규탭 navigate가2회CDP timeout, 탭은about:blank유지. 로그인완료여부 확인못함. 사용자가같은Chrome에서Supabase/Vercel열고로그인해줄것요청. 운영DB/commit/push/배포아직없음, 운영dd17260/DB32유지. 로컬기능/검증결과보존.
+
+### 2026-10-23 부산 실제 출발일과 보고 주차 분리 (로컬)
+- 사용자 이전주포함출발일전부선택요청. groups/[id]/page의campus 출발입력 min/max 제거한 CampusDepartureField추가. createReport는실제그룹campus+standard+meetingcampus일때만 meeting_date=선택reportWeek, details.depart_pangyo=입력출발일로분리. 과거주출발일/미래출발일모두허용, 보고주차미래제한및다른모임날짜제한유지. campus-form의두출발일은이미min/max없어유지.
+- 이번 lint/tsc/webpack41경로성공, test:db104개성공(실제저장2020/2099출발일왕복검증추가), diffcheck통과. 브라우저localhost navigate2경로timeout으로실제스크린샷불가. outputs/mobile-ui/campus-departure-change.png는명시된변경안내그림(화면캡처아님), preview원본보존/임시페이지삭제/생성validator정리/dev종료.
+- DB추가변경없음. 앞서승인DB33/앱배포는연결대기중, 운영dd17260/DB32유지. 이번부산변경포함로컬수정보존, 운영반영없음. 다음연결복구후배포가능.
+
+### 2026-10-23 사역 내용·팀 이슈 구분 및 작성자 위계 (로컬)
+- WeeklyReportBlock 공통컴포넌트 추가, weekly-summary와manage 전체보고를 예배별 사역내용·특이사항/팀이슈 두구역으로분리. 팀명·이슈제목강조, 작성자작은연한글자, 직책연한알약, 본문들여쓰기/원문코멘트링크유지. 기존 report_issues는팀이슈구역으로이동해일반본문중복제거, 결과뱃지중복텍스트제거. 비공개내용추가안함.
+- weekly-summary-data 일반보고author_id·이슈author/profile/연결report_id조회, 이슈작성자이름표시, 동일작성자연결보고직책우선·읽을수있는현재membership직책보조(없으면미표시). RLS변경없음. weekly-summary타입선택필드확장. 메일HTML변경은없음.
+- 이번 lint/타입포함webpack41경로/DB104개/diffcheck통과. 초기스크립트중복const오류는수정후적용. Chrome2다시연결됨, 실제컴포넌트익명fixture캡처 outputs/mobile-ui/weekly-summary-separated.png. 원본weekly-summary-preview.tsx보존, fixture삭제/생성validator정리/dev종료. 실운영데이터/계정/알림수정없음, 실제운영조회는미검증.
+- 새DB마이그레이션없음, 앞선승인DB33및앱은아직미배포. 운영dd17260/DB32유지. 다른로컬수정/사용자루트변경보존. 다음운영반영시DB33선적용필요.
+
+### 2026-10-23 사역 보고 단일 입력·확인조치 표시 (로컬)
+- 예배기술 WorshipForm은 notes 한곳에 사역/문제/조치작성, ReportAttentionFields 확인·조치필요 체크와 open/temporary/resolved 선택. JSON details.needs_attention/attention_status 선택필드 추가, 체크시사역내용필수. 기존 reports RLS/저장RPC/자동저장/보고코멘트·답글사용, 이슈복사레코드생성없음.
+- reports열람에상태표시, 신규별도팀이슈입력제거; 기존incident코멘트/수정기록은 열람시 이전등록이슈로보존. 신규incidents/new는사역보고작성파트선택으로연결, 그룹custom명칭 기타보고·행사로확대. incidents목록은체크된제출보고와원문링크+과거이슈보존, 상태필터/열람RLS유지. home/manage메뉴 확인·조치목록. WeeklyReportBlock별도팀이슈구역제거·사역본문한번+배지, weekly-summary필터 확인조치필요보고만, MeetingSummary미해결표시보고원문링크목록추가.
+- 수정 report-forms, reports/[id]/page/worship-form, team-issues, weekly-report-block, weekly-summary/page, meeting-summary, incidents/page/new, groups/[id]/new-report-fields, home/manage, tests/report-workflow. DB추가마이그레이션없음. DB104/104(autosave→제출flag보존+incident중복생성0검증), lint/타입포함webpack41경로빌드통과.
+- 실제Chrome1 익명실제컴포넌트preview에서체크해제/처리상태변경→배지동작확인. outputs/mobile-ui/unified-ministry-report.png 캡처(입력/열람예시), 원본unified-report-preview.tsx보존. fixture삭제/생성validator정리/dev종료. 운영사용자실제제출/댓글/알림검증없음. 기존미배포교회학교·팀원명단DB33·부산출발일·요약변경보존, DB33승인있으나아직미적용. 운영dd17260/DB32유지, 이번작업배포없음.
+
+### 2026-10-23 DB33 운영 적용·누적 앱 배포 시작
+- 기존사용자DB33승인과최신배포요청에따라진행. 연결Chrome1 복구, SQL편집기읽기사전db33_present=false 확인후승인apply-db33.sql전체실행. team_position_ready/roster_rls_enabled 모두true. 증빙outputs/report-deploy/db33-applied.png. 다른스키마/계정역할변경없음.
+- 교회학교표시/팀명단/로테이션/예배별날짜/부산출발일/단일사역보고·조치목록 누적로컬변경모두이번배포범위. 직전104테스트및lint/타입포함41경로빌드통과이후코드변경없음. 운영master정상push와VercelReady확인예정.

@@ -44,7 +44,7 @@ import { OtherForm, WorshipForm } from "./worship-form";
 const MESSAGES: Record<string, string> = {
   "campus-finance":"부산 헌금·경비 항목을 모두 입력해 주세요. 지출하지 않은 항목은 0, 헌금이 없으면 기타에 없음으로 적어 주세요.",
   conflict: "다른 기기에서 보고서가 변경되었습니다. 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.",
-  "attendance-assignment": "교육부서 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
+  "attendance-assignment": "교회학교 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
   invalid: "입력값이 올바르지 않습니다. 다시 확인해 주세요.",
   missing: "제출에 필요한 항목이 비어 있습니다.",
   consent: "보호자 연락처를 저장하려면 수집 동의를 체크해 주세요.",
@@ -211,7 +211,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           key={draftVersion}
           action={saveReport}
           reportId={id}
-          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff"),worship_leader:str("worship_leader") }, issues, messages }) as WorshipPayload}
+          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff"),worship_leader:str("worship_leader"),rotation:str("rotation"),needs_attention:report.details.needs_attention===true,attention_status:str("attention_status")||"open" }, issues, messages }) as WorshipPayload}
           showMessages={isAuthor}
         />
       );
@@ -231,7 +231,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
               ["설교자", str("preacher")],
               ["예배·교육 내용", str("content")],
               ["나눔 주제",str("sharing_topic")],["나눔 범위",str("sharing_passage")],["나눔 장소",str("sharing_place")],
-            ] as [string, string][] : [["예배인도자",str("worship_leader")], ["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
+            ] as [string, string][] : [...(report.details.needs_attention===true?[["확인·조치",({open:"확인 필요",temporary:"조치 중",resolved:"해결"} as Record<string,string>)[str("attention_status")]||"확인 필요"]]:[]),["부서 로테이션",str("rotation")],["예배인도자",str("worship_leader")], ["말씀본문",str("sermon_passage")], ["말씀·예배 내용",str("sermon_content")], ["예배위원",str("service_staff")],
             ["진행 결과", RESULT_LABEL[str("result") as keyof typeof RESULT_LABEL] ?? ""]] as [string, string][]),
             ...issues.map(
               (i) => [`이슈 · ${i.category}`, `${i.content}${i.action ? `\n→ ${i.action}` : ""} (${ISSUE_STATUS_LABEL[i.status]})`] as [string, string],
@@ -289,7 +289,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   return (
     <>
       <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{groupDisplayName(group.name)}</BackLink>
-      <PageTitle sub={`${group.parent ? `${group.parent.name} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
+      <PageTitle sub={`${group.parent ? `${groupDisplayName(group.parent.name)} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
         <span className="flex items-center gap-2">
           {title}
           <Badge tone={report.status === "draft" ? "danger" : report.status === "reviewed" ? "accent" : "muted"}>
@@ -303,7 +303,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
       {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
       <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date}/>
-      {group.type === "worship" ? <TeamIssues canWrite={canEdit && Boolean(teamWriteRes.data)} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
+      {group.type === "worship" && !editMode && (incidentResult?.error || incidentResult?.data?.length) ? <TeamIssues canWrite={false} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
         {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}

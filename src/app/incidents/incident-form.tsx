@@ -1,4 +1,6 @@
 "use client";
+import {groupDisplayName} from "@/lib/group-display";
+
 
 import { useActionState, useState } from "react";
 import { WORSHIP_ISSUE_CATEGORIES } from "@/lib/report-forms";
@@ -37,7 +39,7 @@ export function IncidentForm({ incident, groups=[], services=[], initial, today,
       <fieldset><legend className="mb-2 text-[15px] font-medium">작성하는 팀</legend>
         <p className="mb-3 text-xs text-muted">현재 팀의 이슈를 작성합니다. 같은 예배의 이슈는 예배별 목록에 함께 모입니다.</p>
         <div className="grid grid-cols-2 gap-2">{groups.filter(g=>!initial || g.id===initial.group_id).map(g=><label key={g.id} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm">
-          <input type="radio" required name="group_ids" value={g.id} defaultChecked={state.groups ? state.groups.includes(g.id) : initial?.group_id===g.id}/>{g.name}
+          <input type="radio" required name="group_ids" value={g.id} defaultChecked={state.groups ? state.groups.includes(g.id) : initial?.group_id===g.id}/>{groupDisplayName(g.name)}
         </label>)}</div>
       </fieldset>
     </>}

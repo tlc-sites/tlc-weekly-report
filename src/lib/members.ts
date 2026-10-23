@@ -2,6 +2,7 @@ export type Member = {
   id: string;
   group_id: string;
   name: string;
+  team_position?: string | null;
   kind: "student" | "teacher";
   class_name: string | null;
   grade: string | null;
@@ -27,7 +28,7 @@ export type Guardian = {
 };
 
 export const MEMBER_COLUMNS =
-  "id, group_id, name, kind, class_name, grade, birth_year, birth_date, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
+  "id, group_id, name, team_position, kind, class_name, grade, birth_year, birth_date, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
 
 export const KIND_LABEL: Record<Member["kind"], string> = { student: "학생", teacher: "교사" };
 

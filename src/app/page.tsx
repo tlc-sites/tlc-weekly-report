@@ -128,7 +128,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
       {rosterGroups.length ? (
         <Card>
-          <MenuHeading icon="people" description="아이들의 출결과 명단을 살펴보세요.">교육부서 출결·명단</MenuHeading>
+          <MenuHeading icon="people" description="아이들의 출결과 명단을 살펴보세요.">교회학교 출결·명단</MenuHeading>
           <ul className="flex flex-wrap gap-2">
             {rosterGroups.map((g) => (
               <li key={g.id}>
@@ -144,7 +144,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         </Card>
       ) : null}
 
-      <Link href={`/incidents?week=${week}`} className="mt-6 flex min-h-14 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold"><MenuIcon name="report" small/>예배·팀 이슈</Link>
+      <Link href={`/incidents?week=${week}`} className="mt-6 flex min-h-14 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold"><MenuIcon name="report" small/>확인·조치 목록</Link>
       <div className="mt-auto flex items-center justify-between pt-8">
         <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
           <MenuIcon name="bell" small />알림 설정
