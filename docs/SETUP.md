@@ -148,3 +148,10 @@ npm run test:db
 ## 사역 보고 추가 기능 적용 준비
 
 현재 기능 브랜치는 DB13→14→15번 적용이 필요합니다. 운영 승인과 배포는 별개입니다. 최신 권한과 적용 순서는 [REPORTING_ROUND_TWO.md](REPORTING_ROUND_TWO.md)를 참고합니다.
+
+### 모임 종료 3시간 알림·금요일 요약 운영 설정
+
+- `.github/workflows/meeting-reminders.yml`이 5분마다 `/api/cron/meeting-deadlines`를 호출합니다. GitHub 저장소 Actions variable `REPORT_MEETING_REMINDERS_ENABLED=true`, Actions secret `REPORT_CRON_SECRET`(Vercel `CRON_SECRET`과 같은 값)이 필요합니다. 비밀 값은 문서나 채팅에 기록하지 않습니다. 활성화 전 현재 Actions 실행 기록과 각 그룹의 모임 종료 시각을 확인합니다.
+- 기존 DB 로직은 종료 3시간부터 미제출 작성자·담당 교역자·지정 담임 수신자에게 알리고, 미제출 동안 2시간마다 다시 알립니다. 제출 또는 해당 주 모임 없음 표시는 대상에서 제외합니다. 기존 일정의 과거 미제출분도 대상이므로 활성화 전 dry inspection이 필요합니다.
+- 금요일 17시 Vercel `fri-digest` 경로도 주간 요약 메일을 직접 호출합니다. 모임 알림 경로에서도 호출되지만 수신자별 주간 claim으로 중복을 막습니다. 메일은 `WEEKLY_EMAIL_ENABLED=true`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`와 활성 담임 수신자 역할이 있어야 합니다. 기존 본문 열람 제한을 유지합니다.
+- 예약 실행은 지연될 수 있어 정각 또는 정확히 3시간째 전달을 보장하지 않습니다. GitHub/Vercel 실행 이력과 실제 수신은 운영 활성화 후 따로 확인합니다.

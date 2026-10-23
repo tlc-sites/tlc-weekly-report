@@ -700,3 +700,47 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-23 DB33 운영 적용·누적 앱 배포 시작
 - 기존사용자DB33승인과최신배포요청에따라진행. 연결Chrome1 복구, SQL편집기읽기사전db33_present=false 확인후승인apply-db33.sql전체실행. team_position_ready/roster_rls_enabled 모두true. 증빙outputs/report-deploy/db33-applied.png. 다른스키마/계정역할변경없음.
 - 교회학교표시/팀명단/로테이션/예배별날짜/부산출발일/단일사역보고·조치목록 누적로컬변경모두이번배포범위. 직전104테스트및lint/타입포함41경로빌드통과이후코드변경없음. 운영master정상push와VercelReady확인예정.
+
+### 2026-10-23 통합사역보고·누적개선 운영배포 완료
+- 8fc38f1d17eb7fcaf3dddef042941eea01c522eb 정상push dd17260→8fc38f1 origin/master. Vercel관리화면로그인필요로GitHub연결get_commit_combined_status조회, Vercel state=success/target Gx27kUUk6CYNyJKJ8ZSp9NLYyjWQ 확인. 운영DB33적용완료(직전증빙).
+- 실제운영 /login 정상응답및변경문구 교회학교·예배팀·캠퍼스보고 확인. 증빙 outputs/report-deploy/8fc38f1-production-login.png. 실제로그인보고제출/처리상태/명단수정/알림은미실행. 직전104테스트/lint/타입포함41경로빌드후코드변경없이배포, 이번전검사재실행주장안함.
+- 운영현재8fc38f1/DB33. 계정역할변경/메일·푸시전송없음. 완료영수증로컬문서만추가/추가배포트리거안함. 사용자루트/다른프로젝트변경보존. GitHub연결조회에서첫ref파라미터불일치는commit_sha로교정후성공, 인증토큰접근없음.
+
+### 2026-10-23 한영번역·번안 진단
+- 사용자 작동안됨 확인요청. 코드상 LanguageSwitch는 메뉴번역아닌보고내용번역언어로컬선택, AutoTranslation/report액션은영어보고번역을isSenior에만허용. 일반교역자/관리자는보고서영문번역UI미표시. 영어report_comments의한국어번역만일반사용자대상으로연결, 나머지코멘트종류/답글/독립이슈번역없음. 별도번안모드없음, 공급자지침은faithful번역/자연스러운영어.
+- ANTHROPIC_API_KEY/TRANSLATE_MODEL/TRANSLATION_ENABLED=true 모두필요. 최종HANDOFF에운영미설정기록유지. Vercel환경변수페이지접근은로그인화면이라현재운영값재확인불가(값추출안함). 실제유료API/운영본문전송안함.
+- 이번 node --test tests/translation-provider.test.mjs 1/1성공(mock요청/오류/잘린응답/비공개필드제외), 실제API연결성공을뜻하지않음. 코드/권한/설정/DB/배포변경없음. 운영8fc38f1/DB33유지. 후속: 운영로그인후설정존재확인, 번역가능역할·화면범위결정및활성화필요.
+
+### 2026-10-23 운영 번역 환경 확인 완료
+- 사용자 연결복구 후 Chrome1 Vercel tlc-weekly-report 프로젝트 환경변수 목록 읽기 확인. 기존환경변수7개만있고 ANTHROPIC_API_KEY/TRANSLATE_MODEL/TRANSLATION_ENABLED 세항목없음. 비밀값펼치기/복사/기록안함. 운영번역실행불가원인확정.
+- 셀케어 api/translate.js 읽기비교: 동일Anthropic공급자사용, 자체프로젝트환경키필요. 셀케어프로젝트의키읽기/재사용안함. API모델명은공식Claude문서조회(claude-sonnet-5-5)로확인, 실제API호출없음.
+- 코드/설정/권한/DB/배포변경없음. 다음필요작업: 보고서프로젝트에사용자가키직접등록, 모델/활성화설정변경안확인, 번역사용역할범위확정. 현재영문보고번역최상단제한/메뉴번역아님/번안별도없음 진단유지. 운영8fc38f1/DB33유지.
+
+### 2026-10-23 사용자 번역 설정 등록·재배포 확인
+- 사용자완료응답후Vercel프로젝트환경목록에 ANTHROPIC_API_KEY/TRANSLATE_MODEL/TRANSLATION_ENABLED 세변수Production등록확인. 비밀값펼침/복사없음, 값자체유효성미확인.
+- 사용자가이미재배포한9Rar569UnnrDSnRRj1M5yn8xhBgY(8fc38f1동일소스) Production Current Ready52초와운영도메인연결확인. 중복재배포실행안함. 증빙outputs/report-deploy/translation-env-production-ready.png.
+- 에이전트코드/환경/DB/계정변경없음. 영어보고번역최상단전용유지. 실제권한최상단로그인/API본문번역실행미검증(예시문장API테스트도실행안함), 실제보고내용외부전송없음. API키/모델/잔액의실효성은담임계정실제번역으로확인필요. 이번단순운영확인으로테스트재실행없음. 운영8fc38f1/DB33.
+
+### 2026-10-23 이메일 발신 표시 이름 확인
+- 사용자 문의에 따라 읽기 확인만 수행. 셀케어 요약 메일은 cell-care/api/_digest.js의 from.name='TLC 셀 케어', 보고 앱 요약은 src/lib/weekly-email.ts의 'TLC 교회 보고서'. 로그인 메일 표시 이름은 공유 Supabase Auth Custom SMTP Sender name에서 설정한다.
+- TLC Office 변경 방법 안내 예정. 공유 Auth 설정 변경 시 두 앱 로그인 메일에 함께 영향. 코드·SMTP 설정·DB·배포 변경 없음, 테스트 실행 없음. 실제 받은 메일 종류는 미확인.
+
+### 2026-10-23 알림 미수신 초기 확인
+- 사용자 알림 미수신 문의. 종 알림/이메일 중 어떤 종류인지 비동기 질문, 아직 미확인. 앱과 발생 동작·수신 계정 역할도 필요.
+- 읽기 확인: 셀케어 notify-submit은 submit_push_targets 결과가 0이면 바로 종료하고 sendAll의 알림함 기록도 기기 endpoint 대상으로 구성한다. 기기 등록 여부에 따라 일부 알림이 누락될 가능성 있으나 운영 원인으로 확정하지 않음. 보고 앱은 별도 inbox_notifications를 읽는다.
+- 코드·DB·설정·운영 데이터 변경, 알림 발송, 배포·테스트 실행 없음. 종류 확인 후 해당 경로 조사 필요.
+
+### 2026-10-23 두 앱 휴대폰 푸시 범위 확인
+- 사용자가 셀케어·교회보고서 모두 푸시 미수신이라고 명확히 함. 두 앱의 기기 등록·테스트 발송 코드를 읽음. 별도 사이트 구독이며 각 앱에서 등록 필요. 교회보고서 보고 제출/수정 알림은 DB inbox 생성만 연결되어 있으며 기존 공지·신청·리마인더의 웹푸시 발송과 별도임.
+- 셀케어는 제출 API→수신 기기 조회→sendAll 푸시 경로 존재. 미수신 원인은 운영 기기 등록/서버 발송 결과 미확인으로 확정하지 않음. 두 앱 테스트 알림 결과 문구와 휴대폰 종류를 질문함.
+- 코드·설정·DB·배포 변경 및 실제 푸시 전송 없음. 테스트 실행 없음. 다음 작업: 테스트 결과로 구독/키/기기 차단 분리, 교회보고서 보고 이벤트 푸시 연결 구현 검토.
+
+### 2026-10-23 테스트 알림 문구 해석 정정
+- 사용자가 교회보고서 테스트 버튼 후 같은 문구가 나온다고 재확인. settings/actions.ts 실제 payload.body가 정확히 '이 기기에서 알림을 받을 수 있습니다.'임을 확인. 앞서 이를 단순 지원 안내라고 설명한 것은 잘못이므로 사용자에게 정정한다.
+- sendToSubscriptions는 OS 발송 전 동일 본문을 앱 알림함에 기록한다. 해당 문구만으로는 OS 푸시 성공/실패 판정 불가. 아이폰 알림 배너에서 보이면 테스트 푸시 수신, 앱 내부에서만 보이면 알림함 생성만 확인된 것. 보고서 제출/수정은 종 알림만 연결되어 있다는 기존 진단 유지.
+- 이번 읽기 확인 및 문서 기록만 수행, 코드·운영 변경/발송/테스트 없음.
+
+### 2026-10-23 모임 3시간 미제출 푸시·금요일 17시 요약 연결 보완 (로컬)
+- 사용자 요청: 종료 3시간 내 미작성 시 예배명 포함 작성 요청, 금요일17시 두 분 요약본. 기존 claim_meeting_reminders SQL와 GitHub5분 workflow 존재 확인. REPORT_MEETING_REMINDERS_ENABLED/REPORT_CRON_SECRET 활성화 및 운영 실행 이력은 미확인. Vercel cron만 보고 스케줄이 없다고 한 초기 설명 정정.
+- src/lib/meeting-reminders.ts 푸시 제목을 '[모임명] 보고서 작성 부탁드립니다'로 변경. src/app/api/cron/[slot]/route.ts 금요일 fri-digest non-dryRun에서 runWeeklyEmail 호출 추가, 기존 주간 DB claim으로 모임 경로와 중복 방지. docs/SETUP.md 운영 설정·2시간 재알림·과거 누락분 주의·실행 지연 기록.
+- 이번 lint, tsc --noEmit, webpack production41경로, test:db104/104 통과. DB 및 권한 변경 없음, 화면 UI 변경 없음. 실제 푸시/이메일 전송·운영 설정/역할 변경·배포 없음. 운영 활성화 전 등록 종료시각과 과거 미제출 대상·담임 역할·메일 설정 확인 필요. 신규 운영 설정/배포 승인은 아직 받지 않음. 셀케어 소스 보존.

@@ -9,7 +9,7 @@ export async function runMeetingReminders(){
  for(const item of data??[]){
   const {data:subs,error:subError}=await admin.from("push_subscriptions").select("id,endpoint,p256dh,auth").eq("user_id",item.user_id);
   if(subError){failed++;continue;}
-  try{const r=await sendToSubscriptions(admin,subs??[],{title:"보고서 제출을 확인해 주세요",body:item.label+" · "+item.meeting_date+" · 모임 종료 후 3시간이 지났습니다.",url:"/groups/"+item.group_id+"?week="+weekOf(item.meeting_date),tag:"meeting:"+item.group_id+":"+item.meeting_date},[item.user_id]);sent+=r.sent;failed+=r.failed;}catch{failed++;}
+  try{const r=await sendToSubscriptions(admin,subs??[],{title:item.label+" 보고서 작성 부탁드립니다",body:item.meeting_date+" · 모임 종료 후 3시간이 지났습니다. 아직 제출하지 않은 보고서를 작성해 주세요.",url:"/groups/"+item.group_id+"?week="+weekOf(item.meeting_date),tag:"meeting:"+item.group_id+":"+item.meeting_date},[item.user_id]);sent+=r.sent;failed+=r.failed;}catch{failed++;}
  }
  const weeklyEmail=await runWeeklyEmail();
  return {claimed:data?.length??0,sent,failed,weeklyEmail};

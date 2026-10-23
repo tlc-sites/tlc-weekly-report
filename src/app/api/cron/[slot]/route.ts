@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { REMINDER_SLOTS, runReminders, type ReminderSlot } from "@/lib/reminders";
 import { runMeetingReminders } from "@/lib/meeting-reminders";
+import { runWeeklyEmail } from "@/lib/weekly-email";
 
 // 정해진 시각에 크론이 호출한다. Vercel Cron은 CRON_SECRET을 Authorization 헤더로 보낸다.
 // ?dryRun=1 이면 보내지 않고 대상만 돌려준다 (점검용).
@@ -25,6 +26,12 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/api/c
 
   try {
     const result = await runReminders(slot as ReminderSlot, { dryRun: request.nextUrl.searchParams.get("dryRun") === "1" });
+    if (slot === "fri-digest" && request.nextUrl.searchParams.get("dryRun") !== "1") {
+      // 요약 메일은 모임 알림 스케줄의 활성화 여부와 관계없이 금요일 경로에서도 보낸다.
+      // 주간 수신자별 DB claim이 중복 발송을 막는다.
+      const weeklyEmail = await runWeeklyEmail();
+      return NextResponse.json({ ...result, weeklyEmail });
+    }
     return NextResponse.json(result);
   } catch (error) {
     console.error("[cron] 실패", error);
