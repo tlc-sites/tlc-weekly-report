@@ -744,3 +744,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 사용자 요청: 종료 3시간 내 미작성 시 예배명 포함 작성 요청, 금요일17시 두 분 요약본. 기존 claim_meeting_reminders SQL와 GitHub5분 workflow 존재 확인. REPORT_MEETING_REMINDERS_ENABLED/REPORT_CRON_SECRET 활성화 및 운영 실행 이력은 미확인. Vercel cron만 보고 스케줄이 없다고 한 초기 설명 정정.
 - src/lib/meeting-reminders.ts 푸시 제목을 '[모임명] 보고서 작성 부탁드립니다'로 변경. src/app/api/cron/[slot]/route.ts 금요일 fri-digest non-dryRun에서 runWeeklyEmail 호출 추가, 기존 주간 DB claim으로 모임 경로와 중복 방지. docs/SETUP.md 운영 설정·2시간 재알림·과거 누락분 주의·실행 지연 기록.
 - 이번 lint, tsc --noEmit, webpack production41경로, test:db104/104 통과. DB 및 권한 변경 없음, 화면 UI 변경 없음. 실제 푸시/이메일 전송·운영 설정/역할 변경·배포 없음. 운영 활성화 전 등록 종료시각과 과거 미제출 대상·담임 역할·메일 설정 확인 필요. 신규 운영 설정/배포 승인은 아직 받지 않음. 셀케어 소스 보존.
+
+### 2026-10-23 제출 푸시 추가·자동 알림 운영 확인
+- 사용자가 배포 중 제출 알림도 두 분·담당 교역자에게 휴대폰 푸시 요청. report-submission-push.ts 추가, saveReport 성공 후 next/server after로 DB 종 알림의 신규 report_event_key 수신자에게 전달. 활성/notify_enabled 확인, notification_logs notice ID claim으로 중복 방지, sendToSubscriptions 빈 recipients로 종 알림 중복 생성 금지. 본문 읽기 없음. 제출을 푸시 실패로 취소하지 않으며 자동 재전송 큐는 아님.
+- 이번 제출 푸시 mock1/1, DB104/104, lint/tsc/webpack41경로 통과. 이후 meeting-reminders claim 오류에 개인정보 없는 error.code 로그 추가. 운영 DB 변경 없음.
+- b357f7b5b704ac57dbe97d3cead2b28aaaa799e0 이미 master push 및 Vercel BjqWMvCmZnc39CzkA5TiK4jv9T8S Production Current Ready24초 확인. 신규 제출 푸시는 추가 배포 예정.
+- 운영 읽기 확인: GitHub REPORT_MEETING_REMINDERS_ENABLED=true 이미 설정. 최근10회 자동 실행 실패, #10 HTTP500(39902467250/job/120246892014), 원인 상세 미확정. Vercel 푸시·CRON 키 이름 존재, 주간메일 WEEKLY_EMAIL_ENABLED/GMAIL_USER/GMAIL_APP_PASSWORD 없음. Supabase SELECT reminder_function=true/reminder_schedules=true, 활성 recipient_role 수신자0. 계정 역할/비밀값/설정 변경 안함. 두 분 실제 수신은 계정 역할 등록 전 불가. DB 함수 적용 누락은 아님.

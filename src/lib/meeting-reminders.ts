@@ -4,7 +4,7 @@ import {sendToSubscriptions} from "./push";
 import {weekOf} from "./week";
 export async function runMeetingReminders(){
  const admin=createAdminClient();
- const {data,error}=await admin.rpc("claim_meeting_reminders");if(error)throw error;
+ const {data,error}=await admin.rpc("claim_meeting_reminders");if(error){console.error("[meeting-reminders] claim failed",error.code);throw new Error("meeting reminder claim failed");}
  let sent=0,failed=0;
  for(const item of data??[]){
   const {data:subs,error:subError}=await admin.from("push_subscriptions").select("id,endpoint,p256dh,auth").eq("user_id",item.user_id);

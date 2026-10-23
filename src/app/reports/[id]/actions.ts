@@ -4,6 +4,8 @@ import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { preserveReportIdentity } from "@/lib/report-identity";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { notifyReportSubmission } from "@/lib/report-submission-push";
 import { z } from "zod";
 import { requireActive, isClergy } from "@/lib/auth";
 import { campusPayload, educationPayload, missingOnSubmit, otherPayload, worshipPayload } from "@/lib/report-forms";
@@ -40,6 +42,7 @@ export async function saveReport(formData: FormData) {
   if(isTeamSession(report.details) && (parsed.data.details as Record<string,unknown>).session_type!==report.details.session_type) redirect(`${back}?error=invalid`);
   if (intent === "submit" && missingOnSubmit(type, parsed.data).length) redirect(`${back}?error=missing`);
 
+  const notificationSince = new Date().toISOString();
   const { error } = await supabase.rpc("save_report_from_draft", {
     p_report: reportId.data,
     p_expected_draft_updated_at: String(formData.get("draftVersion")??"") || null,
@@ -49,6 +52,10 @@ export async function saveReport(formData: FormData) {
   if (error) {
     redirect(`${back}?error=${/autosave conflict/.test(error.message) ? "conflict" : /campus (offerings|expense|lodging) required/.test(error.message) ? "campus-finance" : /education attendance assignment/.test(error.message) ? "attendance-assignment" : /consent/.test(error.message) ? "consent" : /forbidden|not found/.test(error.message) ? "forbidden" : "save"}`);
   }
+  if (intent === "submit") after(async () => {
+    try { await notifyReportSubmission(reportId.data, notificationSince); }
+    catch { console.error("[report-push] 제출은 완료됐지만 푸시를 전달하지 못했습니다."); }
+  });
   redirect(`${back}?saved=${intent}`);
 }
 
