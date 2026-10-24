@@ -18,12 +18,14 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/api/c
   if(slot === "meeting-deadlines") {
     if(request.nextUrl.searchParams.get("dryRun") === "1") return NextResponse.json({error:"dry-run is not supported for reminder claims"},{status:400});
     try { return NextResponse.json(await runMeetingReminders()); }
-    catch { return NextResponse.json({error:"meeting reminder failed"},{status:500}); }
+    catch (error) { console.error("[cron] meeting-deadlines 실패", error); return NextResponse.json({error:"meeting reminder failed"},{status:500}); }
+
   }
   if (!REMINDER_SLOTS.includes(slot as ReminderSlot)) {
     return NextResponse.json({ error: "unknown slot" }, { status: 404 });
   }
 
+  
   try {
     const result = await runReminders(slot as ReminderSlot, { dryRun: request.nextUrl.searchParams.get("dryRun") === "1" });
     if (slot === "fri-digest" && request.nextUrl.searchParams.get("dryRun") !== "1") {
