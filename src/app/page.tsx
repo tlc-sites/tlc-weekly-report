@@ -149,6 +149,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
           <MenuIcon name="bell" small />알림 설정
         </Link>
+        <a href="/guide.html" className="inline-flex min-h-11 items-center text-sm text-muted hover:text-accent">📖 사용 안내</a>
         <SignOutButton />
       </div>
     </>

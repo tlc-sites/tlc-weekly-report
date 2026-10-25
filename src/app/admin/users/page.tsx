@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { ROLE_LABEL, listGroupsOrdered, type OrderedGroup } from "@/lib/groups";
 import { MembershipPositionSelect } from "@/components/membership-position-select";
 import { approveUser, setUserStatus } from "./actions";
+import {HELP} from "@/lib/help-text";
 
 const ERRORS: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
@@ -62,7 +63,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
       <Link href="/" className="mb-3 text-sm text-muted">
         ← 홈
       </Link>
-      <PageTitle>사용자 관리</PageTitle>
+      <PageTitle info={HELP.users}>사용자 관리</PageTitle>
       <AdminNav current="/admin/users" />
       {message ? (
         <div className="mb-4">

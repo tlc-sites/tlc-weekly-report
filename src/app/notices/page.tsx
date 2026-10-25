@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { requireActive, canManage, isClergy } from "@/lib/auth";
 import { GROUP_TYPE_LABEL, listGroupsOrdered, type Group } from "@/lib/groups";
 import { createNotice } from "./actions";
+import {HELP} from "@/lib/help-text";
 
 export default function NoticesPage(props: PageProps<"/notices">) {
   return <Suspense fallback={<Loading />}><Content {...props} /></Suspense>;
@@ -29,7 +30,7 @@ async function Content({ searchParams }: PageProps<"/notices">) {
   const canSend=canManage(profile) || isClergy(profile);
   const targets=canSend ? groups : [];
   return <>
-    <BackLink href="/">홈</BackLink><PageTitle sub="공지와 대상이 지정된 메시지를 확인해 주세요.">공지·소통</PageTitle>
+    <BackLink href="/">홈</BackLink><PageTitle info={HELP.notices} sub="공지와 대상이 지정된 메시지를 확인해 주세요.">공지·소통</PageTitle>
     <nav aria-label="공지 분류" className="mb-3 grid grid-cols-2 gap-2">
       {[["/notices","전체 공지",!restricted],["/notices?tab=restricted","일부 공개 메시지",restricted]].map(([href,label,active])=><Link key={String(href)} href={String(href)} aria-current={active?"page":undefined} className={"flex min-h-12 items-center justify-center rounded-xl border p-3 text-center font-semibold "+(active?"border-accent bg-accent text-white":"border-border bg-surface text-accent")}>{label}</Link>)}
     </nav>

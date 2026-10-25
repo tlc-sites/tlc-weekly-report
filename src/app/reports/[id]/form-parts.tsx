@@ -8,15 +8,18 @@ import { ISSUE_STATUS_LABEL, REQUEST_CATEGORIES, missingOnSubmit } from "@/lib/r
 import {FieldErrors,FieldHighlight,FailureDialog} from "@/components/form-validation";
 import {autosaveReport} from "./autosave-actions";
 import {useAutosaveContext} from "./autosave-context";
+import {InfoTip} from "@/components/info-tip";
+import {HELP} from "@/lib/help-text";
 
 export type Messages = { pastor: string; pastor_wife: string };
 export type Request = { category: (typeof REQUEST_CATEGORIES)[number]; content: string };
 export type Issue = { category: string; content: string; status: keyof typeof ISSUE_STATUS_LABEL; action: string };
 
-export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+export function Section({ title, hint, info, children }: { title: string; hint?: string; info?: { body: ReactNode; guide?: string }; children: ReactNode }) {
+  const heading = <h2 className="mb-1 text-sm font-semibold">{title}</h2>;
   return (
     <FieldHighlight label={title}><section className="mb-5">
-      <h2 className="mb-1 text-sm font-semibold">{title}</h2>
+      {info ? <InfoTip title={heading} guide={info.guide}>{info.body}</InfoTip> : heading}
       {hint ? <p className="mb-2 text-xs text-muted">{hint}</p> : null}
       <Card className="flex flex-col gap-3">{children}</Card>
     </section></FieldHighlight>
@@ -147,6 +150,7 @@ export function ReportForm({
           {error}
         </p>
       ) : null}
+      <InfoTip className="mt-3" title={<span className="text-sm font-semibold">임시저장 · 자동저장 · 제출</span>} guide={HELP.save.guide}>{HELP.save.body}</InfoTip>
       {sync.enabled?<p role="status" aria-live="polite" className="my-3 text-sm text-muted">{conflict?"다른 기기에서 보고서가 변경되었거나 제출되었습니다. 현재 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.":saving?"서버에 자동저장 중…":failed===serialized?"자동저장하지 못했습니다. 입력 내용은 화면에 유지됩니다. 인터넷 연결과 입력값을 확인해 주세요.":savedPayload!==serialized?"변경 내용을 자동저장할 예정입니다.":savedTime?"자동저장 완료 · "+savedTime+" · 다른 기기에서 이어 쓸 수 있습니다.":"입력하면 자동저장됩니다. 기기를 바꾸기 전 저장 완료를 확인해 주세요."}{failed===serialized&&!conflict?<button type="button" onClick={()=>setFailed(null)} className="ml-2 underline">다시 저장</button>:null}</p>:null}
       {queued?<p role="status" className="mb-3 text-sm text-accent">자동저장을 마치고 요청하신 저장·제출을 진행합니다.</p>:null}
       {error?<FailureDialog key={errorKey} message={error}/>:null}
@@ -266,7 +270,7 @@ export function IssuesEditor({
 
 export function MessagesEditor({ value, onChange }: { value: Messages; onChange: (v: Messages) => void }) {
   return (
-    <Section title="담임 목사님·담임 사모님께 드리는 글 (선택)" hint="작성자와 담임 목사님·담임 사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
+    <Section title="담임 목사님·담임 사모님께 드리는 글 (선택)" info={HELP.privateNote} hint="작성자와 담임 목사님·담임 사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">
       <TextArea
         label="담임 목사님께"
         value={value.pastor}

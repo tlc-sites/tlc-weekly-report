@@ -160,3 +160,12 @@ main { padding-bottom: calc(var(--bottom-nav-height) + 1.5rem); }
 .report-submit-bar { bottom: var(--bottom-nav-height); }
 input[type="date"], input[type="time"], select, textarea { min-width: 0; max-width: 100%; }
 @media print { main { padding-bottom: 0; } }
+
+/* ⓘ 도움말: 셀 케어와 같은 모양. 버튼은 작아도 누르는 영역은 넓힌다. */
+.info-btn { position: relative; display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; padding: 0; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--surface); color: var(--accent); font: italic 700 15px/1 Georgia, "Times New Roman", serif; }
+.info-btn::after { content: ""; position: absolute; inset: -9px; }
+.info-btn[aria-expanded="true"] { background: var(--accent); color: var(--accent-foreground); }
+.info-box { margin: 8px 0 12px; border-radius: 12px; background: var(--accent-soft); padding: 12px 14px; font-family: var(--font-sans); font-size: 15px; font-weight: 400; line-height: 1.65; letter-spacing: 0; color: var(--foreground); }
+.info-box ul { margin: 4px 0 0; padding-left: 1.1em; list-style: disc; }
+.info-box[hidden] { display: none; }
+@media print { .info-btn, .info-box { display: none !important; } }

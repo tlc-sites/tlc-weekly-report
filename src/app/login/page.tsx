@@ -38,6 +38,7 @@ async function LoginContent({ searchParams }: Pick<PageProps<"/login">, "searchP
       <header className="text-center">
         <h1 className="text-2xl font-semibold">TLC 교회 보고서</h1>
         <p className="mt-2 text-sm text-muted">교회학교 · 예배팀 · 캠퍼스 보고</p>
+        <a href="/guide.html" className="mt-3 inline-block text-sm font-semibold text-accent">📖 처음 쓰시는 분을 위한 사용 안내</a>
       </header>
 
       {message ? <ErrorText>{message}</ErrorText> : null}

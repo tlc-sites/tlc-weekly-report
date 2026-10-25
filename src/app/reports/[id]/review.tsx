@@ -7,6 +7,8 @@ import Link from "@/components/pending-link";
 import { Card, buttonClass, secondaryButtonClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { addComment, deleteComment, setReviewStatus } from "./actions";
+import { InfoTip } from "@/components/info-tip";
+import { HELP } from "@/lib/help-text";
 
 export function ReviewPanel({
   reportId,
@@ -21,9 +23,7 @@ export function ReviewPanel({
 }) {
   return (
     <Card className="mb-4 flex flex-wrap items-center gap-2">
-      <p className="flex-1 text-sm">
-        {status === "reviewed" ? "확인 처리한 보고입니다." : "검토자로서 내용을 확인했으면 확인 처리해 주세요."}
-      </p>
+      <InfoTip className="min-w-0 flex-1" title={<p className="text-sm">{status === "reviewed" ? "확인 처리한 보고입니다." : "검토자로서 내용을 확인했으면 확인 처리해 주세요."}</p>} guide={HELP.review.guide}>{HELP.review.body}</InfoTip>
       {canEditAsReviewer ? (
         <Link href={editing ? `/reports/${reportId}` : `/reports/${reportId}?edit=1`} className={`${secondaryButtonClass} h-9 text-xs`}>
           {editing ? "읽기 화면으로" : "검토자 수정"}

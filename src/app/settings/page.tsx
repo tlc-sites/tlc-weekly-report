@@ -3,6 +3,7 @@ import { BackLink, Card, Loading, PageTitle, secondaryButtonClass } from "@/comp
 import { requireActive } from "@/lib/auth";
 import { setNotifyEnabled } from "./actions";
 import { PushManager } from "./push-manager";
+import {HELP} from "@/lib/help-text";
 
 export default function SettingsPage() {
   return (
@@ -23,7 +24,7 @@ async function SettingsContent() {
   return (
     <>
       <BackLink href="/">홈</BackLink>
-      <PageTitle sub="수요일·금요일 오전 작성 알림과 금요일 오후 5시 사역 보고 안내를 받습니다.">알림 설정</PageTitle>
+      <PageTitle info={HELP.push} sub="수요일·금요일 오전 작성 알림과 금요일 오후 5시 사역 보고 안내를 받습니다.">알림 설정</PageTitle>
 
       <h2 className="mb-2 text-sm font-semibold">이 기기</h2>
       <Card className="mb-6">

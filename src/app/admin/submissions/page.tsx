@@ -8,6 +8,7 @@ import { addDays, formatWeek, reportWeek, todayKST } from "@/lib/week";
 import { BackLink, Card, Field, Loading, PageTitle, selectClass, smallButtonClass } from "@/components/ui";
 import { ReportStatusBadge } from "@/components/report-status";
 import { AdminNav } from "@/components/admin-nav";
+import {HELP} from "@/lib/help-text";
 
 export default function Page(props: PageProps<"/admin/submissions">) {
   return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;
@@ -25,7 +26,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
   const href = (value: string) => `/admin/submissions?${new URLSearchParams({week:value,status,group})}`;
   return <>
     <BackLink href={`/?week=${week}`}>홈 · 제출현황</BackLink>
-    <PageTitle sub={formatWeek(week)}>전체 제출현황</PageTitle>
+    <PageTitle info={HELP.submissions} sub={formatWeek(week)}>전체 제출현황</PageTitle>
     <AdminNav current="/admin/submissions"/>
     <p className="mb-4 text-sm text-muted">관리자에게는 파트·작성자·예배·제출 상태만 표시됩니다. 본문은 별도 열람 권한이 있을 때만 열 수 있습니다.</p>
     {data.setup_expires_at ? <Card className="mb-4"><p className="text-sm">셋업용 일반 내용 열람 중 · {new Date(data.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})} 자동 종료</p><p className="mt-1 text-xs text-muted">읽기만 가능하며 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}

@@ -1,4 +1,5 @@
 import {FieldHighlight} from "./form-validation";
+import {InfoTip} from "./info-tip";
 import type { ReactNode } from "react";
 import Link from "@/components/pending-link";
 
@@ -38,10 +39,11 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
   return <section className={`rounded-[14px] border border-border bg-surface p-[18px] ${className}`}>{children}</section>;
 }
 
-export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
+export function PageTitle({ children, sub, info }: { children: ReactNode; sub?: ReactNode; info?: { body: ReactNode; guide?: string } }) {
+  const heading = <h1 className="text-[26px]">{children}</h1>;
   return (
     <header className="mb-5">
-      <h1 className="text-[26px]">{children}</h1>
+      {info ? <InfoTip title={heading} guide={info.guide}>{info.body}</InfoTip> : heading}
       {sub ? <p className="mt-2 text-[15px] leading-relaxed text-muted">{sub}</p> : null}
     </header>
   );
