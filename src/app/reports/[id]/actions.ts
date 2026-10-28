@@ -65,7 +65,12 @@ export async function deleteDraft(formData: FormData) {
   const reportId = z.uuid().safeParse(formData.get("reportId"));
   if (!reportId.success) redirect("/");
 
-  const { data } = await supabase.from("reports").select("group_id, meeting_date").eq("id", reportId.data).maybeSingle();
+  const { data } = await supabase.from("reports").select("group_id, meeting_date, status").eq("id", reportId.data).maybeSingle();
+  // 보고서를 지우면 Storage 권한도 사라지므로 사진 파일을 먼저 지운다.
+  if (data?.status === "draft") {
+    const { data: images } = await supabase.from("report_images").select("path").eq("report_id", reportId.data);
+    if (images?.length) await supabase.storage.from("report-images").remove(images.map((i) => i.path));
+  }
   const { data: deleted, error } = await supabase.from("reports").delete().eq("id", reportId.data).eq("status", "draft").select("id");
   if (error || !deleted?.length || !data) redirect(`/reports/${reportId.data}?error=delete`);
   redirect(`/groups/${data.group_id}?week=${weekOf(data.meeting_date)}`);

@@ -769,3 +769,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - DB37 `20261120000000_pd_positions_mentions.sql`: 'PD' 파트(1~3부·라이프라인), 직책 'PD'와 모든 파트의 '기타 교역자'(교역자 계정 필요·작성 전용·검토 불가, 보고 층은 교역자 층 3). set_memberships_with_minister·group_content_layer 갱신. 주간 미제출 알림에서 기타 교역자 제외(reminders.ts). 모임별 3시간 알림(claim_meeting_reminders)은 그대로라 일정이 등록된 파트면 기타 교역자도 받을 수 있음.
 - 부서 멘션: details.mentions(최대 5) → 제출 시 트리거가 report_mentions 동기화, 새로 멘션된 부서 직접 소속자에게 종 알림(본문 미포함, 제출 푸시 경로로 휴대폰 알림). 기존 정책은 그대로 두고 reports_mention_read 정책과 can_view_report에 멘션 조건만 추가. 같은 층 작성자끼리는 기존대로 이미 서로 봄.
 - tests/feedback-round3.test.mjs 3개, rls 시드 기대값(그룹 25·예배 연결 103) 갱신. lint·tsc·test:db 114/114·next build 통과. 배포 안 함.
+
+### 2026-10-28 교회보고서 피드백 3차: 보고서 사진 첨부 (로컬, 운영 미적용)
+- DB38 `20261121000000_report_images.sql`: 비공개 Storage 버킷 report-images(JPEG, 1MB), report_images 표(보고서당 5장, 경로 '보고서ID/사진ID.jpg'), storage.objects 정책은 경로의 보고서 ID로 can_view_report/can_edit_report 확인.
+- 화면: 보고서 화면 '사진' 카드(ReportImages). 브라우저에서 긴 변 1600px JPEG로 줄여 Storage에 직접 올리고(Vercel 4.5MB 제한 회피) attachReportImage로 연결, 실패 시 파일 삭제. 열람은 1시간 서명 주소. 임시저장 삭제 시 사진 파일 먼저 삭제.
+- tests/stub.mjs에 storage 스키마 흉내 추가, tests/report-images.test.mjs. lint·tsc·test:db 115/115·next build 통과. 실제 Storage 업로드·휴대폰 HEIC 변환은 미확인.
+- 운영 적용 순서: scripts/check-db34-db35.sql로 확인 → DB34~DB38 파일 순서대로. DB34의 enum 값 추가는 같은 트랜잭션에서 쓰지 않는다.

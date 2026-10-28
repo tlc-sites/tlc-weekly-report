@@ -5,6 +5,7 @@ import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import {AutoTranslation} from "@/components/auto-translation";
 import {reportSummaryLines} from "@/lib/weekly-summary";
 import {SharedWorshipStaff} from "@/components/shared-worship-staff";
+import {ReportImages} from "@/components/report-images";
 import { AutosaveContext } from "./autosave-context";
 import { getReportIdentity } from "@/lib/report-identity";
 import { SubmissionReceipt } from "@/components/submission-receipt";
@@ -125,6 +126,11 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     supabase.rpc("can_write_group",{gid:group.id}),
   ]);
   const canEdit = Boolean(canEditRes.data);
+  // 사진은 비공개 버킷에 있으므로 1시간짜리 서명 주소로 보여 준다.
+  const imageRows = await supabase.from("report_images").select("id,path,caption").eq("report_id", id).order("created_at");
+  if (imageRows.error) throw imageRows.error;
+  const signed = imageRows.data.length ? (await supabase.storage.from("report-images").createSignedUrls(imageRows.data.map((i) => i.path), 3600)).data ?? [] : [];
+  const images = imageRows.data.map((i) => ({ id: i.id, caption: i.caption, url: signed.find((s) => s.path === i.path)?.signedUrl ?? null }));
   const canReview = Boolean(canReviewRes.data);
   // 검토자는 기본으로 읽기 화면을 보고, 필요할 때만 수정 화면으로 들어간다
   const editMode = canEdit && (report.status === "draft" || edit === "1" || Boolean(error));
@@ -311,6 +317,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
       {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
       <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date} staffReport={group.name==="예배위원"?{reportId:id,editable:isClergy(profile)&&report.meeting_date<=todayKST()}:undefined} status={typeof staffStatus==="string"?staffStatus:undefined}/>
+      <ReportImages reportId={id} images={images} canEdit={canEdit} />
       {group.type === "worship" && !editMode && (incidentResult?.error || incidentResult?.data?.length) ? <TeamIssues canWrite={false} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
 
       <div className="mb-4 flex flex-col gap-2">
