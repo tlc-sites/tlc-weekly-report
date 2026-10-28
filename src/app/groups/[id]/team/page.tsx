@@ -2,13 +2,15 @@ import {groupDisplayName} from "@/lib/group-display";
 import {Suspense} from "react";
 import Link from "@/components/pending-link";
 import {requireActive,isSenior} from "@/lib/auth";
-import {notFound} from "next/navigation";
+import {notFound,redirect} from "next/navigation";
 import {Card,Field,PageTitle,Loading,inputClass,smallButtonClass} from "@/components/ui";
 import {saveTeamMember,setTeamMemberActive,updateTeamMember} from "./actions";
 export default function Page(props:PageProps<"/groups/[id]/team">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
 async function Content({params,searchParams}:PageProps<"/groups/[id]/team">){
  const {supabase,profile}=await requireActive();const {id}=await params;const query=await searchParams;
- const [{data:group},{data:rows,error},{data:assigned}]=await Promise.all([supabase.from("groups").select("name").eq("id",id).maybeSingle(),supabase.from("team_directory").select("id,name,duty,is_active").eq("group_id",id).order("created_at"),supabase.rpc("assigned_clergy",{gid:id})]);if(!group)notFound();if(error)throw error;
+ const [{data:group},{data:rows,error},{data:assigned}]=await Promise.all([supabase.from("groups").select("name,type").eq("id",id).maybeSingle(),supabase.from("team_directory").select("id,name,duty,is_active").eq("group_id",id).order("created_at"),supabase.rpc("assigned_clergy",{gid:id})]);if(!group)notFound();
+ // 교회학교 출결은 members 명단을 쓰므로 같은 명단에서 관리하게 한다.
+ if(group.type==="education")redirect("/groups/"+id+"/members");if(error)throw error;
  const manage=isSenior(profile)||Boolean(assigned);
  return <><Link href={"/groups/"+id} className="mb-4 text-sm text-accent">← 팀 보고서</Link><Link href="/team-management" className="mb-3 block text-sm text-accent">담당 팀 관리 전체 보기 →</Link><PageTitle sub="명단 등록은 로그인 계정이나 보고 작성 권한을 부여하지 않습니다.">{groupDisplayName(group.name)} · 팀 구성</PageTitle>{query.saved?<p role="status" className="mb-3 text-accent">명단을 저장했습니다.</p>:null}{query.error?<p role="alert" className="mb-3 text-red-600">저장하지 못했습니다. 담당 교역자 권한을 확인해 주세요.</p>:null}
  {manage?<Card className="mb-4"><form action={saveTeamMember} className="flex flex-col gap-3"><input type="hidden" name="groupId" value={id}/><Field label="팀원 이름"><input name="name" required maxLength={100} className={inputClass}/></Field><Field label="담당 역할·파트"><input name="duty" maxLength={200} className={inputClass}/></Field><button className={smallButtonClass}>명단에 추가</button></form></Card>:null}

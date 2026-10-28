@@ -150,7 +150,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     const roster = (members ?? []) as RosterMember[];
     const att = new Map((attendance ?? []).map((a) => [a.member_id as string, a]));
     const initial: EducationPayload = {
-      details: { sermon_passage: str("sermon_passage"), preacher: str("preacher"), activity: str("activity"), notes: str("notes"), requests },
+      details: { sermon_passage: str("sermon_passage"), preacher: str("preacher"), sermon_summary: str("sermon_summary"), activity: str("activity"), notes: str("notes"), requests },
       attendance: roster.map((m) => {
         const a = att.get(m.id);
         return {
@@ -189,6 +189,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           ],
           ["설교 본문", str("sermon_passage")],
           ["설교자", str("preacher")],
+          ["설교 요약", str("sermon_summary")],
           ["공과·활동", str("activity")],
           ["기도제목", prayerRes.data?.body ?? ""],
           ["특이사항", str("notes")],
@@ -338,7 +339,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         </Card>
       ))}
 
-      {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">서버에 자동저장된 작성 내용을 불러왔습니다.</p>:null}
+      {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">이전에 저장된 작성 내용을 불러왔습니다.</p>:null}
       <AutosaveContext version={draftVersion} enabled={report.status==="draft" && isAuthor}>{body}</AutosaveContext>
 
       {!editMode && report.status !== "draft" ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}

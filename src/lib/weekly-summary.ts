@@ -21,7 +21,7 @@ export function weeklyBlocks(reports:SummaryReport[],groups:SummaryGroup[],incid
  for(const block of blocks.values())block.reports.sort((a,b)=>(map.get(a.group_id)?.sort_order??0)-(map.get(b.group_id)?.sort_order??0)||a.meeting_date.localeCompare(b.meeting_date)||(a.author_name??"").localeCompare(b.author_name??""));
  return [...blocks.values()].sort((a,b)=>a.order-b.order||a.title.localeCompare(b.title));
 }
-const fieldLabels:Record<string,string>={sermon_passage:"말씀 본문",sermon_content:"말씀·예배 내용",rotation:"부서 로테이션",worship_leader:"예배인도자",service_staff:"예배위원",song_list:"송리스트",preacher:"설교자",content:"진행 내용",activity:"공과·활동",notes:"사역 내용·특이사항",issue_summary:"이슈·조치",topic:"모임 주제",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소"};
+const fieldLabels:Record<string,string>={sermon_passage:"말씀 본문",sermon_content:"말씀·예배 내용",rotation:"부서 로테이션",worship_leader:"예배인도자",service_staff:"예배위원",song_list:"송리스트",preacher:"설교자",sermon_summary:"설교 요약",content:"진행 내용",activity:"공과·활동",notes:"사역 내용·특이사항",issue_summary:"이슈·조치",topic:"모임 주제",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소"};
 export function reportSummaryLines(r:SummaryReport){
  const lines=Object.entries(fieldLabels).flatMap(([key,label])=>typeof r.details[key]==="string"&&r.details[key]?[label+": "+r.details[key]]:[]);
  const result=r.details.result;if(result==="minor")lines.unshift("경미한 이슈");if(result==="incident")lines.unshift("예배 사고");

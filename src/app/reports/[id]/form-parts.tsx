@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Card, buttonClass, inputClass, secondaryButtonClass, selectClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { ISSUE_STATUS_LABEL, REQUEST_CATEGORIES, missingOnSubmit } from "@/lib/report-forms";
 
 import {FieldErrors,FieldHighlight,FailureDialog} from "@/components/form-validation";
-import {autosaveReport} from "./autosave-actions";
 import {useAutosaveContext} from "./autosave-context";
 import {InfoTip} from "@/components/info-tip";
 import {HELP} from "@/lib/help-text";
@@ -82,33 +81,15 @@ export function ReportForm({
   const [error, setError] = useState<string | null>(null);
   const [issues,setIssues]=useState<string[]>([]);
   const [errorKey,setErrorKey]=useState(0);
-  const formRef=useRef<HTMLFormElement>(null);
-  const [queued,setQueued]=useState<string|null>(null);
   const showError=(message:string)=>{setError(message);setErrorKey(key=>key+1);};
 
+  // 임시저장은 버튼으로만 한다. 버전은 다른 기기에서 바뀐 내용을 덮어쓰지 않도록 확인하는 데 쓴다.
   const sync=useAutosaveContext();
   const serialized=JSON.stringify(payload);
-  const [version,setVersion]=useState(sync.version);
-  const [savedPayload,setSavedPayload]=useState(serialized);
-  const [saving,setSaving]=useState(false);
-  const [failed,setFailed]=useState<string|null>(null);
-  const [conflict,setConflict]=useState(false);
+  const [savedPayload]=useState(serialized);
   const [manual,setManual]=useState(false);
-  const [savedTime,setSavedTime]=useState("");
-  useEffect(()=>{
-    if(!sync.enabled||manual||saving||conflict||failed===serialized||savedPayload===serialized)return;
-    const timer=setTimeout(async()=>{
-      setSaving(true);
-      try{const result=await autosaveReport(reportId,version,JSON.parse(serialized));
-        if(result.ok){setVersion(result.version);setSavedPayload(serialized);setFailed(null);setSavedTime(new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}));}
-        else{setFailed(serialized);if(result.reason==="conflict")setConflict(true);}
-      }catch{setFailed(serialized);}finally{setSaving(false);}
-    },1200);
-    return ()=>clearTimeout(timer);
-  },[serialized,savedPayload,saving,failed,conflict,manual,sync.enabled,reportId,version]);
   useEffect(()=>{const guard=(event:BeforeUnloadEvent)=>{if(sync.enabled&&serialized!==savedPayload&&!manual){event.preventDefault();}};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[serialized,savedPayload,sync.enabled,manual]);
 
-  useEffect(()=>{if(!queued||saving)return;const timer=setTimeout(()=>{const intent=queued;setQueued(null);const button=formRef.current?.querySelector<HTMLButtonElement>('button[value="'+intent+'"]');if(button)formRef.current?.requestSubmit(button);},0);return()=>clearTimeout(timer);},[queued,saving]);
   async function submitAction(formData:FormData){
     try{await action(formData);}catch(cause){
       const digest=typeof cause==="object"&&cause!==null&&"digest" in cause?String(cause.digest):"";
@@ -133,16 +114,14 @@ export function ReportForm({
         return;
       }
     }
-    if(conflict){event.preventDefault();showError("다른 기기에서 변경된 내용이 있습니다. 현재 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.");return;}
-    if(saving){event.preventDefault();setQueued(submitter?.value??"submit");return;}
     setManual(true);
     setError(null);
   }
 
   return (
-    <FieldErrors value={issues.filter(issue=>missingOnSubmit(type,payload).includes(issue))}><form ref={formRef} action={submitAction} onSubmit={onSubmit} noValidate>
+    <FieldErrors value={issues.filter(issue=>missingOnSubmit(type,payload).includes(issue))}><form action={submitAction} onSubmit={onSubmit} noValidate>
       <input type="hidden" name="reportId" value={reportId} />
-      <input type="hidden" name="draftVersion" value={sync.enabled?version:""} />
+      <input type="hidden" name="draftVersion" value={sync.enabled?sync.version:""} />
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       {children}
       {error ? (
@@ -150,9 +129,8 @@ export function ReportForm({
           {error}
         </p>
       ) : null}
-      <InfoTip className="mt-3" title={<span className="text-sm font-semibold">임시저장 · 자동저장 · 제출</span>} guide={HELP.save.guide}>{HELP.save.body}</InfoTip>
-      {sync.enabled?<p role="status" aria-live="polite" className="my-3 text-sm text-muted">{conflict?"다른 기기에서 보고서가 변경되었거나 제출되었습니다. 현재 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.":saving?"서버에 자동저장 중…":failed===serialized?"자동저장하지 못했습니다. 입력 내용은 화면에 유지됩니다. 인터넷 연결과 입력값을 확인해 주세요.":savedPayload!==serialized?"변경 내용을 자동저장할 예정입니다.":savedTime?"자동저장 완료 · "+savedTime+" · 다른 기기에서 이어 쓸 수 있습니다.":"입력하면 자동저장됩니다. 기기를 바꾸기 전 저장 완료를 확인해 주세요."}{failed===serialized&&!conflict?<button type="button" onClick={()=>setFailed(null)} className="ml-2 underline">다시 저장</button>:null}</p>:null}
-      {queued?<p role="status" className="mb-3 text-sm text-accent">자동저장을 마치고 요청하신 저장·제출을 진행합니다.</p>:null}
+      <InfoTip className="mt-3" title={<span className="text-sm font-semibold">임시저장 · 제출</span>} guide={HELP.save.guide}>{HELP.save.body}</InfoTip>
+      {sync.enabled&&savedPayload!==serialized?<p role="status" aria-live="polite" className="my-3 text-sm text-muted">저장하지 않은 변경 내용이 있습니다. 이어서 쓰려면 「임시저장」을 눌러 주세요.</p>:null}
       {error?<FailureDialog key={errorKey} message={error}/>:null}
       <SubmitBar />
     </form></FieldErrors>

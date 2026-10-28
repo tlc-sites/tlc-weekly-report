@@ -751,8 +751,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - b357f7b5b704ac57dbe97d3cead2b28aaaa799e0 이미 master push 및 Vercel BjqWMvCmZnc39CzkA5TiK4jv9T8S Production Current Ready24초 확인. 신규 제출 푸시는 추가 배포 예정.
 - 운영 읽기 확인: GitHub REPORT_MEETING_REMINDERS_ENABLED=true 이미 설정. 최근10회 자동 실행 실패, #10 HTTP500(39902467250/job/120246892014), 원인 상세 미확정. Vercel 푸시·CRON 키 이름 존재, 주간메일 WEEKLY_EMAIL_ENABLED/GMAIL_USER/GMAIL_APP_PASSWORD 없음. Supabase SELECT reminder_function=true/reminder_schedules=true, 활성 recipient_role 수신자0. 계정 역할/비밀값/설정 변경 안함. 두 분 실제 수신은 계정 역할 등록 전 불가. DB 함수 적용 누락은 아님.
 
-## 기도회 보고 수정 (2026-10-29, 단독 배포 브랜치)
-- 문의: 기도회 보고가 수정되지 않음 → 원인: 수정 기능이 없었다(화면 없음, DB는 select·insert만 허용).
-- DB39 20261122000000_prayer_edit.sql: 작성 교역자 본인만 update(구분·날짜·제목·참석명단·기도제목 열만). 요일·필수 검사 트리거를 수정에도 적용.
-- prayer-meetings: 본인 보고에 「수정」 펼침 폼, editPrayerMeeting 서버 액션. tests/prayer-edit.test.mjs.
-- 피드백 1~3차(DB34~DB38)와 분리해 origin/master 위에 이 커밋만 올린 release/prayer-edit 브랜치로 먼저 배포한다.
+### 2026-10-28 교회보고서 피드백 1차 (로컬, DB 변경 없음)
+- 명단 경로 통일: 교회학교는 관리 > 담당 팀 명단이 출결 명단(members)으로 연결되고 /groups/[id]/team은 members로 이동. team_directory에만 있던 이름은 명단 등록 칸에 미리 채워 안내(운영 데이터 자동 이전 없음).
+- 확인·조치 목록에 예배·모임 이름 표시(service_types/group_meeting_types 조인). 중등부 13~15세·고등부 16~18세로 년생 분리.
+- 보고 자동저장 타이머 제거, 임시저장 버튼으로만 저장(버전 충돌 확인 유지, 미저장 안내·이탈 경고). 안내 문구·guide.html 수정. autosave-actions.ts는 미사용으로 남김.
+- 교회학교 양식에 설교 요약(details.sermon_summary) 추가, 공과·활동과 분리. 열람·주간 요약·회의 자료 라벨 반영.
+- lint·tsc·test:db 108/108·next build 통과. 화면 실사용 확인·배포 안 함. 고등부 운영 DB 존재 여부 미확인.

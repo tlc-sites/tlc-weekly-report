@@ -59,6 +59,8 @@ export const educationPayload = z.object({
   details: z.object({
     sermon_passage: text(100),
     preacher: text(100),
+    // 이전 보고에는 없던 칸이라 비어 있어도 읽을 수 있게 한다.
+    sermon_summary: longText.default(""),
     activity: longText,
     notes: longText,
     requests: z.array(requestSchema).max(20),

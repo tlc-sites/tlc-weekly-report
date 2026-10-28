@@ -221,7 +221,8 @@ export function EducationForm({
             <input value={p.details.preacher} onChange={(e) => setDetails({ preacher: e.target.value })} maxLength={100} className={inputClass} />
           </Field>
         </div>
-        <TextArea label="공과·활동 내용" value={p.details.activity} onChange={(activity) => setDetails({ activity })} />
+        <TextArea label="설교 요약" value={p.details.sermon_summary ?? ""} onChange={(sermon_summary) => setDetails({ sermon_summary })} placeholder="말씀의 핵심 내용을 적어 주세요." />
+        <TextArea label="공과·활동 내용" value={p.details.activity} onChange={(activity) => setDetails({ activity })} placeholder="공과 진행, 활동, 아이들의 반응 등을 적어 주세요." />
       </Section>
 
       {canEditPrayer ? <Section title="기도제목" hint="작성자와 담임 목사님·담임 사모님, 담당 교역자가 볼 수 있습니다. 두 분이 다른 교역자에게 추가 공개할 수 있습니다.">

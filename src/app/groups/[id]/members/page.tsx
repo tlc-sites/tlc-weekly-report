@@ -54,6 +54,10 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   const members = (data ?? []) as Member[];
 
   const canManageRoster=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
+  // 관리 화면(team_directory)에만 등록된 이름은 출결 명단에 없으므로 옮길 수 있게 미리 채운다.
+  const directory=group.type==="education"&&canManageRoster?await supabase.from("team_directory").select("name").eq("group_id",id).eq("is_active",true):{data:[]};
+  const rosterNames=new Set(members.filter(m=>m.status!=="inactive").map(m=>m.name));
+  const unmoved=[...new Set((directory.data??[]).map(d=>d.name.trim()).filter(n=>n&&n.length<=30&&!rosterNames.has(n)))];
   const guardians=group.type!=="worship" && canReview && members.length>0 ? await supabase.from("member_guardians").select("member_id,name,relation,contact").in("member_id",members.map(m=>m.id)).eq("consent",true) : {data:[]};
   const students = members.filter((m) => m.status === "active" && m.kind === "student");
   const teachers = members.filter((m) => m.status === "active" && m.kind === "teacher");
@@ -115,11 +119,12 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
       {canManageRoster ? (
         <>
           <h2 className="mb-2 text-sm font-semibold">명단 등록</h2>
+          {unmoved.length?<p className="mb-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">관리 화면에서 등록한 {unmoved.length}명이 아직 출결 명단에 없습니다. 아래 칸에 채워 두었으니 구분을 확인하고 등록해 주세요.</p>:null}
           <Card>
             <form action={addMembersBulk} className="flex flex-col gap-3">
               <input type="hidden" name="groupId" value={id} />
               <Field label="이름" hint="한 줄에 한 명씩, 한 번에 100명까지 붙여 넣을 수 있습니다.">
-                <textarea name="names" required rows={6} placeholder={"김하늘\n이바다\n박나무"} className={textareaClass} />
+                <textarea name="names" required rows={6} defaultValue={unmoved.join("\n")} placeholder={"김하늘\n이바다\n박나무"} className={textareaClass} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 {group.type==="worship"?<><input type="hidden" name="kind" value="teacher"/><Field label="구분"><input name="teamPosition" defaultValue="팀원" maxLength={100} placeholder="팀장, 부팀장, 팀원 등" className={inputClass}/></Field></>:<Field label="구분">
