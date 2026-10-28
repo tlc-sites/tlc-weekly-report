@@ -761,7 +761,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ### 2026-10-28 교회보고서 피드백 2차 (로컬, 운영 미적용)
 - DB34 `20261117000000_member_school_status.sql`: members.school(50자) 추가, person_status에 long_absent·long_visitor 추가. 화면은 출생연도 칸을 학교로 교체(birth_year는 생년월일이 있을 때만 갱신, 기존 값 보존), 명단·출결에 장기 결석자·장기 방문자 묶음 표시. 재적 수(enrolled_snapshot)는 기존대로 active·newcomer만.
 - DB35 `20261118000000_communion_groups.sql`: 성찬팀→'성찬 준비팀' 이름 변경(ID·보고 유지), '성찬위원' 파트 신설과 예배 연결. 활성 성찬준비팀이 이미 있으면 예외로 중단. seed도 새 이름으로 변경. 담당자(성수 사모님·요청자) 지정은 관리 화면에서.
-- 운영 DB 조회는 브라우저 접근이 권한 판단에서 막혀 못 함. 적용 전 `scripts/check-db34-db35.sql`(읽기 전용)로 고등부·성찬 파트 상태 확인 필요.
+- 운영 DB 조회는 브라우저 접근이 권한 판단에서 막혀 못 함. 적용 전 `scripts/check-db34-db38.sql`(읽기 전용)로 고등부·성찬·예배위원·PD 파트와 사진 버킷 상태 확인 필요.
 - tests/feedback-round2.test.mjs 3개 추가, rls 기대값 갱신. lint·tsc·test:db 111/111·next build 통과. 배포 안 함.
 
 ### 2026-10-28 교회보고서 피드백 3차 일부: 예배위원 보고서·PD·기타 교역자·부서 멘션 (로컬, 운영 미적용)
@@ -774,4 +774,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - DB38 `20261121000000_report_images.sql`: 비공개 Storage 버킷 report-images(JPEG, 1MB), report_images 표(보고서당 5장, 경로 '보고서ID/사진ID.jpg'), storage.objects 정책은 경로의 보고서 ID로 can_view_report/can_edit_report 확인.
 - 화면: 보고서 화면 '사진' 카드(ReportImages). 브라우저에서 긴 변 1600px JPEG로 줄여 Storage에 직접 올리고(Vercel 4.5MB 제한 회피) attachReportImage로 연결, 실패 시 파일 삭제. 열람은 1시간 서명 주소. 임시저장 삭제 시 사진 파일 먼저 삭제.
 - tests/stub.mjs에 storage 스키마 흉내 추가, tests/report-images.test.mjs. lint·tsc·test:db 115/115·next build 통과. 실제 Storage 업로드·휴대폰 HEIC 변환은 미확인.
-- 운영 적용 순서: scripts/check-db34-db35.sql로 확인 → DB34~DB38 파일 순서대로. DB34의 enum 값 추가는 같은 트랜잭션에서 쓰지 않는다.
+- 운영 적용 순서: scripts/check-db34-db38.sql로 확인 → DB34~DB38 파일 순서대로. DB34의 enum 값 추가는 같은 트랜잭션에서 쓰지 않는다.
