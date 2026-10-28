@@ -8,8 +8,9 @@ export type Member = {
   grade: string | null;
   birth_year: number | null;
   birth_date: string | null;
+  school: string | null;
   photo_data: string | null;
-  status: "newcomer" | "active" | "inactive";
+  status: "newcomer" | "active" | "long_absent" | "long_visitor" | "inactive";
   first_visit_date: string | null;
   follow_up_status: "new" | "contacted" | "settled" | "inactive" | null;
   follow_up_note: string | null;
@@ -28,13 +29,15 @@ export type Guardian = {
 };
 
 export const MEMBER_COLUMNS =
-  "id, group_id, name, team_position, kind, class_name, grade, birth_year, birth_date, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
+  "id, group_id, name, team_position, kind, class_name, grade, birth_year, birth_date, school, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
 
 export const KIND_LABEL: Record<Member["kind"], string> = { student: "학생", teacher: "교사" };
 
 export const MEMBER_STATUS_LABEL: Record<Member["status"], string> = {
   newcomer: "새친구",
   active: "활동",
+  long_absent: "장기 결석자",
+  long_visitor: "장기 방문자",
   inactive: "비활성",
 };
 

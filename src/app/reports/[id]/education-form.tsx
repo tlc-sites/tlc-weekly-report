@@ -14,7 +14,7 @@ export type RosterMember = {
   birth_date: string | null;
   kind: "student" | "teacher";
   class_name: string | null;
-  status: "newcomer" | "active" | "inactive";
+  status: "newcomer" | "active" | "long_absent" | "long_visitor" | "inactive";
 };
 
 type Attendance = EducationPayload["attendance"][number];
@@ -53,7 +53,9 @@ export function EducationForm({
   const setAll = (present: boolean) => setP({ ...p, attendance: p.attendance.map((a) => ({ ...a, present })) });
   const setDetails = (patch: Partial<EducationPayload["details"]>) => setP({ ...p, details: { ...p.details, ...patch } });
 
-  const students = roster.filter((m) => m.kind === "student");
+  const isLong = (m: RosterMember) => m.status === "long_absent" || m.status === "long_visitor";
+  const students = roster.filter((m) => m.kind === "student" && !isLong(m));
+  const longTerm = roster.filter((m) => m.kind === "student" && isLong(m));
   const teachers = roster.filter((m) => m.kind === "teacher");
   const presentStudents = students.filter((m) => byId.get(m.id)?.present).length + p.newcomers.length;
   const presentTeachers = teachers.filter((m) => byId.get(m.id)?.present).length;
@@ -83,6 +85,7 @@ export function EducationForm({
         ) : null}
         {[
           ["학생", students],
+          ["장기 결석자 · 장기 방문자", longTerm],
           ["교사", teachers],
         ].map(([title, list]) =>
           (list as RosterMember[]).length ? (

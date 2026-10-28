@@ -123,15 +123,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
               <Field label="학년">
                 <input name="grade" maxLength={20} defaultValue={member.grade ?? ""} placeholder="예: 중2" className={inputClass} />
               </Field>
-              <Field label="출생연도">
-                <input
-                  name="birthYear"
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  defaultValue={member.birth_year ?? ""}
-                  className={inputClass}
-                />
+              <Field label="학교">
+                <input name="school" maxLength={50} defaultValue={member.school ?? ""} placeholder="예: 정자중" className={inputClass} />
               </Field>
               <Field label="첫 방문일">
                 <input name="firstVisitDate" type="date" defaultValue={member.first_visit_date ?? ""} className={inputClass} />

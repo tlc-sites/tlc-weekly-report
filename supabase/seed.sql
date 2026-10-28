@@ -45,7 +45,7 @@ where not exists (select 1 from report.groups g where g.name = v.name and g.pare
 insert into report.groups (type, name, parent_id, schedule, sort_order)
 select 'worship', v.name, p.id, 'weekly', v.sort_order
 from (values ('예배팀', 0), ('음향팀', 1), ('영상팀', 2), ('조명팀', 3), ('자막팀', 4),
-             ('웰컴팀', 6), ('성찬팀', 7), ('성찬준비팀', 8), ('새가족팀', 9), ('새가족케어팀', 10)) as v (name, sort_order)
+             ('웰컴팀', 6), ('성찬위원', 7), ('성찬 준비팀', 8), ('새가족팀', 9), ('새가족케어팀', 10)) as v (name, sort_order)
 cross join (select id from report.groups where name = '예배/기술팀' and parent_id is null) p
 where not exists (select 1 from report.groups g where g.name = v.name and g.parent_id = p.id);
 

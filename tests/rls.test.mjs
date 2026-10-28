@@ -594,7 +594,7 @@ test("그룹 삭제: 관리자만 가능하고 하위 그룹과 함께 숨기며
 
 test("팀은 10개 독립 보고 그룹이며 라이프라인은 주일, 수요와 월별 금요예배는 별개", async () => {
   const teams = await db.query("select g.name from report.groups g join report.groups p on p.id=g.parent_id where p.name='예배/기술팀' and g.is_active order by g.sort_order");
-  assert.deepEqual(teams.rows.map(r=>r.name),['예배팀','음향팀','영상팀','조명팀','자막팀','웰컴팀','성찬팀','성찬준비팀','새가족팀','새가족케어팀']);
+  assert.deepEqual(teams.rows.map(r=>r.name),['예배팀','음향팀','영상팀','조명팀','자막팀','웰컴팀','성찬위원','성찬 준비팀','새가족팀','새가족케어팀']);
   const services = await db.query("select name,weekday,month_week from report.service_types where is_active order by sort_order");
   assert.equal(services.rows.find(r=>r.name==='라이프라인').weekday,0);
   assert.equal(services.rows.find(r=>r.name==='수요예배').weekday,3);

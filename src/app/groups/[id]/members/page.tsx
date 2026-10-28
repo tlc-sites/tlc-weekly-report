@@ -63,6 +63,9 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   const teachers = members.filter((m) => m.status === "active" && m.kind === "teacher");
   const newcomers = members.filter((m) => m.status === "newcomer");
   const inactive = members.filter((m) => m.status === "inactive");
+  // 장기 결석자·장기 방문자는 출결에는 나오지만 재적 수에는 넣지 않는다 (DB 집계와 같은 기준)
+  const longAbsent = members.filter((m) => m.status === "long_absent");
+  const longVisitors = members.filter((m) => m.status === "long_visitor");
   const message = pickMessage(MESSAGES, error);
 
   return (
@@ -86,6 +89,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
       <MemberCards members={members} groupId={id} guardians={guardians.data??[]} team={group.type==="worship"}/>
       {group.type!=="worship"?<MemberSection title="학생" members={students} groupId={id}/>:null}
       {group.type!=="worship" && newcomers.length ? <MemberSection title="새친구" members={newcomers} groupId={id} showFollowUp /> : null}
+      {group.type!=="worship" && longAbsent.length ? <MemberSection title="장기 결석자" members={longAbsent} groupId={id} /> : null}
+      {group.type!=="worship" && longVisitors.length ? <MemberSection title="장기 방문자" members={longVisitors} groupId={id} /> : null}
       <MemberSection title={group.type==="worship" ? "팀원":"교사"} members={group.type==="worship"?members.filter(m=>m.status!=="inactive").map(m=>({...m,class_name:null,grade:null})):teachers} groupId={id} />
 
       {inactive.length ? (

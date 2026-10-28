@@ -757,3 +757,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 보고 자동저장 타이머 제거, 임시저장 버튼으로만 저장(버전 충돌 확인 유지, 미저장 안내·이탈 경고). 안내 문구·guide.html 수정. autosave-actions.ts는 미사용으로 남김.
 - 교회학교 양식에 설교 요약(details.sermon_summary) 추가, 공과·활동과 분리. 열람·주간 요약·회의 자료 라벨 반영.
 - lint·tsc·test:db 108/108·next build 통과. 화면 실사용 확인·배포 안 함. 고등부 운영 DB 존재 여부 미확인.
+
+### 2026-10-28 교회보고서 피드백 2차 (로컬, 운영 미적용)
+- DB34 `20261117000000_member_school_status.sql`: members.school(50자) 추가, person_status에 long_absent·long_visitor 추가. 화면은 출생연도 칸을 학교로 교체(birth_year는 생년월일이 있을 때만 갱신, 기존 값 보존), 명단·출결에 장기 결석자·장기 방문자 묶음 표시. 재적 수(enrolled_snapshot)는 기존대로 active·newcomer만.
+- DB35 `20261118000000_communion_groups.sql`: 성찬팀→'성찬 준비팀' 이름 변경(ID·보고 유지), '성찬위원' 파트 신설과 예배 연결. 활성 성찬준비팀이 이미 있으면 예외로 중단. seed도 새 이름으로 변경. 담당자(성수 사모님·요청자) 지정은 관리 화면에서.
+- 운영 DB 조회는 브라우저 접근이 권한 판단에서 막혀 못 함. 적용 전 `scripts/check-db34-db35.sql`(읽기 전용)로 고등부·성찬 파트 상태 확인 필요.
+- tests/feedback-round2.test.mjs 3개 추가, rls 기대값 갱신. lint·tsc·test:db 111/111·next build 통과. 배포 안 함.
