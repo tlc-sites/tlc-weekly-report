@@ -763,3 +763,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - DB35 `20261118000000_communion_groups.sql`: 성찬팀→'성찬 준비팀' 이름 변경(ID·보고 유지), '성찬위원' 파트 신설과 예배 연결. 활성 성찬준비팀이 이미 있으면 예외로 중단. seed도 새 이름으로 변경. 담당자(성수 사모님·요청자) 지정은 관리 화면에서.
 - 운영 DB 조회는 브라우저 접근이 권한 판단에서 막혀 못 함. 적용 전 `scripts/check-db34-db35.sql`(읽기 전용)로 고등부·성찬 파트 상태 확인 필요.
 - tests/feedback-round2.test.mjs 3개 추가, rls 기대값 갱신. lint·tsc·test:db 111/111·next build 통과. 배포 안 함.
+
+### 2026-10-28 교회보고서 피드백 3차 일부: 예배위원 보고서·PD·기타 교역자·부서 멘션 (로컬, 운영 미적용)
+- DB36 `20261119000000_worship_staff_group.sql`: 예배/기술팀 아래 '예배위원' 파트와 예배 연결. 예배위원 보고서 화면 위쪽 '예배위원 담당자' 카드에서 공유 worship_staff 명단을 바로 저장(saveStaffFromStaffReport). 보고 양식은 말씀·로테이션을 빼고 사역 내용·이슈·확인·조치만. 예배위원 메뉴에 보고서 작성 링크.
+- DB37 `20261120000000_pd_positions_mentions.sql`: 'PD' 파트(1~3부·라이프라인), 직책 'PD'와 모든 파트의 '기타 교역자'(교역자 계정 필요·작성 전용·검토 불가, 보고 층은 교역자 층 3). set_memberships_with_minister·group_content_layer 갱신. 주간 미제출 알림에서 기타 교역자 제외(reminders.ts). 모임별 3시간 알림(claim_meeting_reminders)은 그대로라 일정이 등록된 파트면 기타 교역자도 받을 수 있음.
+- 부서 멘션: details.mentions(최대 5) → 제출 시 트리거가 report_mentions 동기화, 새로 멘션된 부서 직접 소속자에게 종 알림(본문 미포함, 제출 푸시 경로로 휴대폰 알림). 기존 정책은 그대로 두고 reports_mention_read 정책과 can_view_report에 멘션 조건만 추가. 같은 층 작성자끼리는 기존대로 이미 서로 봄.
+- tests/feedback-round3.test.mjs 3개, rls 시드 기대값(그룹 25·예배 연결 103) 갱신. lint·tsc·test:db 114/114·next build 통과. 배포 안 함.

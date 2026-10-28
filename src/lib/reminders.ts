@@ -28,7 +28,7 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
     admin.from("groups").select("id, type, name, parent_id, schedule, is_active"),
     admin.from("reports").select("group_id, status").eq("week", week),
     admin.from("week_status").select("group_id, no_meeting").eq("week", week),
-    admin.from("memberships").select("user_id, group_id, role"),
+    admin.from("memberships").select("user_id, group_id, role, position"),
     admin.from("profiles").select("id, status, is_admin, is_minister, notify_enabled, recipient_role"),
   ]);
   for (const r of [groupsRes, reportsRes, weekStatusRes, membershipsRes, usersRes]) if (r.error) throw r.error;
@@ -39,7 +39,8 @@ export async function runReminders(slot: ReminderSlot, { dryRun = false } = {}) 
   })) as RtGroup[];
   const noMeeting = new Set((weekStatusRes.data ?? []).filter((w) => w.no_meeting).map((w) => w.group_id as string));
   const missing = missingGroups(groups, (reportsRes.data ?? []) as RtReport[], noMeeting);
-  const memberships = (membershipsRes.data ?? []) as RtMembership[];
+  // 기타 교역자는 가끔 작성하는 직책이라 주간 미제출 알림에서 뺀다.
+  const memberships = (membershipsRes.data ?? []).filter((m) => m.position !== "기타 교역자") as RtMembership[];
   const users = (usersRes.data ?? []) as RtUser[];
   const weekText = formatWeek(week);
 

@@ -45,7 +45,7 @@ where not exists (select 1 from report.groups g where g.name = v.name and g.pare
 insert into report.groups (type, name, parent_id, schedule, sort_order)
 select 'worship', v.name, p.id, 'weekly', v.sort_order
 from (values ('예배팀', 0), ('음향팀', 1), ('영상팀', 2), ('조명팀', 3), ('자막팀', 4),
-             ('웰컴팀', 6), ('성찬위원', 7), ('성찬 준비팀', 8), ('새가족팀', 9), ('새가족케어팀', 10)) as v (name, sort_order)
+             ('웰컴팀', 6), ('성찬위원', 7), ('성찬 준비팀', 8), ('새가족팀', 9), ('새가족케어팀', 10), ('예배위원', 11), ('PD', 12)) as v (name, sort_order)
 cross join (select id from report.groups where name = '예배/기술팀' and parent_id is null) p
 where not exists (select 1 from report.groups g where g.name = v.name and g.parent_id = p.id);
 
@@ -59,6 +59,16 @@ select g.id, s.id
 from report.groups g
 join report.groups p on p.id = g.parent_id and p.name = '예배/기술팀'
 cross join report.service_types s
+where g.name <> 'PD'
+on conflict do nothing;
+
+-- PD는 1~3부 예배와 라이프라인만 맡는다
+insert into report.group_service_types (group_id, service_type_id)
+select g.id, s.id
+from report.groups g
+join report.groups p on p.id = g.parent_id and p.name = '예배/기술팀'
+join report.service_types s on s.name in ('1부 예배', '2부 예배', '3부 예배', '라이프라인')
+where g.name = 'PD'
 on conflict do nothing;
 
 insert into report.app_settings (key, value) values

@@ -1,6 +1,7 @@
 "use client";
 
 import {ReportAttentionFields} from "@/components/report-attention-fields";
+import {MentionPicker} from "@/components/mention-picker";
 import { useState } from "react";
 import { Field, inputClass } from "@/components/ui";
 import { OTHER_ISSUE_CATEGORIES, RESULT_LABEL, type OtherPayload, type WorshipPayload } from "@/lib/report-forms";
@@ -11,24 +12,25 @@ type Props<T> = {
   reportId: string;
   initial: T;
   showMessages: boolean;
+  mentionGroups?: { id: string; label: string }[];
 };
 
 const personHint = (category: string) =>
   category === "인력" || category === "인력·관계" ? "특정인을 비난하기보다 상황과 개선 방안 위주로 적어 주세요." : null;
 
 // 예배팀: 진행 결과, 이슈, 요청사항
-export function WorshipForm({ action, reportId, initial, showMessages, worshipTeam=false }: Props<WorshipPayload> & {worshipTeam?:boolean}) {
+export function WorshipForm({ action, reportId, initial, showMessages, mentionGroups=[], worshipTeam=false, staffReport=false }: Props<WorshipPayload> & {worshipTeam?:boolean;staffReport?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
-      <p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배·기술팀 사역 보고입니다. 출결 대신 담당하신 사역, 진행 내용과 필요한 조치를 기록해 주세요. 예배팀 리허설 참석은 별도 메뉴에서 관리합니다.</p>
+      {staffReport?<p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배위원 보고입니다. 담당자 명단은 위의 ‘예배위원 담당자’에서 따로 저장하고, 여기에는 안내·헌금·봉독 등 예배위원 사역에서 있었던 일과 이슈, 필요한 조치를 적어 주세요.</p>:<p className="mb-4 rounded-xl bg-accent/5 p-3 text-sm text-muted">예배·기술팀 사역 보고입니다. 출결 대신 담당하신 사역, 진행 내용과 필요한 조치를 기록해 주세요. 예배팀 리허설 참석은 별도 메뉴에서 관리합니다.</p>}
       {worshipTeam?<Section title="예배인도자"><Field label="예배인도자 (선택)"><input value={p.details.worship_leader??""} maxLength={100} placeholder="이 예배의 예배인도자 이름" onChange={e=>setP({...p,details:{...p.details,worship_leader:e.target.value}})} className={inputClass}/></Field></Section>:null}
-      <Section title="말씀 (선택)" hint="팀마다 반복 입력하지 않아도 제출할 수 있습니다.">
+      {staffReport?null:<><Section title="말씀 (선택)" hint="팀마다 반복 입력하지 않아도 제출할 수 있습니다.">
         <Field label="말씀본문 (선택)"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
         <TextArea label="말씀·예배 내용 (선택)" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
         <p className="text-sm text-muted">예배위원은 별도 ‘예배위원’ 메뉴에서 관리하며, 위쪽의 공유 명단을 확인해 주세요.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
-      <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} maxLength={1000} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section>
+      <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} maxLength={1000} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section></>}
       <Section title="진행 결과"><button type="button" className="min-h-11 rounded-xl border border-border px-3 text-sm text-accent" onClick={()=>setP({...p,details:{...p.details,result:"normal",notes:p.details.notes||"특이사항 없습니다."}})}>이슈 없음 · 정상 진행으로 작성</button>
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(RESULT_LABEL).map(([value, label]) => (
@@ -55,8 +57,9 @@ export function WorshipForm({ action, reportId, initial, showMessages, worshipTe
         <RequestsEditor value={p.details.requests} onChange={(requests) => setP({ ...p, details: { ...p.details, requests } })} />
       </Section>
       <Section title="사역 보고">
-        <TextArea label="사역 내용" value={p.details.notes} placeholder="진행한 사역, 있었던 일, 필요한 조치와 다음 주 준비를 한 번에 적어 주세요." onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
+        <TextArea label="사역 내용" value={p.details.notes} placeholder={staffReport?"예: 수요예배도 2층 대예배실처럼 그레이스홀 강단 바닥에 봉독자 위치를 표시해 주시면 좋겠습니다.":"진행한 사역, 있었던 일, 필요한 조치와 다음 주 준비를 한 번에 적어 주세요."} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
       </Section>
+      <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})}/>
       <ReportAttentionFields needed={p.details.needs_attention===true} status={p.details.attention_status??"open"} onChange={(needed,status)=>setP({...p,details:{...p.details,needs_attention:needed,attention_status:status as "open"|"temporary"|"resolved"}})}/>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
@@ -64,7 +67,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, worshipTe
 }
 
 // 학교: 출결 없이 예배·교육 내용과 이슈를 보고한다.
-export function OtherForm({ action, reportId, initial, showMessages, internship=false }: Props<OtherPayload> & {internship?:boolean}) {
+export function OtherForm({ action, reportId, initial, showMessages, mentionGroups=[], internship=false }: Props<OtherPayload> & {internship?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
@@ -96,6 +99,7 @@ export function OtherForm({ action, reportId, initial, showMessages, internship=
       </Section>
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
+        <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})}/>
       </Section>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>

@@ -1,6 +1,7 @@
 "use client";
 
 import { MemberPhoto } from "@/components/member-photo";
+import { MentionPicker } from "@/components/mention-picker";
 import { useState } from "react";
 import { Badge, Field, inputClass, selectClass, smallButtonClass } from "@/components/ui";
 import { GUARDIAN_RELATIONS } from "@/lib/members";
@@ -37,6 +38,7 @@ export function EducationForm({
   guardianCheck,
   showMessages,
   canEditPrayer,
+  mentionGroups = [],
 }: {
   action: (formData: FormData) => Promise<void>;
   reportId: string;
@@ -45,6 +47,7 @@ export function EducationForm({
   guardianCheck: boolean;
   showMessages: boolean;
   canEditPrayer: boolean;
+  mentionGroups?: { id: string; label: string }[];
 }) {
   const [p, setP] = useState(initial);
   const byId = new Map(p.attendance.map((a) => [a.member_id, a]));
@@ -238,6 +241,7 @@ export function EducationForm({
 
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setDetails({ notes })} />
+        <MentionPicker groups={mentionGroups} value={p.details.mentions ?? []} onChange={(mentions) => setDetails({ mentions })} />
       </Section>
 
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}

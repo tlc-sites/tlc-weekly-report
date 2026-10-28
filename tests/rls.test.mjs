@@ -97,14 +97,15 @@ before(async () => {
   await approve(ids.techWriter, [{ group_id: ids.sound, role: "writer" }]);
 });
 
-test("시드: 중복 없이 그룹 23개(교육부서 8, 예배팀 10, 학교 2, 부산), 예배 9개가 생성된다", async () => {
+test("시드: 중복 없이 그룹 25개(교육부서 8, 예배팀 12, 학교 2, 부산), 예배 9개가 생성된다", async () => {
   const groups = await db.query("select count(*)::int as n from report.groups");
   const services = await db.query("select count(*)::int as n from report.service_types");
   const worshipLinks = await db.query("select count(*)::int as n from report.group_service_types");
   const campus = await db.query("select type from report.groups where name = '부산 캠퍼스'");
-  assert.equal(groups.rows[0].n, 23);
+  assert.equal(groups.rows[0].n, 25);
   assert.equal(services.rows[0].n, 9);
-  assert.equal(worshipLinks.rows[0].n, 90);
+  // 예배팀 11곳 × 예배 9개 + PD 4개
+  assert.equal(worshipLinks.rows[0].n, 103);
   assert.equal(campus.rows[0].type, "campus");
 });
 
@@ -142,7 +143,7 @@ test("익명 사용자는 그룹 목록도 볼 수 없다", async () => {
 
 test("승인 대기자: 그룹 목록만 보이고 다른 사람 프로필과 예배 목록은 안 보인다", async () => {
   const groups = await as(ids.pending, "select id from report.groups");
-  assert.equal(groups.rows.length, 23);
+  assert.equal(groups.rows.length, 25);
   const profiles = await as(ids.pending, "select id from report.profiles");
   assert.deepEqual(profiles.rows.map((r) => r.id), [ids.pending]);
   const services = await as(ids.pending, "select id from report.service_types");
@@ -592,9 +593,9 @@ test("그룹 삭제: 관리자만 가능하고 하위 그룹과 함께 숨기며
   assert.equal((await db.query("select id from report.members where group_id=$1",[child])).rows.length,1);
 });
 
-test("팀은 10개 독립 보고 그룹이며 라이프라인은 주일, 수요와 월별 금요예배는 별개", async () => {
+test("팀은 12개 독립 보고 그룹이며 라이프라인은 주일, 수요와 월별 금요예배는 별개", async () => {
   const teams = await db.query("select g.name from report.groups g join report.groups p on p.id=g.parent_id where p.name='예배/기술팀' and g.is_active order by g.sort_order");
-  assert.deepEqual(teams.rows.map(r=>r.name),['예배팀','음향팀','영상팀','조명팀','자막팀','웰컴팀','성찬위원','성찬 준비팀','새가족팀','새가족케어팀']);
+  assert.deepEqual(teams.rows.map(r=>r.name),['예배팀','음향팀','영상팀','조명팀','자막팀','웰컴팀','성찬위원','성찬 준비팀','새가족팀','새가족케어팀','예배위원','PD']);
   const services = await db.query("select name,weekday,month_week from report.service_types where is_active order by sort_order");
   assert.equal(services.rows.find(r=>r.name==='라이프라인').weekday,0);
   assert.equal(services.rows.find(r=>r.name==='수요예배').weekday,3);

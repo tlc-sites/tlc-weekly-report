@@ -43,6 +43,8 @@ export function campusSectionRows(details: {sections?:Record<string,string>;text
 }
 
 const text = (max: number) => z.string().trim().max(max);
+// 함께 봐 달라고 알릴 다른 부서 (DB 트리거가 제출 시 다시 검증한다)
+const mentions = z.array(z.uuid()).max(5).optional();
 const longText = text(1000);
 
 const requestSchema = z.object({ category: z.enum(REQUEST_CATEGORIES), content: text(500).min(1) });
@@ -61,6 +63,7 @@ export const educationPayload = z.object({
     preacher: text(100),
     // 이전 보고에는 없던 칸이라 비어 있어도 읽을 수 있게 한다.
     sermon_summary: longText.default(""),
+    mentions,
     activity: longText,
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -103,6 +106,7 @@ export const worshipPayload = z.object({
     rotation: text(1000).optional(),
     needs_attention: z.boolean().optional(),
     attention_status: z.enum(["open","temporary","resolved"]).optional(),
+    mentions,
     result: z.union([z.enum(["normal", "minor", "incident"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -119,6 +123,7 @@ export const otherPayload = z.object({
     sermon_passage: text(100).default(""),
     preacher: text(100).default(""),
     content: text(2000).default(""),
+    mentions,
     notes: longText,
     requests: z.array(requestSchema).max(20),
   }),
