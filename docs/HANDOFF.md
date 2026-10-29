@@ -775,3 +775,11 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 화면: 보고서 화면 '사진' 카드(ReportImages). 브라우저에서 긴 변 1600px JPEG로 줄여 Storage에 직접 올리고(Vercel 4.5MB 제한 회피) attachReportImage로 연결, 실패 시 파일 삭제. 열람은 1시간 서명 주소. 임시저장 삭제 시 사진 파일 먼저 삭제.
 - tests/stub.mjs에 storage 스키마 흉내 추가, tests/report-images.test.mjs. lint·tsc·test:db 115/115·next build 통과. 실제 Storage 업로드·휴대폰 HEIC 변환은 미확인.
 - 운영 적용 순서: scripts/check-db34-db38.sql로 확인 → DB34~DB38 파일 순서대로. DB34의 enum 값 추가는 같은 트랜잭션에서 쓰지 않는다.
+
+## 기도회 보고 수정 (2026-10-29, 로컬)
+- 문의: 기도회 보고가 수정되지 않음 → 원인: 수정 기능이 없었다(화면 없음, DB는 select·insert만 허용).
+- DB39 20261122000000_prayer_edit.sql: 작성 교역자 본인만 update(구분·날짜·제목·참석명단·기도제목 열만). 요일·필수 검사 트리거를 수정에도 적용.
+- prayer-meetings: 본인 보고에 「수정」 펼침 폼, editPrayerMeeting 서버 액션. tests/prayer-edit.test.mjs.
+- 운영 적용은 DB34~DB38 다음 순서. 승인 전 미적용.
+- 2026-10-29 운영 반영: 사용자가 SQL 편집기에서 DB39 직접 적용. release/prayer-edit 26d9e00을 origin/master에 정상 push(5a94787→26d9e00), Vercel 9nQvNgdTg3onhkri7AoTTfbu4bwF success. 운영 /prayer-meetings 비로그인 → /login 307, /login 200 확인. 실제 로그인 수정은 미확인.
+- 이 브랜치(피드백 1~3차)를 반영할 때 새 master 위로 옮기고 같은 내용의 1f1f376은 뺀다.
