@@ -783,3 +783,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 운영 적용은 DB34~DB38 다음 순서. 승인 전 미적용.
 - 2026-10-29 운영 반영: 사용자가 SQL 편집기에서 DB39 직접 적용. release/prayer-edit 26d9e00을 origin/master에 정상 push(5a94787→26d9e00), Vercel 9nQvNgdTg3onhkri7AoTTfbu4bwF success. 운영 /prayer-meetings 비로그인 → /login 307, /login 200 확인. 실제 로그인 수정은 미확인.
 - 이 브랜치(피드백 1~3차)를 반영할 때 새 master 위로 옮기고 같은 내용의 1f1f376은 뺀다.
+
+### 2026-10-29 화면 조회 병렬화 운영 배포 (속도)
+- 10/27 로컬 속도 수정(feature/ministry-reporting-round-two 1caa1ed)을 최신 master 위 release/perf-parallel로 옮김(3f739c0). 서울 지역 vercel.json은 이미 5e2faee로 반영돼 있어 제외. 10/27 진단 기록은 feature 브랜치 32b114b에만 있음.
+- 홈: 관리자 제출현황 조회를 다른 6개 조회와 함께 시작. 보고서 화면: 확인 기록·팀 이슈·그룹·초안·권한·사진 목록 조회를 한 번에 시작(4e8503d에서 새 사진 조회도 포함). createClient는 connection() 뒤 세션 초기화. RLS/권한/화면 변경 없음.
+- lint, tsc, test:db 116/116, next build --webpack 통과 → 4e8503d master 일반 push → GitHub 상태 Vercel success(CswoMyTui5eKTMDspVbaiFTjsT3t). 운영 /login 200, x-vercel-id icn1. DB 변경 없음.
+- 로그인 뒤 홈·보고서 열기·제출의 전후 응답시간은 아직 재지 않음(개선 폭 미확정).
