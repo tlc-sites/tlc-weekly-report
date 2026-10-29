@@ -1,9 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { supabaseEnv } from "./env";
 
 // 요청마다 새로 만든다 (클라이언트를 요청 간에 재사용하면 안 됨)
 export async function createClient() {
+  // 인증 SDK의 시간·세션 처리는 미리 생성하지 않고 실제 요청에서만 실행한다.
+  await connection();
   const cookieStore = await cookies();
   const { url, key } = supabaseEnv();
 

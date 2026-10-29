@@ -94,37 +94,33 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     .eq("id", id)
     .maybeSingle<ReportRow>();
   if (!report?.group) notFound();
-  const [reads,confirmations]=await Promise.all([
-    report.status!=="draft"?supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null,
-    report.status!=="draft"?supabase.from("senior_report_confirmations").select("recipient_role,report_version,confirmed_at").eq("report_id",id):null,
-  ]);
-  if(reads?.error)throw reads.error;
-  if(confirmations?.error)throw confirmations.error;
   const group = report.group;
   const serviceName=report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "예배";
-  let incidentResult=null;
-  let teamGroups:{id:string;name:string}[]=[];
-  if(group.type==="worship") {
-    let query=supabase.from("worship_incidents").select("*").contains("group_ids",[group.id]).eq("occurred_on",report.meeting_date).order("created_at");
-    query=report.service_type_id ? query.eq("service_id",report.service_type_id) : query.is("service_id",null).eq("service_name",serviceName);
-    incidentResult=await query;
-    teamGroups=(await listGroupsOrdered(supabase)).filter(g=>g.type==="worship" && g.childCount===0);
-  }
-
   const isAuthor = report.author_id === profile.id;
-  const draftResult=isAuthor && report.status==="draft" ? await supabase.from("report_drafts").select("payload,updated_at").eq("report_id",id).maybeSingle():null;
-  if(draftResult?.error)throw draftResult.error;
-  const draftPayload=draftResult?.data?.payload;
-  const draftVersion=draftResult?.data?.updated_at??report.updated_at;
-  const [canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes] = await Promise.all([
+  let incidentQuery = supabase.from("worship_incidents").select("*").contains("group_ids",[group.id]).eq("occurred_on",report.meeting_date).order("created_at");
+  incidentQuery=report.service_type_id ? incidentQuery.eq("service_id",report.service_type_id) : incidentQuery.is("service_id",null).eq("service_name",serviceName);
+  // 보고서 확인 후 독립적인 조회를 한꺼번에 시작한다. 각 조회의 기존 RLS는 그대로 적용된다.
+  const [reads, confirmations, incidentResult, allTeamGroups, draftResult,
+    canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes] = await Promise.all([
+    report.status!=="draft"?supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null,
+    report.status!=="draft"?supabase.from("senior_report_confirmations").select("recipient_role,report_version,confirmed_at").eq("report_id",id):null,
+    group.type==="worship" ? incidentQuery : null,
+    group.type==="worship" ? listGroupsOrdered(supabase) : Promise.resolve([]),
+    isAuthor && report.status==="draft" ? supabase.from("report_drafts").select("payload,updated_at").eq("report_id",id).maybeSingle() : null,
     supabase.rpc("can_edit_report", { rid: id }),
     supabase.rpc("can_review_report", { rid: id }),
-    // 작성자에게는 자기가 쓴 글 전부, 받는 분에게는 자기에게 온 글만 돌아온다 (RLS)
+    // 작성자는 자기 글 전체, 수신자는 자기에게 온 글만 읽는다.
     supabase.from("report_messages").select("recipient, body").eq("report_id", id),
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
     supabase.rpc("can_read_private",{rid:id,kind:"prayer"}),
     supabase.rpc("can_write_group",{gid:group.id}),
   ]);
+  if(reads?.error)throw reads.error;
+  if(confirmations?.error)throw confirmations.error;
+  if(draftResult?.error)throw draftResult.error;
+  const teamGroups=allTeamGroups.filter(g=>g.type==="worship" && g.childCount===0);
+  const draftPayload=draftResult?.data?.payload;
+  const draftVersion=draftResult?.data?.updated_at??report.updated_at;
   const canEdit = Boolean(canEditRes.data);
   // 사진은 비공개 버킷에 있으므로 1시간짜리 서명 주소로 보여 준다.
   const imageRows = await supabase.from("report_images").select("id,path,caption").eq("report_id", id).order("created_at");

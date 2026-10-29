@@ -23,9 +23,8 @@ export default function HomePage(props: PageProps<"/">) {
 async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
   const week = reportWeek((await searchParams).week, todayKST());
-  const adminStatus = canManage(profile) ? await loadAdminSubmissions(supabase, week) : null;
-
-  const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses] = await Promise.all([
+  // 서로 독립적인 홈 조회는 관리자 제출현황까지 함께 시작한다.
+  const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses, adminStatus] = await Promise.all([
     supabase.from("memberships").select("group_id, role, position").eq("user_id", profile.id),
     listGroupsOrdered(supabase),
     canManage(profile)
@@ -38,6 +37,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
     supabase.from("notices").select("id,title").order("created_at", { ascending: false }).limit(3),
     supabase.from("reports").select("id,group_id,author_id,author_name,meeting_date,status,meeting_label,service:service_types(name),meeting:group_meeting_types(name)").eq("week", week).order("updated_at", { ascending: false }).returns<OverviewReport[]>(),
     supabase.from("week_status").select("group_id").eq("week", week).eq("no_meeting", true),
+    canManage(profile) ? loadAdminSubmissions(supabase, week) : Promise.resolve(null),
   ]);
 
   const roleByGroup = new Map((memberships ?? []).map((m) => [m.group_id as string, m.role as keyof typeof ROLE_LABEL]));
