@@ -48,9 +48,13 @@ test('성찬: 성찬팀은 성찬 준비팀으로 이름만 바뀌고 성찬위�
  assert.equal((await db.query("select count(*)::int n from report.groups where parent_id=$1 and name in ('성찬위원','성찬 준비팀')",[parent.id])).rows[0].n,2);
 }finally{await db.close();}});
 
-test('성찬: 운영 중인 성찬준비팀이 이미 있으면 아무것도 바꾸지 않고 멈춘다',async()=>{const db=new PGlite();try{
- await legacyCommunion(db,true);
- await assert.rejects(db.exec(readFileSync('supabase/migrations/20261118000000_communion_groups.sql','utf8')),/active 성찬준비팀/);
- assert.equal((await db.query("select count(*)::int n from report.groups where name='성찬팀'")).rows[0].n,1);
- assert.equal((await db.query("select count(*)::int n from report.groups where name='성찬위원'")).rows[0].n,0);
+test('성찬: 성찬팀과 성찬준비팀이 함께 운영 중이면 성찬팀이 성찬위원이 되고 성찬준비팀은 띄어쓰기만 맞춘다',async()=>{const db=new PGlite();try{
+ const {parent,team}=await legacyCommunion(db,true);
+ const prep=(await db.query("select id from report.groups where name='성찬준비팀'")).rows[0];
+ const service=(await db.query("select id from report.service_types where is_active limit 1")).rows[0];
+ for(let i=0;i<2;i++)await db.exec(readFileSync('supabase/migrations/20261118000000_communion_groups.sql','utf8'));
+ assert.equal((await db.query('select name from report.groups where id=$1',[team.id])).rows[0].name,'성찬위원');
+ assert.equal((await db.query('select name from report.groups where id=$1',[prep.id])).rows[0].name,'성찬 준비팀');
+ assert.equal((await db.query("select count(*)::int n from report.groups where parent_id=$1 and name like '%성찬%'",[parent.id])).rows[0].n,2);
+ assert.equal((await db.query('select count(*)::int n from report.group_service_types where group_id=$1 and service_type_id=$2',[team.id,service.id])).rows[0].n,1);
 }finally{await db.close();}});

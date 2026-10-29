@@ -1,9 +1,12 @@
--- 성찬팀은 이름만 '성찬 준비팀'으로 바꿔 기존 보고·명단·담당자 기록을 그대로 잇고,
--- '성찬위원' 보고 파트를 새로 만든다. 담당자 지정은 관리 화면에서 한다.
+-- 성찬 파트 정리. 담당자 지정은 관리 화면에서 한다.
+-- 운영처럼 성찬팀과 성찬준비팀이 이미 함께 운영 중이면: 성찬준비팀을 '성찬 준비팀'으로 쓰고
+-- 성찬팀은 이름을 '성찬위원'으로 바꾼다 (새 파트를 만들지 않아 같은 일을 하는 파트가 겹치지 않는다).
+-- 성찬팀만 있으면: 성찬팀을 '성찬 준비팀'으로 바꾸고 '성찬위원'을 새로 만든다.
 do $$
 declare
   v_parent uuid;
   v_team uuid;
+  v_prep uuid;
   v_sort int;
 begin
   select id into v_parent from report.groups
@@ -12,12 +15,14 @@ begin
 
   select id, sort_order into v_team, v_sort from report.groups
    where parent_id = v_parent and name = '성찬팀' limit 1;
-  if v_team is not null then
-    -- 이미 운영 중인 성찬준비팀이 있으면 같은 이름 파트가 둘이 되므로 멈추고 확인받는다.
-    if exists (select 1 from report.groups where parent_id = v_parent and is_active
-                 and replace(name, ' ', '') = '성찬준비팀' and id <> v_team) then
-      raise exception 'communion: active 성찬준비팀 already exists';
+  select id into v_prep from report.groups
+   where parent_id = v_parent and is_active and replace(name, ' ', '') = '성찬준비팀' limit 1;
+  if v_team is not null and v_prep is not null then
+    if not exists (select 1 from report.groups where parent_id = v_parent and name = '성찬위원') then
+      update report.groups set name = '성찬위원' where id = v_team;
     end if;
+    update report.groups set name = '성찬 준비팀' where id = v_prep;
+  elsif v_team is not null then
     update report.groups set name = '성찬 준비팀' where id = v_team;
   end if;
 
