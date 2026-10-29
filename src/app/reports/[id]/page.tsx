@@ -101,7 +101,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   incidentQuery=report.service_type_id ? incidentQuery.eq("service_id",report.service_type_id) : incidentQuery.is("service_id",null).eq("service_name",serviceName);
   // 보고서 확인 후 독립적인 조회를 한꺼번에 시작한다. 각 조회의 기존 RLS는 그대로 적용된다.
   const [reads, confirmations, incidentResult, allTeamGroups, draftResult,
-    canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes] = await Promise.all([
+    canEditRes, canReviewRes, messagesRes, prayerRes, privateRes, teamWriteRes, imageRows] = await Promise.all([
     report.status!=="draft"?supabase.from("senior_report_reads").select("recipient_role,report_version,viewed_at").eq("report_id",id):null,
     report.status!=="draft"?supabase.from("senior_report_confirmations").select("recipient_role,report_version,confirmed_at").eq("report_id",id):null,
     group.type==="worship" ? incidentQuery : null,
@@ -114,6 +114,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     supabase.from("report_prayers").select("body").eq("report_id", id).maybeSingle(),
     supabase.rpc("can_read_private",{rid:id,kind:"prayer"}),
     supabase.rpc("can_write_group",{gid:group.id}),
+    supabase.from("report_images").select("id,path,caption").eq("report_id", id).order("created_at"),
   ]);
   if(reads?.error)throw reads.error;
   if(confirmations?.error)throw confirmations.error;
@@ -123,7 +124,6 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const draftVersion=draftResult?.data?.updated_at??report.updated_at;
   const canEdit = Boolean(canEditRes.data);
   // 사진은 비공개 버킷에 있으므로 1시간짜리 서명 주소로 보여 준다.
-  const imageRows = await supabase.from("report_images").select("id,path,caption").eq("report_id", id).order("created_at");
   if (imageRows.error) throw imageRows.error;
   const signed = imageRows.data.length ? (await supabase.storage.from("report-images").createSignedUrls(imageRows.data.map((i) => i.path), 3600)).data ?? [] : [];
   const images = imageRows.data.map((i) => ({ id: i.id, caption: i.caption, url: signed.find((s) => s.path === i.path)?.signedUrl ?? null }));
