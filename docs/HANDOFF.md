@@ -750,3 +750,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 이번 제출 푸시 mock1/1, DB104/104, lint/tsc/webpack41경로 통과. 이후 meeting-reminders claim 오류에 개인정보 없는 error.code 로그 추가. 운영 DB 변경 없음.
 - b357f7b5b704ac57dbe97d3cead2b28aaaa799e0 이미 master push 및 Vercel BjqWMvCmZnc39CzkA5TiK4jv9T8S Production Current Ready24초 확인. 신규 제출 푸시는 추가 배포 예정.
 - 운영 읽기 확인: GitHub REPORT_MEETING_REMINDERS_ENABLED=true 이미 설정. 최근10회 자동 실행 실패, #10 HTTP500(39902467250/job/120246892014), 원인 상세 미확정. Vercel 푸시·CRON 키 이름 존재, 주간메일 WEEKLY_EMAIL_ENABLED/GMAIL_USER/GMAIL_APP_PASSWORD 없음. Supabase SELECT reminder_function=true/reminder_schedules=true, 활성 recipient_role 수신자0. 계정 역할/비밀값/설정 변경 안함. 두 분 실제 수신은 계정 역할 등록 전 불가. DB 함수 적용 누락은 아님.
+
+## 기도회 보고 수정 (2026-10-29, 단독 배포 브랜치)
+- 문의: 기도회 보고가 수정되지 않음 → 원인: 수정 기능이 없었다(화면 없음, DB는 select·insert만 허용).
+- DB39 20261122000000_prayer_edit.sql: 작성 교역자 본인만 update(구분·날짜·제목·참석명단·기도제목 열만). 요일·필수 검사 트리거를 수정에도 적용.
+- prayer-meetings: 본인 보고에 「수정」 펼침 폼, editPrayerMeeting 서버 액션. tests/prayer-edit.test.mjs.
+- 피드백 1~3차(DB34~DB38)와 분리해 origin/master 위에 이 커밋만 올린 release/prayer-edit 브랜치로 먼저 배포한다.
