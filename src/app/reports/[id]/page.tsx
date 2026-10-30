@@ -89,7 +89,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const { data: report } = await supabase
     .from("reports")
     .select(
-      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, attend_snapshot, enrolled_snapshot, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups(id, name, type, settings, parent:parent_id(name))",
+      "id, group_id, author_id, meeting_date, service_type_id, meeting_label, status, details, attend_snapshot, enrolled_snapshot, updated_at, service:service_types(name), meeting:group_meeting_types(name), author:profiles!reports_author_id_fkey(real_name), group:groups!reports_group_id_fkey(id, name, type, settings, parent:parent_id(name))",
     )
     .eq("id", id)
     .maybeSingle<ReportRow>();

@@ -22,7 +22,7 @@ export async function saveReport(formData: FormData) {
 
   const { data: report } = await supabase
     .from("reports")
-    .select("id, details, author:profiles!reports_author_id_fkey(real_name), group:groups(type)")
+    .select("id, details, author:profiles!reports_author_id_fkey(real_name), group:groups!reports_group_id_fkey(type)")
     .eq("id", reportId.data)
     .maybeSingle<{ id: string; details:Record<string,unknown>; author:{real_name:string|null}|null; group: { type: keyof typeof SCHEMAS } | null }>();
   const type = report?.group?.type;

@@ -13,7 +13,7 @@ export default function ReportsPage(props:PageProps<"/reports">){return <Suspens
 async function Content({searchParams}:PageProps<"/reports">){
   const {supabase}=await requireActive();const params=await searchParams;
   const week=reportWeek(params.week,todayKST());
-  const {data,error}=await supabase.from("reports").select("id,author_id,meeting_date,meeting_label,status,submitted_at,details,author:profiles!reports_author_id_fkey(real_name),group:groups(name),service:service_types(name)").gte("meeting_date",week).lte("meeting_date",addDays(week,6)).order("meeting_date",{ascending:false}).returns<Row[]>();
+  const {data,error}=await supabase.from("reports").select("id,author_id,meeting_date,meeting_label,status,submitted_at,details,author:profiles!reports_author_id_fkey(real_name),group:groups!reports_group_id_fkey(name),service:service_types(name)").gte("meeting_date",week).lte("meeting_date",addDays(week,6)).order("meeting_date",{ascending:false}).returns<Row[]>();
   if(error)throw error;
   const authors=new Map((data??[]).map(r=>[r.author_id,getReportIdentity(r.details,r.author?.real_name).author_name]));
   const selected=typeof params.author==="string" && /^[0-9a-f-]{36}$/i.test(params.author)?params.author:"";

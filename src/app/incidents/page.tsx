@@ -19,7 +19,7 @@ async function Content({searchParams}:Pick<PageProps<"/incidents">,"searchParams
   if(typeof report==="string" && /^[0-9a-f-]{36}$/i.test(report)) query=query.eq("report_id",report);
   const {data,error}=await query;
   const incidents=(data ?? []) as Incident[];
-  let markedQuery=supabase.from("reports").select("id,meeting_date,meeting_label,author_name,duty_part,details,group:groups(name),service:service_types(name),meeting:group_meeting_types(name)").neq("status","draft").contains("details",{needs_attention:true}).order("meeting_date",{ascending:false}).limit(100);
+  let markedQuery=supabase.from("reports").select("id,meeting_date,meeting_label,author_name,duty_part,details,group:groups!reports_group_id_fkey(name),service:service_types(name),meeting:group_meeting_types(name)").neq("status","draft").contains("details",{needs_attention:true}).order("meeting_date",{ascending:false}).limit(100);
   if(typeof report==="string"&&/^[0-9a-f-]{36}$/i.test(report))markedQuery=markedQuery.eq("id",report);
   const marked=await markedQuery;
   const markedRows=(marked.data??[]).filter(r=>filter==="all"||(r.details.attention_status??"open")===filter);
