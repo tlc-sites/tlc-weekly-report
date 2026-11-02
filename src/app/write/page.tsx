@@ -6,6 +6,7 @@ import { reportWeek, formatWeek, todayKST } from "@/lib/week";
 import { GroupPicker } from "@/components/group-picker";
 import { BackLink, Card, Loading, PageTitle, smallButtonClass } from "@/components/ui";
 import {HELP} from "@/lib/help-text";
+import { PastWeekNotice, WeekNav } from "@/components/week-nav";
 
 export default function WritePage(props: PageProps<"/write">) {
   return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;
@@ -18,7 +19,9 @@ async function Content({ searchParams }: PageProps<"/write">) {
   const writable = groups.filter(g => g.childCount===0 && (canManage(profile) || isSenior(profile) || mine.has(g.id) || Boolean(g.parent_id && mine.has(g.parent_id))));
   writable.sort((a,b) => Number(mine.has(b.id) || Boolean(b.parent_id && mine.has(b.parent_id))) - Number(mine.has(a.id) || Boolean(a.parent_id && mine.has(a.parent_id))));
   return <><BackLink href={`/?week=${week}`}>홈</BackLink><PageTitle info={HELP.write} sub={formatWeek(week)}>보고 작성</PageTitle>
-    <p className="mb-4 text-sm text-muted">파트와 예배·모임을 선택한 뒤 새 보고를 추가해 주세요. 기존 보고가 있어도 내 이름으로 따로 작성할 수 있습니다.</p>
+    <WeekNav week={week} href="/write"/>
+    {week < reportWeek(undefined, todayKST()) ? <PastWeekNotice week={week} href="/write"/> : null}
+    <p className="mb-4 text-sm text-muted">파트와 예배·모임을 선택한 뒤 새 보고를 추가해 주세요. 지난 주 보고는 「← 지난 주」로 이동해서 쓸 수 있습니다. 기존 보고가 있어도 내 이름으로 따로 작성할 수 있습니다.</p>
     <Card className="mb-4"><GroupPicker groups={writable} defaultCategory={writable[0] ? groupCategory(writable[0]) : undefined} suffix={`?week=${week}`}/>{!writable.length ? <p className="mt-3 text-sm text-muted">작성할 수 있는 파트가 없습니다. 담당 배정을 요청해 주세요.</p> : null}</Card>
     {profile.is_admin ? <p className="mb-4 text-xs text-muted">관리자도 일반 작성자와 같은 폼을 사용합니다. 내 보고 작성 권한과 타인 내용·출결 명단·확인 권한은 별개입니다.</p> : null}
     <Link href={`/reports?week=${week}&author=${profile.id}`} className={smallButtonClass}>내 보고 이어서 보기 →</Link>

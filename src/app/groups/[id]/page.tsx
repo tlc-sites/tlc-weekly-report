@@ -23,6 +23,7 @@ import { requireActive } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
 import { REPORT_STATUS_LABEL, type ReportStatus } from "@/lib/report-forms";
 import { addDays, dateInWeek, formatDate, formatWeek, reportWeek, reportDateMax, latestWeekday, todayKST } from "@/lib/week";
+import { PastWeekNotice } from "@/components/week-nav";
 import { createReport } from "./actions";
 import { NewReportFields } from "./new-report-fields";
 
@@ -72,7 +73,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
           <ul className="flex flex-col divide-y divide-border">
             {children.map((g) => (
               <li key={g.id}>
-                <Link href={`/groups/${g.id}`} className="flex justify-between py-3">
+                <Link href={`/groups/${g.id}?week=${week}`} className="flex justify-between py-3">
                   {groupDisplayName(g.name)}
                   <span className="text-muted">›</span>
                 </Link>
@@ -130,7 +131,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
 
   return (
     <>
-      <BackLink href="/">홈</BackLink>
+      <BackLink href={`/?week=${week}`}>홈</BackLink>
       <PageTitle>{groupDisplayName(group.name)}</PageTitle>
       <nav aria-label="파트 관리" className="mb-3 flex flex-wrap gap-4 text-sm text-accent"><Link href={`/groups/${id}/team`}>팀 구성 명단</Link><Link href={`/groups/${id}/schedule`}>모임 시간 설정</Link></nav>
       <p className="mb-4 text-sm text-muted">일요일~토요일 주간 보고 · 금요일 오후 5시 전달</p>
@@ -154,10 +155,11 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
           </Link>
         )}
       </nav>
+      {!isCurrentWeek ? <PastWeekNotice week={week} href={`/groups/${id}`}/> : null}
 
       {group.type==="worship" ? <Link href={`/groups/${id}/rehearsals`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">팀원·리허설 참석 관리</Link>:null}
       <Card className="mb-4">
-        <h2 className="mb-2 text-sm font-medium text-muted">이번 주 보고 {reports.length}건</h2>
+        <h2 className="mb-2 text-sm font-medium text-muted">{isCurrentWeek ? "이번 주" : "이 주"} 보고 {reports.length}건</h2>
         {reports.length ? (
           <ul className="flex flex-col divide-y divide-border">
             {reports.map((r) => (
@@ -177,7 +179,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">{noMeeting ? "이번 주는 모임 없음으로 표시되어 있습니다." : "아직 보고가 없습니다."}</p>
+          <p className="text-sm text-muted">{noMeeting ? `${isCurrentWeek ? "이번 주" : "이 주"}는 모임 없음으로 표시되어 있습니다.` : "아직 보고가 없습니다."}</p>
         )}
       </Card>
 

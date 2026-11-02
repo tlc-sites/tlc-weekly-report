@@ -40,7 +40,7 @@ export async function createReport(formData: FormData) {
   const campusDeparture=group.type==="campus" && meeting==="campus" && parsed.data.reportKind==="standard";
   const meetingDate=campusDeparture?parsed.data.reportWeek:parsed.data.meetingDate;
   const back = `/groups/${groupId}?week=${weekOf(meetingDate)}`;
-  if (weekOf(meetingDate) !== parsed.data.reportWeek || meetingDate > todayKST() || weekOf(meetingDate) > latestWeekday(todayKST(), 0)) redirect("/groups/" + groupId + "?error=invalid");
+  if (weekOf(meetingDate) !== parsed.data.reportWeek || meetingDate > todayKST() || weekOf(meetingDate) > latestWeekday(todayKST(), 0)) redirect(`/groups/${groupId}?week=${parsed.data.reportWeek}&error=invalid`);
 
   const [kind, id] = meeting.split(":");
   if (kind === "service") {
