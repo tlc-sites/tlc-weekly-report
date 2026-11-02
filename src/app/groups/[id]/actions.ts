@@ -71,26 +71,28 @@ export async function createReport(formData: FormData) {
 }
 
 // 그 주 모임 없음 표시 / 해제
-export async function setNoMeeting(_previous: { error: string; saved: boolean }, formData: FormData) {
+// 사유는 여러 줄로 적을 수 있다. 브라우저는 줄바꿈을 \r\n으로 보내므로 \n으로 바꾼 뒤 글자 수를 센다.
+export async function setNoMeeting(_previous: { error: string; saved: boolean; reason?: string }, formData: FormData) {
   const { supabase, profile } = await requireActive();
+  const typed = String(formData.get("reason") ?? "").replace(/\r\n?/g, "\n");
   const parsed = z
     .object({
       groupId: z.uuid(),
       week: z.iso.date(),
       on: z.enum(["true", "false"]),
-      reason: z.string().trim().max(100),
+      reason: z.string().trim().max(1000),
     })
     .safeParse({
       groupId: formData.get("groupId"),
       week: formData.get("week"),
       on: formData.get("on"),
-      reason: formData.get("reason") ?? "",
+      reason: typed,
     });
-  if (!parsed.success || weekOf(parsed.data.week) !== parsed.data.week) return { error: "입력값을 확인해 주세요.", saved: false };
+  if (!parsed.success || weekOf(parsed.data.week) !== parsed.data.week) return { error: "사유는 1000자까지 적을 수 있습니다. 입력 내용을 확인해 주세요.", saved: false, reason: typed };
   const { groupId, week, on, reason } = parsed.data;
   const group = await getGroup(supabase, groupId);
-  if (!group || !group.is_active || week > latestWeekday(todayKST(), 0)) return { error: "이 주차에는 모임 없음을 등록할 수 없습니다.", saved: false };
-  if (on === "true" && !reason) return { error: "모임이 없는 사유를 적어 주세요.", saved: false };
+  if (!group || !group.is_active || week > latestWeekday(todayKST(), 0)) return { error: "이 주차에는 모임 없음을 등록할 수 없습니다.", saved: false, reason: typed };
+  if (on === "true" && !reason) return { error: "모임이 없는 사유를 적어 주세요.", saved: false, reason: typed };
 
   const { error } =
     on === "true"
@@ -98,7 +100,7 @@ export async function setNoMeeting(_previous: { error: string; saved: boolean },
           .from("week_status")
           .upsert({ group_id: groupId, week, no_meeting: true, reason: reason || null, set_by: profile.id, updated_at: new Date().toISOString() })
       : await supabase.from("week_status").delete().eq("group_id", groupId).eq("week", week);
-  if (error) return { error: "저장하지 못했습니다. 권한과 입력 내용을 확인해 주세요.", saved: false };
+  if (error) return { error: "저장하지 못했습니다. 권한과 입력 내용을 확인해 주세요.", saved: false, reason: typed };
   refresh();
   return { error: "", saved: true };
 }
