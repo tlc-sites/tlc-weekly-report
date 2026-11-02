@@ -789,3 +789,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 홈: 관리자 제출현황 조회를 다른 6개 조회와 함께 시작. 보고서 화면: 확인 기록·팀 이슈·그룹·초안·권한·사진 목록 조회를 한 번에 시작(4e8503d에서 새 사진 조회도 포함). createClient는 connection() 뒤 세션 초기화. RLS/권한/화면 변경 없음.
 - lint, tsc, test:db 116/116, next build --webpack 통과 → 4e8503d master 일반 push → GitHub 상태 Vercel success(CswoMyTui5eKTMDspVbaiFTjsT3t). 운영 /login 200, x-vercel-id icn1. DB 변경 없음.
 - 로그인 뒤 홈·보고서 열기·제출의 전후 응답시간은 아직 재지 않음(개선 폭 미확정).
+
+## 2026-11-02 지난 주 보고 작성 (보고 작성 화면)
+- `/write`에 지난 주/다음 주/이번 주 이동(`src/components/week-nav.tsx`), 지난 주면 `PastWeekNotice` 안내. 파트 화면도 주차 유지·「이 주 보고」 표기.
+- DB 변경 없음(DB는 미래 날짜만 막음). 미래 주차 URL은 `reportWeek`가 이번 주로 제한.
