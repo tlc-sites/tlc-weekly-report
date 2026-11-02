@@ -90,9 +90,11 @@ export async function setReviewStatus(formData: FormData) {
     .update({ status: parsed.data.reviewed === "true" ? "reviewed" : "submitted" })
     .eq("id", parsed.data.reportId)
     .neq("status", "draft")
-    .select("id");
+    .select("id, meeting_date");
   if (error || !data?.length) redirect(`${back}?error=forbidden`);
-  redirect(`${back}?reviewed=${parsed.data.reviewed}`);
+  // 확인하면 그 주 보고 목록으로 돌아가 다음 보고를 이어서 확인한다. 확인 취소는 보고 화면에 남는다.
+  if (parsed.data.reviewed === "true") redirect(`/reports?week=${weekOf(data[0].meeting_date)}&reviewed=${parsed.data.reportId}`);
+  redirect(`${back}?reviewed=false`);
 }
 
 export async function addComment(formData: FormData) {
