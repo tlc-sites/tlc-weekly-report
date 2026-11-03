@@ -22,7 +22,8 @@ export default function HomePage(props: PageProps<"/">) {
 
 async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
-  const week = reportWeek((await searchParams).week, todayKST());
+  const params = await searchParams;
+  const week = reportWeek(params.week, todayKST());
   // 서로 독립적인 홈 조회는 관리자 제출현황까지 함께 시작한다.
   const [{ data: memberships }, groups, pendingCount, notices, weeklyReports, weekStatuses, adminStatus] = await Promise.all([
     supabase.from("memberships").select("group_id, role, position").eq("user_id", profile.id),
@@ -51,9 +52,14 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
   );
   reportGroups.sort((a,b) => Number(roleByGroup.has(b.id) || Boolean(b.parent_id && roleByGroup.has(b.parent_id))) - Number(roleByGroup.has(a.id) || Boolean(a.parent_id && roleByGroup.has(a.parent_id))));
   const rosterGroups = reportGroups.filter((g) => g.type === "education");
+  // 보고서에서 '확인'을 누르고 돌아오면 알림을 띄운다
+  const reviewed = typeof params.reviewed === "string" ? weeklyReports.data?.find((r) => r.id === params.reviewed) : undefined;
+  const waiting = (weeklyReports.data ?? []).filter((r) => r.status === "submitted").length;
+  const reviewedGroup = reviewed ? groups.find((g) => g.id === reviewed.group_id) : undefined;
 
   return (
     <>
+      {reviewed ? <p role="status" aria-live="polite" className="mb-4 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">{reviewed.author_name} · {reviewedGroup ? groupDisplayName(reviewedGroup.name) : "파트"} 보고를 확인 처리했습니다. {waiting ? `이 주에 확인 대기 중인 보고가 ${waiting}건 남았습니다.` : "이 주에 확인 대기 중인 보고가 없습니다."} <Link href={`/reports/${reviewed.id}`} className="underline underline-offset-2">방금 확인한 보고 보기</Link></p> : null}
       <Card className="mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
 
