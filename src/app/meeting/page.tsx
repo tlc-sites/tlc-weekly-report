@@ -59,7 +59,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
         <Link href={`/meeting?week=${addDays(week, -7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
           ← 지난주
         </Link>
-        <PrintButton />
+        <span className="flex items-center gap-2"><PrintButton /><a href="/api/print-pack" target="_blank" rel="noopener" className="rounded-lg border border-border px-3 py-1 text-xs">화요일 인쇄본 PDF</a></span>
         {week < lastWeek ? <Link href={`/meeting?week=${addDays(week, 7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">다음 주 →</Link> : <span className="px-2 py-1 text-muted/40">다음 주 →</span>}
       </nav>
       {message ? (

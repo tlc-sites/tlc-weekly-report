@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { REMINDER_SLOTS, runReminders, type ReminderSlot } from "@/lib/reminders";
 import { runMeetingReminders } from "@/lib/meeting-reminders";
 import { runWeeklyEmail } from "@/lib/weekly-email";
+import { runPrintPack } from "@/lib/print-run";
 
 // 정해진 시각에 크론이 호출한다. Vercel Cron은 CRON_SECRET을 Authorization 헤더로 보낸다.
 // ?dryRun=1 이면 보내지 않고 대상만 돌려준다 (점검용).
@@ -20,6 +21,10 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/api/c
     try { return NextResponse.json(await runMeetingReminders()); }
     catch (error) { console.error("[cron] meeting-deadlines 실패", error); return NextResponse.json({error:"meeting reminder failed"},{status:500}); }
 
+  }
+  if (slot === "tue-print") {
+    try { return NextResponse.json(await runPrintPack({ dryRun: request.nextUrl.searchParams.get("dryRun") === "1" })); }
+    catch (error) { console.error("[cron] tue-print 실패", error); return NextResponse.json({ error: "print pack failed" }, { status: 500 }); }
   }
   if (!REMINDER_SLOTS.includes(slot as ReminderSlot)) {
     return NextResponse.json({ error: "unknown slot" }, { status: 404 });

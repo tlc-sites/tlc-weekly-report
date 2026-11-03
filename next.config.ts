@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  // 인쇄본 PDF의 한글 글꼴은 코드가 아닌 파일이라 배포 묶음에 직접 넣는다
+  outputFileTracingIncludes: {
+    "/api/print-pack": ["./assets/fonts/**/*"],
+    "/api/cron/*": ["./assets/fonts/**/*"],
+  },
   partialPrefetching: true,
   async headers() {
     return [

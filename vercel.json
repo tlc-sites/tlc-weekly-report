@@ -4,6 +4,7 @@
   "crons": [
     { "path": "/api/cron/wed-am", "schedule": "0 0 * * 3" },
     { "path": "/api/cron/fri-am", "schedule": "0 0 * * 5" },
-    { "path": "/api/cron/fri-digest", "schedule": "0 8 * * 5" }
+    { "path": "/api/cron/fri-digest", "schedule": "0 8 * * 5" },
+    { "path": "/api/cron/tue-print", "schedule": "0 4 * * 2" }
   ]
 }

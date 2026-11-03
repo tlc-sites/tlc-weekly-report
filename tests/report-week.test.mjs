@@ -25,11 +25,13 @@ test('10/18 주일·10/21 수요일·10/24 토요일은 같은 주, 10/25는 다
   assert.equal(reportDeadline('2026-10-18').toISOString(),'2026-10-23T07:59:59.000Z');
 });
 
-test('금요일 오후 5시 안내 크론은 UTC 금요일 08:00, 주중 독촉은 수·금 오전 9시',()=>{
+test('금요일 오후 5시 안내 크론은 UTC 금요일 08:00, 주중 독촉은 수·금 오전 9시, 화요일 인쇄본은 13시',()=>{
   const {crons}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
   assert.deepEqual(crons,[
     {path:'/api/cron/wed-am',schedule:'0 0 * * 3'},
     {path:'/api/cron/fri-am',schedule:'0 0 * * 5'},
     {path:'/api/cron/fri-digest',schedule:'0 8 * * 5'},
+    // 화요일 13시(KST) 회의 인쇄본 PDF
+    {path:'/api/cron/tue-print',schedule:'0 4 * * 2'},
   ]);
 });
