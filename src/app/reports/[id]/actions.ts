@@ -1,4 +1,5 @@
 "use server";
+import {lf} from "@/lib/form-text";
 
 import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { preserveReportIdentity } from "@/lib/report-identity";
@@ -102,7 +103,7 @@ export async function addComment(formData: FormData) {
   if (!isClergy(profile)) redirect("/");
   const parsed = z
     .object({ reportId: z.uuid(), body: z.string().trim().min(1).max(1000) })
-    .safeParse({ reportId: formData.get("reportId"), body: formData.get("body") });
+    .safeParse({ reportId: formData.get("reportId"), body: lf(formData.get("body")) });
   if (!parsed.success) redirect(`/reports/${formData.get("reportId")}?error=comment`);
 
   const { error } = await supabase

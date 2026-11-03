@@ -1,4 +1,5 @@
 "use server";
+import {formFields} from "@/lib/form-text";
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -11,7 +12,7 @@ export async function createNotice(formData: FormData) {
     target: z.string().regex(/^type:(education|worship|other|campus)$|^group:[0-9a-f-]{36}$/),
     audience: z.enum(["all", "senior", "minister", "lead", "member"]),
     title: z.string().trim().min(1).max(100), body: z.string().trim().min(1).max(2000),
-  }).safeParse(Object.fromEntries(formData));
+  }).safeParse(formFields(formData));
   if (!parsed.success) redirect("/notices?error=invalid");
   const [kind, value] = parsed.data.target.split(":");
   const { data, error } = await supabase.from("notices").insert({
@@ -26,7 +27,7 @@ export async function createNotice(formData: FormData) {
 
 export async function addNoticeComment(formData: FormData) {
   const { supabase, profile } = await requireActive();
-  const parsed = z.object({ noticeId: z.uuid(), body: z.string().trim().min(1).max(1000) }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ noticeId: z.uuid(), body: z.string().trim().min(1).max(1000) }).safeParse(formFields(formData));
   if (!parsed.success) redirect("/notices?error=invalid");
   const path = `/notices/${parsed.data.noticeId}`;
   const { data: notice } = await supabase.from("notices").select("author_id").eq("id", parsed.data.noticeId).maybeSingle();

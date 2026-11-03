@@ -1,4 +1,5 @@
 "use server";
+import {formFields} from "@/lib/form-text";
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -9,7 +10,7 @@ import { todayKST } from "@/lib/week";
 export type IncidentState = { error: string };
 export async function saveIncident(_: IncidentState, form: FormData): Promise<IncidentState> {
   const { supabase, profile } = await requireActive();
-  const values = Object.fromEntries(form);
+  const values = formFields(form);
   const parsed = incidentFields.safeParse(values);
   if (!parsed.success) return { error: "필수 항목과 글자 수를 확인해 주세요. 해결 처리에는 대응 결과와 개선대책이 필요합니다." };
   const fields = { ...parsed.data, due_on: parsed.data.due_on || null };

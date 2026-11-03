@@ -1,4 +1,5 @@
 "use server";
+import {lf} from "@/lib/form-text";
 
 import { serviceOccursOn } from "@/lib/service-schedule";
 import { refresh } from "next/cache";
@@ -74,7 +75,7 @@ export async function createReport(formData: FormData) {
 // 사유는 여러 줄로 적을 수 있다. 브라우저는 줄바꿈을 \r\n으로 보내므로 \n으로 바꾼 뒤 글자 수를 센다.
 export async function setNoMeeting(_previous: { error: string; saved: boolean; reason?: string }, formData: FormData) {
   const { supabase, profile } = await requireActive();
-  const typed = String(formData.get("reason") ?? "").replace(/\r\n?/g, "\n");
+  const typed = String(lf(formData.get("reason") ?? ""));
   const parsed = z
     .object({
       groupId: z.uuid(),

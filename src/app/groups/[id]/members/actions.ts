@@ -1,4 +1,5 @@
 "use server";
+import {lf} from "@/lib/form-text";
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,7 +30,7 @@ export async function addMembersBulk(formData: FormData) {
     })
     .safeParse({
       groupId: formData.get("groupId"),
-      names: formData.get("names") ?? "",
+      names: lf(formData.get("names") ?? ""),
       kind: formData.get("kind"),
       teamPosition: formData.get("teamPosition") ?? "",
       className: formData.get("className") ?? "",
@@ -99,7 +100,7 @@ export async function updateMember(formData: FormData) {
     status: formData.get("status"),
     firstVisitDate: formData.get("firstVisitDate") ?? "",
     followUpStatus: formData.get("followUpStatus") ?? "",
-    followUpNote: formData.get("followUpNote") ?? "",
+    followUpNote: lf(formData.get("followUpNote") ?? ""),
   });
   const back = `/groups/${formData.get("groupId")}/members/${formData.get("id")}`;
   if (!parsed.success) redirect(`${back}?error=invalid`);
@@ -153,7 +154,7 @@ export async function updateFollowUp(formData: FormData) {
       id: formData.get("id"),
       groupId: formData.get("groupId"),
       followUpStatus: formData.get("followUpStatus"),
-      followUpNote: formData.get("followUpNote") ?? "",
+      followUpNote: lf(formData.get("followUpNote") ?? ""),
     });
   const back = `/groups/${formData.get("groupId")}/members/${formData.get("id")}`;
   if (!parsed.success) redirect(`${back}?error=invalid`);
