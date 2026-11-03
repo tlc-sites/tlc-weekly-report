@@ -26,6 +26,7 @@ import {
   GUARDIAN_RELATIONS,
   KIND_LABEL,
   MEMBER_COLUMNS,
+  GENDER_LABEL,
   MEMBER_STATUS_LABEL,
   type Guardian,
   type Member,
@@ -126,6 +127,13 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
               <Field label="학교">
                 <input name="school" maxLength={50} defaultValue={member.school ?? ""} placeholder="예: 정자중" className={inputClass} />
               </Field>
+              <Field label="성별">
+                <select name="gender" defaultValue={member.gender ?? ""} className={selectClass}>
+                  <option value="">미입력</option>
+                  <option value="male">{GENDER_LABEL.male}</option>
+                  <option value="female">{GENDER_LABEL.female}</option>
+                </select>
+              </Field>
               <Field label="첫 방문일">
                 <input name="firstVisitDate" type="date" defaultValue={member.first_visit_date ?? ""} className={inputClass} />
               </Field>
@@ -155,6 +163,8 @@ async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/m
             <dd>{member.class_name ?? "-"}</dd>
             <dt className="text-muted">학년</dt>
             <dd>{member.grade ?? "-"}</dd>
+            <dt className="text-muted">성별</dt>
+            <dd>{member.gender ? GENDER_LABEL[member.gender] : "-"}</dd>
             <dt className="text-muted">첫 방문일</dt>
             <dd>{member.first_visit_date ?? "-"}</dd>
           </dl></>}

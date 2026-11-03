@@ -21,7 +21,7 @@ import {
 import { getGroupAccess } from "@/lib/access";
 import { requireActive } from "@/lib/auth";
 import { getGroup } from "@/lib/groups";
-import { FOLLOW_UP_LABEL, KIND_LABEL, MEMBER_COLUMNS, type Member } from "@/lib/members";
+import { FOLLOW_UP_LABEL, GENDER_LABEL, KIND_LABEL, MEMBER_COLUMNS, type Member } from "@/lib/members";
 import { addMembersBulk, quickSetStatus } from "./actions";
 
 const MESSAGES: Record<string, string> = {
@@ -192,7 +192,7 @@ function MemberSection({
                     className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm"
                   >
                     {m.name}
-                    {m.grade ? <span className="text-xs text-muted">{m.grade}</span> : null}
+                    {m.grade || m.gender ? <span className="text-xs text-muted">{[m.gender ? GENDER_LABEL[m.gender] : null, m.grade].filter(Boolean).join(" · ")}</span> : null}
                     {showFollowUp && m.follow_up_status ? (
                       <Badge tone={m.follow_up_status === "new" ? "danger" : "muted"}>
                         {FOLLOW_UP_LABEL[m.follow_up_status]}

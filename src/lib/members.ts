@@ -9,6 +9,7 @@ export type Member = {
   birth_year: number | null;
   birth_date: string | null;
   school: string | null;
+  gender?: "male" | "female" | null;
   photo_data: string | null;
   status: "newcomer" | "active" | "long_absent" | "long_visitor" | "inactive";
   first_visit_date: string | null;
@@ -29,7 +30,9 @@ export type Guardian = {
 };
 
 export const MEMBER_COLUMNS =
-  "id, group_id, name, team_position, kind, class_name, grade, birth_year, birth_date, school, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
+  "id, group_id, name, team_position, kind, class_name, grade, birth_year, birth_date, school, gender, photo_data, status, first_visit_date, follow_up_status, follow_up_note, left_at";
+
+export const GENDER_LABEL: Record<"male" | "female", string> = { male: "남", female: "여" };
 
 export const KIND_LABEL: Record<Member["kind"], string> = { student: "학생", teacher: "교사" };
 
