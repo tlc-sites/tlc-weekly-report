@@ -2,6 +2,7 @@ import {CampusDepartureField} from "@/components/campus-departure-field";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
 import { ReportKindFields } from "./report-kind-fields";
+import { sessionKinds } from "@/lib/team-session";
 import { NoMeeting } from "./no-meeting";
 import { SubmitButton } from "@/components/submit-button";
 import { serviceOccursOn } from "@/lib/service-schedule";
@@ -193,7 +194,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
               <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
               <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={myMembership.data?.position ?? ""} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
               <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
-              <ReportKindFields minDate={week} maxDate={maxDate}>
+              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)}>
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />

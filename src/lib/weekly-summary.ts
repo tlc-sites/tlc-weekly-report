@@ -1,4 +1,5 @@
 import {groupDisplayName} from "./group-display";
+import {attendanceLines} from "./team-session";
 export type SummaryReport={id:string;author_id?:string;group_id:string;author_name?:string;duty_part?:string;meeting_date:string;meeting_label:string|null;status:string;details:Record<string,unknown>;service:{name:string;sort_order?:number}|null;service_type_id?:string|null;group_meeting_type_id?:string|null};
 export type SummaryGroup={id:string;name:string;type:string;sort_order?:number;parent_id?:string|null;settings?:Record<string,unknown>};
 export type SummaryIncident={id:string;author_id?:string;report_id?:string|null;author?:{real_name:string|null}|null;duty_part?:string;title:string;occurred_on:string;service_id:string|null;service_name:string;circumstances:string;response:string;status:string;group_ids:string[]};
@@ -26,6 +27,7 @@ export function reportSummaryLines(r:SummaryReport){
  const lines=Object.entries(fieldLabels).flatMap(([key,label])=>typeof r.details[key]==="string"&&r.details[key]?[label+": "+r.details[key]]:[]);
  const result=r.details.result;if(result==="minor")lines.unshift("경미한 이슈");if(result==="incident")lines.unshift("예배 사고");
  for(const key of ["sections","texts"])if(r.details[key]&&typeof r.details[key]==="object")for(const [name,body]of Object.entries(r.details[key] as Record<string,unknown>))if(typeof body==="string"&&body)lines.push((({worship:"예배",adults:"장년부",young_adults:"청년부",school:"교회학교",obed_edom:"오벧에돔",newcomers:"새가족 현황",welcome:"웰컴팀",training:"새가족 훈련"} as Record<string,string>)[name]??name)+": "+body);
+ if(r.details.session_type==="assembly")lines.push(...attendanceLines(r.details.members));
  if(Array.isArray(r.details.requests))for(const item of r.details.requests)if(item&&typeof item.content==="string")lines.push("요청사항: "+item.content);
  return lines;
 }

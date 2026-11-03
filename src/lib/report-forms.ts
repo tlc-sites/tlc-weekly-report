@@ -165,6 +165,7 @@ export type CampusPayload = z.infer<typeof campusPayload>;
 // 제출할 때만 확인하는 필수 항목 (임시저장은 비어 있어도 된다). 빠진 항목 이름을 돌려준다.
 export function missingOnSubmit(type: string, payload: unknown): string[] {
   const session=(payload as {details?:Record<string,unknown>})?.details;
+  if(session?.session_type==="assembly") return !session.content ? ["모임 내용"]:[];
   if(session?.session_type==="meeting" || session?.session_type==="curriculum") return [...(!session.topic ? ["모임 주제"]:[]),...(!session.content ? ["진행 내용"]:[])];
   if (type === "worship") {
     const p = payload as WorshipPayload;

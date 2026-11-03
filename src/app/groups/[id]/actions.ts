@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActive } from "@/lib/auth";
 import { getGroup } from "@/lib/groups";
+import { sessionKinds } from "@/lib/team-session";
 import { weekOf, todayKST, latestWeekday } from "@/lib/week";
 
 // 같은 예배에 여러 담당자가 각자 보고를 남길 수 있다.
@@ -14,7 +15,7 @@ export async function createReport(formData: FormData) {
   const { supabase, profile } = await requireActive();
   const parsed = z
     .object({
-      reportKind:z.enum(["standard","meeting","curriculum"]),
+      reportKind:z.enum(["standard","meeting","curriculum","assembly"]),
       authorName: z.string().trim().min(1).max(100),
       dutyPart: z.string().trim().max(100),
       groupId: z.uuid(),
@@ -37,6 +38,7 @@ export async function createReport(formData: FormData) {
   const { groupId, meeting, customLabel } = parsed.data;
   const group = await getGroup(supabase, groupId);
   if (!group || !group.is_active) redirect("/");
+  if (!sessionKinds(group.type).includes(parsed.data.reportKind)) redirect(`/groups/${groupId}?week=${parsed.data.reportWeek}&error=invalid`);
   // 부산의 실제 출발일은 보고 주차와 다를 수 있으므로 별도 보관한다.
   const campusDeparture=group.type==="campus" && meeting==="campus" && parsed.data.reportKind==="standard";
   const meetingDate=campusDeparture?parsed.data.reportWeek:parsed.data.meetingDate;
@@ -61,10 +63,16 @@ export async function createReport(formData: FormData) {
     meeting_label: kind === "custom" ? customLabel : kind === "campus" ? "부산 방문" : null,
   };
   if (kind === "custom" && !customLabel) redirect(`${back}&error=label`);
+  // 전체모임 출결표는 팀 명단(쉬는 사람 제외)으로 미리 채운다. 기본값은 출석이고 결석자만 바꾸면 된다.
+  let roster: { name: string; present: boolean; note: string; follow_up: string }[] | undefined;
+  if (parsed.data.reportKind === "assembly") {
+    const { data: members } = await supabase.from("members").select("name").eq("group_id", groupId).neq("status", "inactive").order("name");
+    roster = (members ?? []).slice(0, 150).map((m) => ({ name: m.name as string, present: true, note: "", follow_up: "" }));
+  }
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ group_id: groupId, author_id: profile.id, author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart, details:{...(campusDeparture?{depart_pangyo:parsed.data.meetingDate}:{}),session_type:parsed.data.reportKind,_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
+    .insert({ group_id: groupId, author_id: profile.id, author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart, details:{...(campusDeparture?{depart_pangyo:parsed.data.meetingDate}:{}),session_type:parsed.data.reportKind,...(roster?{members:roster}:{}),_report_meta:{author_name:parsed.data.authorName,duty_part:parsed.data.dutyPart}}, meeting_date: meetingDate, status: "draft", ...fields })
     .select("id")
     .single();
   if (error || !data) redirect(`${back}&error=save`);

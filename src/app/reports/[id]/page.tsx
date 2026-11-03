@@ -10,7 +10,7 @@ import { AutosaveContext } from "./autosave-context";
 import { getReportIdentity } from "@/lib/report-identity";
 import { SubmissionReceipt } from "@/components/submission-receipt";
 import {TeamSessionForm} from "./team-session-form";
-import {isTeamSession,teamSessionPayload} from "@/lib/team-session";
+import {attendanceLines,isTeamSession,teamSessionPayload} from "@/lib/team-session";
 import { Suspense } from "react";
 import { TeamIssues } from "@/components/team-issues";
 import type { Incident } from "@/lib/incidents";
@@ -146,7 +146,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   if(isTeamSession(report.details)) {
     const initial=teamSessionPayload.parse({details:{session_type:report.details.session_type,topic:str("topic"),passage:str("passage"),place:str("place"),content:str("content"),members:Array.isArray(report.details.members)?report.details.members:[]},messages});
-    body=editMode?<TeamSessionForm key={draftVersion} reportId={id} initial={(draftPayload??initial) as typeof initial} action={saveReport} showMessages={isAuthor}/>:<ReadOnly rows={[["주제",initial.details.topic],["공과·성경 범위",initial.details.passage],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
+    const att=attendanceLines(initial.details.members);
+    body=editMode?<TeamSessionForm key={draftVersion} reportId={id} initial={(draftPayload??initial) as typeof initial} action={saveReport} showMessages={isAuthor}/>:initial.details.session_type==="assembly"?<ReadOnly rows={[["모임 주제",initial.details.topic],["진행 장소",initial.details.place],["모임 내용",initial.details.content],["출결",att[0]??"명단 없음"],["결석 사유",initial.details.members.filter(m=>!m.present).map(m=>`${m.name} · ${m.note||"사유 미기재"}`).join("\n")],["출석",initial.details.members.filter(m=>m.present).map(m=>m.name).join(", ")]]}/>:<ReadOnly rows={[["주제",initial.details.topic],["공과·성경 범위",initial.details.passage],["진행 장소",initial.details.place],["진행 내용",initial.details.content],["팀원별 보고",initial.details.members.map(m=>`${m.name} · ${m.present ? "참석":"불참"} · ${m.note} · ${m.follow_up}`).join("\n")]]}/>;
   } else if (group.type === "education") {
     const [{ data: members }, { data: attendance }] = await Promise.all([
       supabase.from("members").select("id, name, kind, class_name, status, photo_data, birth_date").eq("group_id", group.id).neq("status", "inactive").order("class_name").order("name"),
