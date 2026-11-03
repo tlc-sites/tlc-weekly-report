@@ -1,0 +1,32 @@
+name: CI
+# master에 올리거나 PR을 열면 lint, 타입 검사, DB 테스트, 빌드를 돌린다.
+# 운영 비밀값 없이 돈다(빌드는 환경변수 없이도 된다).
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npx next typegen && npx tsc --noEmit
+      - name: DB tests
+        run: npm run test:db
+      - name: Build
+        run: npm run build
