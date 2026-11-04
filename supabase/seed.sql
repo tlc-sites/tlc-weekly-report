@@ -62,12 +62,12 @@ cross join report.service_types s
 where g.name <> 'PD'
 on conflict do nothing;
 
--- PD는 1~3부 예배와 라이프라인만 맡는다
+-- PD는 1~3부 예배, 라이프라인, 수요예배를 맡는다
 insert into report.group_service_types (group_id, service_type_id)
 select g.id, s.id
 from report.groups g
 join report.groups p on p.id = g.parent_id and p.name = '예배/기술팀'
-join report.service_types s on s.name in ('1부 예배', '2부 예배', '3부 예배', '라이프라인')
+join report.service_types s on s.name in ('1부 예배', '2부 예배', '3부 예배', '라이프라인', '수요예배')
 where g.name = 'PD'
 on conflict do nothing;
 

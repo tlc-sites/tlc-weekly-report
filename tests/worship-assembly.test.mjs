@@ -47,3 +47,16 @@ test('예배팀 전체모임 보고를 저장·제출하면 출결과 결석 사
  assert.equal(saved.attend_snapshot,null);assert.equal(saved.enrolled_snapshot,null);
  assert.equal((await db.query('select * from report.attendance where report_id=$1',[r.id])).rows.length,0);
 }finally{await db.close();}});
+
+test('PD 보고 예배에 수요예배가 추가되고 기존 주일 예배 연결은 유지된다',async()=>{const db=new PGlite();try{
+ await db.exec(SUPABASE_STUB);const files=readdirSync('supabase/migrations').sort();
+ const list=()=>db.query("select s.name from report.group_service_types t join report.groups g on g.id=t.group_id join report.service_types s on s.id=t.service_type_id where g.name='PD' order by s.name").then(r=>r.rows.map(x=>x.name));
+ // 운영과 같은 순서: 이전 마이그레이션과 seed가 먼저 있고, 새 마이그레이션을 나중에 실행한다.
+ for(const f of files.filter(f=>f<'20261125000000'))await db.exec(readFileSync('supabase/migrations/'+f,'utf8'));
+ await db.exec(readFileSync('supabase/seed.sql','utf8'));
+ await db.query("delete from report.group_service_types t using report.groups g,report.service_types s where g.id=t.group_id and s.id=t.service_type_id and g.name='PD' and s.name='수요예배'");
+ assert.ok(!(await list()).includes('수요예배'));
+ const sql=readFileSync('supabase/migrations/20261125000000_pd_wednesday_service.sql','utf8');
+ await db.exec(sql);await db.exec(sql);
+ assert.deepEqual(await list(),['1부 예배','2부 예배','3부 예배','라이프라인','수요예배']);
+}finally{await db.close();}});
