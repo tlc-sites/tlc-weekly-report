@@ -104,8 +104,8 @@ test("시드: 중복 없이 그룹 25개(교육부서 8, 예배팀 12, 학교 2,
   const campus = await db.query("select type from report.groups where name = '부산 캠퍼스'");
   assert.equal(groups.rows[0].n, 25);
   assert.equal(services.rows[0].n, 9);
-  // 예배팀 11곳 × 예배 9개 + PD 4개
-  assert.equal(worshipLinks.rows[0].n, 103);
+  // 예배팀 11곳 × 예배 9개 + PD 5개(1~3부·라이프라인·수요예배)
+  assert.equal(worshipLinks.rows[0].n, 104);
   assert.equal(campus.rows[0].type, "campus");
 });
 
