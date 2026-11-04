@@ -60,7 +60,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
       <Section title="사역 보고">
         <TextArea label="사역 내용" value={p.details.notes} placeholder={staffReport?"예: 수요예배도 2층 대예배실처럼 그레이스홀 강단 바닥에 봉독자 위치를 표시해 주시면 좋겠습니다.":"진행한 사역, 있었던 일, 필요한 조치와 다음 주 준비를 한 번에 적어 주세요."} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
       </Section>
-      <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})}/>
+      <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} notify={p.details.notify} onNotify={notify=>setP({...p,details:{...p.details,notify}})}/>
       <ReportAttentionFields needed={p.details.needs_attention===true} status={p.details.attention_status??"open"} onChange={(needed,status)=>setP({...p,details:{...p.details,needs_attention:needed,attention_status:status as "open"|"temporary"|"resolved"}})}/>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
@@ -100,7 +100,7 @@ export function OtherForm({ action, reportId, initial, showMessages, mentionGrou
       </Section>
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
-        <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})}/>
+        <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} notify={p.details.notify} onNotify={notify=>setP({...p,details:{...p.details,notify}})}/>
       </Section>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>

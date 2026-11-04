@@ -241,7 +241,7 @@ export function EducationForm({
 
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setDetails({ notes })} />
-        <MentionPicker groups={mentionGroups} value={p.details.mentions ?? []} onChange={(mentions) => setDetails({ mentions })} />
+        <MentionPicker groups={mentionGroups} value={p.details.mentions ?? []} onChange={(mentions) => setDetails({ mentions })} notify={p.details.notify} onNotify={(notify) => setDetails({ notify })} />
       </Section>
 
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
