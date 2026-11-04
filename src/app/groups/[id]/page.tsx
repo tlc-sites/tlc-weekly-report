@@ -212,9 +212,9 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
         </>
       ) : null}
 
-      {group.type === "education" ? (
+      {group.type === "education" || group.type === "worship" ? (
         <Link href={`/groups/${id}/members`} className="mt-6 text-sm text-accent underline underline-offset-4">
-          {groupDisplayName(group.name)} 명단 →
+          {groupDisplayName(group.name)} {group.type === "worship" ? "팀원 명단" : "명단"} →
         </Link>
       ) : null}
     </>

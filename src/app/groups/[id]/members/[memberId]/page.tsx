@@ -19,7 +19,7 @@ import {
   textareaClass,
 } from "@/components/ui";
 import { getGroupAccess } from "@/lib/access";
-import { requireActive } from "@/lib/auth";
+import { canManage, requireActive } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
 import {
   FOLLOW_UP_LABEL,
@@ -50,12 +50,12 @@ export default function MemberPage({ params, searchParams }: PageProps<"/groups/
 }
 
 async function MemberContent({ params, searchParams }: PageProps<"/groups/[id]/members/[memberId]">) {
-  const { supabase } = await requireActive();
+  const { supabase, profile } = await requireActive();
   const [{ id, memberId }, { error, saved }] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/i.test(memberId)) notFound();
   const { group, canReview, canWrite } = await getGroupAccess(supabase, id);
 
-  const canEditMember=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
+  const canEditMember=canReview || (group.type==="worship" && canManage(profile)) || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
   const rosterAccess=await supabase.rpc("can_view_roster",{gid:id});if(!rosterAccess.data)notFound();
   const [{ data: member }, guardians, groups] = await Promise.all([
     supabase.from("members").select(MEMBER_COLUMNS).eq("id", memberId).eq("group_id", id).maybeSingle<Member>(),

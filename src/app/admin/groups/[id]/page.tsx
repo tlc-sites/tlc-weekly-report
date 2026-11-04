@@ -198,6 +198,16 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
         </>
       ) : null}
 
+      {group.type === "worship" && reportsHere ? (
+        <>
+          <h2 className="mb-2 text-sm font-semibold">팀원 명단</h2>
+          <Card className="mb-6">
+            <p className="mb-3 text-sm text-muted">로그인 계정이 없어도 팀원 이름을 명단에 넣을 수 있습니다. 이 명단은 전체모임 보고 출결표와 리허설 출결에 쓰입니다.</p>
+            <Link href={`/groups/${group.id}/members#add-members`} className={buttonClass}>팀원 명단 보기 · 추가</Link>
+          </Card>
+        </>
+      ) : null}
+
       <h2 className="mb-2 text-sm font-semibold">소속 사용자 {members.length}명</h2>
       <Card className="mb-6">
         {members.length ? (

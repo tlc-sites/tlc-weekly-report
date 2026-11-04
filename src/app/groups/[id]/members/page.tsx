@@ -19,7 +19,7 @@ import {
   textareaClass,
 } from "@/components/ui";
 import { getGroupAccess } from "@/lib/access";
-import { requireActive } from "@/lib/auth";
+import { canManage, requireActive } from "@/lib/auth";
 import { getGroup } from "@/lib/groups";
 import { FOLLOW_UP_LABEL, GENDER_LABEL, KIND_LABEL, MEMBER_COLUMNS, type Member } from "@/lib/members";
 import { addMembersBulk, quickSetStatus } from "./actions";
@@ -40,7 +40,7 @@ export default function MembersPage({ params, searchParams }: PageProps<"/groups
 }
 
 async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/members">) {
-  const { supabase } = await requireActive();
+  const { supabase, profile } = await requireActive();
   const [{ id }, { error, added, skipped }] = await Promise.all([params, searchParams]);
   const { group, canReview, isLeaf } = await getGroupAccess(supabase, id);
   if (!["education","worship"].includes(group.type) || !isLeaf) notFound();
@@ -53,7 +53,8 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
   if (loadError) throw loadError;
   const members = (data ?? []) as Member[];
 
-  const canManageRoster=canReview || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
+  // 관리자는 그룹 관리에서 예배/기술팀 팀원을 추가·수정할 수 있다(DB 20261126000000).
+  const canManageRoster=canReview || (group.type==="worship" && canManage(profile)) || (group.type==="worship" && Boolean((await supabase.rpc("can_manage_rehearsal",{gid:id})).data));
   // 관리 화면(team_directory)에만 등록된 이름은 출결 명단에 없으므로 옮길 수 있게 미리 채운다.
   const directory=group.type==="education"&&canManageRoster?await supabase.from("team_directory").select("name").eq("group_id",id).eq("is_active",true):{data:[]};
   const rosterNames=new Set(members.filter(m=>m.status!=="inactive").map(m=>m.name));
@@ -123,7 +124,7 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
 
       {canManageRoster ? (
         <>
-          <h2 className="mb-2 text-sm font-semibold">명단 등록</h2>
+          <h2 id="add-members" className="mb-2 scroll-mt-4 text-sm font-semibold">명단 등록</h2>
           {unmoved.length?<p className="mb-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">관리 화면에서 등록한 {unmoved.length}명이 아직 출결 명단에 없습니다. 아래 칸에 채워 두었으니 구분을 확인하고 등록해 주세요.</p>:null}
           <Card>
             <form action={addMembersBulk} className="flex flex-col gap-3">
