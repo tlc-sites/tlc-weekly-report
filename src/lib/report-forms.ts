@@ -10,7 +10,7 @@ export const REQUEST_CATEGORIES = ["시설", "물품", "예산", "기타"] as co
 export const WORSHIP_ISSUE_CATEGORIES = ["장비", "인력", "진행·큐시트", "소통", "기타"] as const;
 export const OTHER_ISSUE_CATEGORIES = ["장소·시설", "인력·관계", "진행", "안전", "기타"] as const;
 export const ISSUE_STATUS_LABEL = { open: "미해결", temporary: "임시 조치", resolved: "해결" } as const;
-export const RESULT_LABEL = { normal: "정상", minor: "경미한 문제", incident: "사고" } as const;
+export const RESULT_LABEL = { normal: "정상", minor: "경미한 문제", incident: "사고", other: "기타" } as const;
 
 // 부산 캠퍼스 보고: 기존 구글 폼 항목 그대로
 export const CAMPUS_SECTIONS = [["worship","예배"],["adults","장년부"],["young_adults","청년부"],["school","교회학교"],["obed_edom","오벧에돔"],["newcomers","새가족 현황"],["welcome","웰컴팀"],["training","새가족 교육"]] as const;
@@ -107,7 +107,7 @@ export const worshipPayload = z.object({
     needs_attention: z.boolean().optional(),
     attention_status: z.enum(["open","temporary","resolved"]).optional(),
     mentions,
-    result: z.union([z.enum(["normal", "minor", "incident"]), z.literal("")]),
+    result: z.union([z.enum(["normal", "minor", "incident", "other"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
   }),
@@ -169,7 +169,8 @@ export function missingOnSubmit(type: string, payload: unknown): string[] {
   if(session?.session_type==="meeting" || session?.session_type==="curriculum") return [...(!session.topic ? ["모임 주제"]:[]),...(!session.content ? ["진행 내용"]:[])];
   if (type === "worship") {
     const p = payload as WorshipPayload;
-    return [...(p.details.result?[]:["진행 결과"]),...(p.details.needs_attention&&!p.details.notes?.trim()?["사역 내용"]:[])];
+    // 기타는 어떤 일이었는지 사역 내용에 적어야 제출할 수 있다.
+    return [...(p.details.result?[]:["진행 결과"]),...((p.details.needs_attention||p.details.result==="other")&&!p.details.notes?.trim()?["사역 내용"]:[])];
   }
   if (type === "campus") {
     const d = (payload as CampusPayload).details;

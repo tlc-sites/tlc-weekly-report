@@ -32,7 +32,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
       </Section>
       <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} maxLength={1000} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section></>}
       <Section title="진행 결과"><button type="button" className="min-h-11 rounded-xl border border-border px-3 text-sm text-accent" onClick={()=>setP({...p,details:{...p.details,result:"normal",notes:p.details.notes||"특이사항 없습니다."}})}>이슈 없음 · 정상 진행으로 작성</button>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {Object.entries(RESULT_LABEL).map(([value, label]) => (
             <label
               key={value}
@@ -52,6 +52,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
             </label>
           ))}
         </div>
+        {p.details.result === "other" ? <p className="mt-2 text-sm text-muted">기타를 고르면 아래 ‘사역 내용’에 어떤 일이었는지 적어 주세요. 제출할 때 필요합니다.</p> : null}
       </Section>
       <Section title="요청사항">
         <RequestsEditor value={p.details.requests} onChange={(requests) => setP({ ...p, details: { ...p.details, requests } })} />

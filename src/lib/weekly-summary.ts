@@ -25,7 +25,7 @@ export function weeklyBlocks(reports:SummaryReport[],groups:SummaryGroup[],incid
 const fieldLabels:Record<string,string>={sermon_passage:"말씀 본문",sermon_content:"말씀·예배 내용",rotation:"부서 로테이션",worship_leader:"예배인도자",service_staff:"예배위원",song_list:"송리스트",preacher:"설교자",sermon_summary:"설교 요약",content:"진행 내용",activity:"공과·활동",notes:"사역 내용·특이사항",issue_summary:"이슈·조치",topic:"모임 주제",sharing_topic:"나눔 주제",sharing_passage:"나눔 범위",sharing_place:"나눔 장소"};
 export function reportSummaryLines(r:SummaryReport){
  const lines=Object.entries(fieldLabels).flatMap(([key,label])=>typeof r.details[key]==="string"&&r.details[key]?[label+": "+r.details[key]]:[]);
- const result=r.details.result;if(result==="minor")lines.unshift("경미한 이슈");if(result==="incident")lines.unshift("예배 사고");
+ const result=r.details.result;if(result==="minor")lines.unshift("경미한 이슈");if(result==="incident")lines.unshift("예배 사고");if(result==="other")lines.unshift("진행 결과: 기타");
  for(const key of ["sections","texts"])if(r.details[key]&&typeof r.details[key]==="object")for(const [name,body]of Object.entries(r.details[key] as Record<string,unknown>))if(typeof body==="string"&&body)lines.push((({worship:"예배",adults:"장년부",young_adults:"청년부",school:"교회학교",obed_edom:"오벧에돔",newcomers:"새가족 현황",welcome:"웰컴팀",training:"새가족 훈련"} as Record<string,string>)[name]??name)+": "+body);
  if(r.details.session_type==="assembly")lines.push(...attendanceLines(r.details.members));
  if(Array.isArray(r.details.requests))for(const item of r.details.requests)if(item&&typeof item.content==="string")lines.push("요청사항: "+item.content);

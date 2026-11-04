@@ -19,7 +19,7 @@ export function MeetingSummary({reports,groupName}:{reports:MeetingReport[];grou
       <h3 className="font-semibold">{groupName.get(items[0].group_id)} · {reportTitle(items[0])} · {items[0].meeting_date}</h3>
       {items.map(r=><div key={r.id} className="mt-3 rounded-xl border border-border p-3 text-sm">
         <Link href={`/reports/${r.id}`} className="font-semibold text-accent">{getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""} · 원본 보기 ›</Link>
-        {typeof r.details.result==="string" && r.details.result in RESULT_LABEL ? <div className="mt-2"><Badge tone={r.details.result==="normal"?"muted":"danger"}>{RESULT_LABEL[r.details.result as keyof typeof RESULT_LABEL]}</Badge></div>:null}
+        {typeof r.details.result==="string" && r.details.result in RESULT_LABEL ? <div className="mt-2"><Badge tone={r.details.result==="minor"||r.details.result==="incident"?"danger":"muted"}>{RESULT_LABEL[r.details.result as keyof typeof RESULT_LABEL]}</Badge></div>:null}
         {Object.entries(FIELDS).map(([field,label])=>typeof r.details[field]==="string" && r.details[field] ? <p key={field} className="mt-2 whitespace-pre-wrap"><strong>{label}:</strong> {String(r.details[field])}</p>:null)}
         {Array.isArray(r.details.members) ? <ul className="mt-2">{r.details.members.map((m,i)=><li key={i} className="whitespace-pre-wrap">{String(m.name??"")} · {m.present ? "참석":"불참"} · {String(m.note??"")} · {String(m.follow_up??"")}</li>)}</ul>:null}
         {Array.isArray(r.details.requests) ? r.details.requests.map((q,i)=><p key={i} className="mt-2 whitespace-pre-wrap"><strong>요청사항:</strong> {String(q.category ?? "")} · {String(q.content ?? "")}</p>):null}
