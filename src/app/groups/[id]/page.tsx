@@ -158,6 +158,35 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
       </nav>
       {!isCurrentWeek ? <PastWeekNotice week={week} href={`/groups/${id}`}/> : null}
 
+      {canCreateReport ? (
+        <>
+          <h2 id="new-report" className="mb-1 scroll-mt-24 font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 작성" : "새 보고 작성"}</h2>
+          <p className="mb-2 text-xs text-muted">2단계 · 어떤 예배·모임의 보고인지 고르고 「작성 시작」을 누르면 내용을 쓰는 화면이 열립니다.</p>
+          <Card className="mb-6 border-accent/40">
+            <form action={createReport} className="flex flex-col gap-3">
+              <input type="hidden" name="groupId" value={id} />
+              <input type="hidden" name="reportWeek" value={week} />
+              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)}>
+              {group.type === "campus" ? (
+                <>
+                  <input type="hidden" name="meeting" value="campus" />
+                  <CampusDepartureField defaultDate={maxDate}/>
+                </>
+              ) : (
+                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
+              )}
+              </ReportKindFields>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
+                <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={myMembership.data?.position ?? ""} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
+              </div>
+              <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
+              <SubmitButton pendingText="작성 화면 여는 중…">{group.type === "education" ? "출결 체크 시작" : "작성 시작"}</SubmitButton>
+            </form>
+          </Card>
+
+        </>
+      ) : null}
       {group.type==="worship" ? <Link href={`/groups/${id}/rehearsals`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">팀원·리허설 참석 관리</Link>:null}
       <Card className="mb-4">
         <h2 className="mb-2 text-sm font-medium text-muted">{isCurrentWeek ? "이번 주" : "이 주"} 보고 {reports.length}건</h2>
@@ -184,33 +213,8 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
         )}
       </Card>
 
-      {canCreateReport ? (
-        <>
-          <h2 id="new-report" className="mb-2 text-sm font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 작성" : "새 보고 작성"}</h2>
-          <Card className="mb-4">
-            <form action={createReport} className="flex flex-col gap-3">
-              <input type="hidden" name="groupId" value={id} />
-              <input type="hidden" name="reportWeek" value={week} />
-              <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
-              <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={myMembership.data?.position ?? ""} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
-              <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
-              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)}>
-              {group.type === "campus" ? (
-                <>
-                  <input type="hidden" name="meeting" value="campus" />
-                  <CampusDepartureField defaultDate={maxDate}/>
-                </>
-              ) : (
-                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
-              )}
-              </ReportKindFields>
-              <SubmitButton pendingText="작성 화면 여는 중…">{group.type === "education" ? "출결 체크 시작" : "작성 시작"}</SubmitButton>
-            </form>
-          </Card>
 
-          {canWrite ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
-        </>
-      ) : null}
+      {canCreateReport && canWrite ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
 
       {group.type === "education" || group.type === "worship" ? (
         <Link href={`/groups/${id}/members`} className="mt-6 text-sm text-accent underline underline-offset-4">

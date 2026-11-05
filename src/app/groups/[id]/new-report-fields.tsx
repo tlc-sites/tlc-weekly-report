@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Field, inputClass, selectClass } from "@/components/ui";
+import { Field, inputClass } from "@/components/ui";
+import { formatDate } from "@/lib/week";
+import { ChoiceChips } from "./choice-chips";
 
 type Option = { value: string; label: string; date: string; fixedDate?: boolean };
 
@@ -12,30 +14,25 @@ export function NewReportFields({ options, fallbackDate, maxDate, minDate }: { o
 
   return (
     <>
-      <Field label="예배·모임">
-        <select
-          name="meeting"
-          value={meeting}
-          onChange={(e) => {
-            setMeeting(e.target.value);
-            setDate(options.find((o) => o.value === e.target.value)?.date ?? fallbackDate);
-          }}
-          className={selectClass}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-          <option value="custom">기타 보고·행사 (직접 입력)</option>
-        </select>
-      </Field>
+      <ChoiceChips
+        legend="어느 예배·모임인가요?"
+        name="meeting"
+        value={meeting}
+        onChange={(v) => {
+          setMeeting(v);
+          setDate(options.find((o) => o.value === v)?.date ?? fallbackDate);
+        }}
+        options={[
+          ...options.map((o) => ({ value: o.value, label: o.label, sub: o.fixedDate ? formatDate(o.date) : undefined })),
+          { value: "custom", label: "기타 보고·행사", sub: "이름 직접 입력" },
+        ]}
+      />
       {meeting === "custom" ? (
         <Field label="보고·행사 이름">
           <input name="customLabel" required maxLength={50} placeholder="예: 장비 점검, 팀 준비, 특별예배" className={inputClass} />
         </Field>
       ) : null}
-      {options.find(o => o.value === meeting)?.fixedDate ? <p className="text-sm text-muted">예배일 {date} · 선택한 주차에 자동으로 맞춰집니다.<input type="hidden" name="meetingDate" value={date} /></p> : <Field label="날짜">
+      {options.find(o => o.value === meeting)?.fixedDate ? <p className="text-sm text-muted">예배일 {formatDate(date)} · 선택한 주차에 자동으로 맞춰집니다.<input type="hidden" name="meetingDate" value={date} /></p> : <Field label="날짜">
         <input name="meetingDate" type="date" min={minDate} max={maxDate} required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
       </Field>}
     </>
