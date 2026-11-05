@@ -12,7 +12,7 @@ export function QuickSwitcher({items}:{items:QuickItem[]}){
  const [idx,setIdx]=useState(0);
  const input=useRef<HTMLInputElement>(null);
  useEffect(()=>{
-  const onKey=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"&&matchMedia("(min-width: 1024px)").matches){e.preventDefault();setQ("");setIdx(0);setOpen(true);}};
+  const onKey=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"&&matchMedia("(min-width: 900px)").matches){e.preventDefault();setQ("");setIdx(0);setOpen(true);}};
   window.addEventListener("keydown",onKey);return ()=>window.removeEventListener("keydown",onKey);
  },[]);
  useEffect(()=>{if(open)input.current?.focus();},[open]);
