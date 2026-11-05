@@ -485,3 +485,18 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   body:has(.app-sidebar):has(.page-wide) main, body:has(.app-sidebar):has(.home-cols) main { --content-w: 80rem; }
   body:has(.app-sidebar) main > *, body:has(.app-sidebar):has(.page-wide) main > *, body:has(.app-sidebar) main > .home-cols { max-width: none; }
 }
+
+/* PC 알림 종: 본문 위 오른쪽 끝 얇은 줄(셀케어처럼). 제목줄·보고 제목줄은 이 줄 바로 아래에 붙는다. */
+.app-topbar { display: none; }
+@media (min-width: 900px) {
+  :root:has(.app-topbar) { --topbar-h: 52px; }
+  body:has(.app-sidebar) .app-topbar {
+    position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    height: var(--topbar-h); padding: 0 14px; background: var(--surface);
+  }
+  body:has(.app-sidebar) main { min-height: calc(100dvh - var(--topbar-h)); }
+  body:has(.app-sidebar) main > .page-title, body:has(.app-sidebar) .report-head { top: var(--topbar-h); }
+  body:has(.app-sidebar) main:not(:has(> .page-title)):not(:has(.report-head)) { padding-top: .5rem; }
+  body:has(.app-sidebar) .home-col-side { top: calc(var(--topbar-h) + 1rem); }
+}
+@media print { .app-topbar { display: none !important; } }
