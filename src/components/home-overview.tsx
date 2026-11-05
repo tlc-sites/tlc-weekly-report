@@ -1,4 +1,6 @@
 import {groupDisplayName} from "@/lib/group-display";
+import { NAV_CATEGORY_LABEL, groupCategory } from "@/lib/groups";
+import type { Group } from "@/lib/groups";
 import Link from "@/components/pending-link";
 import { Card, smallButtonClass } from "./ui";
 import { ReportStatusBadge } from "./report-status";
@@ -12,7 +14,7 @@ export type OverviewReport = {
   meeting_label: string | null;
 };
 
-type Part = { id: string; name: string; type: string; schedule: string };
+type Part = { id: string; name: string; type: string; schedule: string; settings?: Group["settings"] };
 
 export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, userId, failed, allParts = false, adminStatus = false, writablePartIds }: {
   week: string; currentWeek: string; reports: OverviewReport[]; parts: Part[];
@@ -53,22 +55,37 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
     {!failed && parts.length ? <Card className="mt-3">
       <h3 className="mb-1 font-semibold">{allParts ? "파트별 제출현황" : "내 담당 파트"}</h3>
       <p className="mb-2 text-xs text-muted">{adminStatus ? "파트를 누르면 제출현황을 볼 수 있습니다." : "파트를 누르면 보고를 작성하거나 제출 내역을 볼 수 있습니다."}</p>
-      <ul className="home-parts divide-y divide-border">{parts.map(g => {
-        const rows = reports.filter(r => r.group_id === g.id);
-        const submitted = rows.filter(r => r.status !== "draft").length;
-        const drafting = rows.length - submitted;
-        const no = noMeeting.includes(g.id);
-        const required = g.type !== "worship" && g.schedule === "weekly";
-        const state = submitted ? "done" : drafting ? "draft" : no ? "none" : "todo";
-        return <li key={g.id} className={"home-part is-" + state}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
-          <span className="flex min-w-0 items-center gap-2 font-medium"><span className="home-part-dot" aria-hidden="true"/>{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
-            {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
-            {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
-            {no ? <span className="text-muted">모임 없음</span> : !rows.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "등록된 보고 없음"}</span> : null}
-            <span aria-hidden className="text-accent">›</span>
-          </span>
-        </Link></li>;
-      })}</ul>
+      {Object.entries(NAV_CATEGORY_LABEL).map(([cat, catLabel]) => {
+        const list = parts.filter(g => groupCategory({ type: g.type as Group["type"], settings: g.settings ?? {}, name: g.name }) === cat);
+        if (!list.length) return null;
+        const rows = list.map(g => {
+          const mine = reports.filter(r => r.group_id === g.id);
+          const submitted = mine.filter(r => r.status !== "draft").length;
+          const drafting = mine.length - submitted;
+          const no = noMeeting.includes(g.id);
+          return { g, mine, submitted, drafting, no, state: submitted ? "done" : drafting ? "draft" : no ? "none" : "todo" };
+        });
+        const done = rows.filter(r => r.state === "done" || r.state === "none").length;
+        const inProgress = rows.filter(r => r.state === "draft").length;
+        return <section key={cat} className="home-part-cat" aria-label={`${catLabel} 제출현황`}>
+          <div className="home-part-cat-head">
+            <h4>{catLabel}</h4>
+            <span className="home-part-cat-sum">완료 <b>{done}</b>/{rows.length}{inProgress ? <> · 작성 중 {inProgress}</> : null}</span>
+            <span className="home-part-bar" aria-hidden="true"><i className="is-done" style={{ width: `${done / rows.length * 100}%` }}/><i className="is-draft" style={{ width: `${inProgress / rows.length * 100}%` }}/></span>
+          </div>
+          <ul className="home-parts divide-y divide-border">{rows.map(({ g, mine, submitted, drafting, no, state }) => {
+            const required = g.type !== "worship" && g.schedule === "weekly";
+            return <li key={g.id} className={"home-part is-" + state}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
+              <span className="flex min-w-0 items-center gap-2 font-medium"><span className="home-part-dot" aria-hidden="true"/>{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
+                {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
+                {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
+                {no ? <span className="text-muted">모임 없음</span> : !mine.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "등록된 보고 없음"}</span> : null}
+                <span aria-hidden className="text-accent">›</span>
+              </span>
+            </Link></li>;
+          })}</ul>
+        </section>;
+      })}
       <p className="mt-2 text-xs text-muted">예배·기술팀은 보고가 없어도 미제출로 집계하지 않습니다.</p>
     </Card> : null}
   </section>;

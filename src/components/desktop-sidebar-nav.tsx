@@ -35,15 +35,16 @@ export function DesktopSidebarNav({clergy,manage,sections,name,role}:{clergy:boo
  const path=usePathname();
  const active=(it:Item)=>{const base=it.match??it.href.split("?")[0];return base==="/"?path==="/":path===base||path.startsWith(base+"/");};
  const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"내 보고서",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people}];
- const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/prayer-meetings",label:"주중 기도회 보고",icon:I.pray},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
+ const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
  const admin:Item[]=[...(manage||clergy?[{href:"/manage",label:"관리 홈",icon:I.grid}]:[]),...(clergy?[{href:"/team-management",label:"담당 팀 명단",icon:I.people}]:[]),...(manage?[{href:"/admin/submissions",label:"전체 제출현황",icon:I.check},{href:"/admin/users",label:"가입 승인·담당 지정",icon:I.user},{href:"/admin/groups",label:"그룹 관리",icon:I.tree},{href:"/admin/services",label:"예배 목록",icon:I.calendar}]:[])];
  const link=(it:Item)=><Link key={it.href} href={it.href} aria-current={active(it)?"page":undefined} className="app-sidebar-item">{it.icon}<span>{it.label}</span></Link>;
  // 자주 쓰지 않는 묶음은 접어 두고, 지금 보고 있는 화면이 들어 있으면 펼친다.
  const block=(title:string,items:Item[],open=false)=>items.length?<div className="app-sidebar-block"><details className="app-sidebar-group" open={open||items.some(active)||undefined}><summary><span className="chev" aria-hidden="true">▾</span><span className="flex-1">{title}</span><span className="app-sidebar-count">{items.length}</span></summary>{items.map(link)}</details></div>:null;
- const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 작성",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"설정",hint:"메뉴"}];
+ const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 작성",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...(clergy?[{href:"/prayer-meetings",label:"주중 기도회 보고",hint:"목회"}]:[]),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"설정",hint:"메뉴"}];
  return <>
   <QuickSwitcher items={quick}/>
   <Link href="/write" className="app-sidebar-write">{I.pen}보고 작성</Link>
+  {clergy?<Link href="/prayer-meetings" aria-current={path.startsWith("/prayer-meetings")?"page":undefined} className="app-sidebar-write is-prayer">{I.pray}주중 기도회 보고</Link>:null}
   <nav className="app-sidebar-scroll" aria-label="주요 메뉴">
    <div className="app-sidebar-block">{main.map(link)}</div>
    {sections.length?<div className="app-sidebar-block">
