@@ -1,4 +1,6 @@
 import {groupDisplayName} from "@/lib/group-display";
+import { SundayNoticePopup } from "@/components/sunday-notice-popup";
+import { upcomingSunday } from "@/lib/sunday-notice";
 import { GroupPicker } from "@/components/group-picker";
 import { HomeOverview, type OverviewReport } from "@/components/home-overview";
 import { MenuHeading, MenuIcon } from "@/components/menu-heading";
@@ -9,7 +11,7 @@ import { PushBanner } from "@/components/push-banner";
 import { SignOutButton } from "@/components/signout-button";
 import { requireActive, canManage, isClergy, isSenior } from "@/lib/auth";
 import { ROLE_LABEL, groupCategory, listGroupsOrdered } from "@/lib/groups";
-import { reportWeek, todayKST } from "@/lib/week";
+import { formatDate, reportWeek, todayKST } from "@/lib/week";
 import { loadAdminSubmissions } from "@/lib/admin-submissions";
 
 export default function HomePage(props: PageProps<"/">) {
@@ -41,6 +43,8 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
     canManage(profile) ? loadAdminSubmissions(supabase, week) : Promise.resolve(null),
   ]);
 
+  // 돌아오는 주일 공지(있으면 첫 화면 팝업)
+  const { data: sundayNotice } = await supabase.from("sunday_notices").select("sunday,body,updated_at").eq("sunday", upcomingSunday(todayKST())).maybeSingle();
   const roleByGroup = new Map((memberships ?? []).map((m) => [m.group_id as string, m.role as keyof typeof ROLE_LABEL]));
   const positionByGroup = new Map((memberships ?? []).map(m => [m.group_id as string, m.position as string | null]));
   const myGroups = groups.filter((g) => roleByGroup.has(g.id));
@@ -62,9 +66,11 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       {reviewed ? <p role="status" aria-live="polite" className="mb-4 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">{reviewed.author_name} · {reviewedGroup ? groupDisplayName(reviewedGroup.name) : "파트"} 보고를 확인 처리했습니다. {waiting ? `이 주에 확인 대기 중인 보고가 ${waiting}건 남았습니다.` : "이 주에 확인 대기 중인 보고가 없습니다."} <Link href={`/reports/${reviewed.id}`} className="underline underline-offset-2">방금 확인한 보고 보기</Link></p> : null}
       <Card className="home-mobile-only mb-4"><Link href="/notices" className="menu-link flex items-center justify-between gap-3"><MenuHeading icon="notice" description="우리 부서의 소식과 이야기를 확인해 주세요.">공지·소통</MenuHeading><span aria-hidden className="text-muted">›</span></Link><ul className="divide-y divide-border">{(notices.data ?? []).map(n => <li key={n.id}><Link href={`/notices/${n.id}`} className="block py-3 text-sm text-muted hover:text-accent">{n.title}</Link></li>)}</ul></Card>
       <PageTitle sub="한 주의 사역과 소식을 함께 나눠요.">{profile.real_name}님, 안녕하세요</PageTitle>
+      {sundayNotice ? <SundayNoticePopup sunday={sundayNotice.sunday} label={formatDate(sundayNotice.sunday)} body={sundayNotice.body} version={sundayNotice.updated_at} canWrite={isClergy(profile) || profile.is_admin} /> : null}
 
       <PushBanner />
       <div className="home-pc-hide">{/* PC에서는 사이드바에 같은 메뉴가 있어 감춘다 */}
+      {!sundayNotice && (isClergy(profile) || profile.is_admin) ? <Link href="/sunday-notice" className="mb-4 flex min-h-12 items-center justify-between gap-2 rounded-xl border border-dashed border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent">📌 이번 주 공지 쓰기 <span className="text-xs font-normal text-muted">쓰면 모두의 첫 화면에 팝업</span></Link> : null}
       {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
       {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/notices?tab=restricted" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">비공개 메시지</Link></div> : null}
       {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리 · 담당 팀 명단</span><span>팀원 추가·수정 ›</span></Link> : null}

@@ -807,3 +807,10 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 다크 모드: `theme-switch.tsx`(기기 설정/라이트/다크, localStorage `tlc-theme`, layout `<head>` 스크립트로 깜빡임 방지). 색은 globals.css 끝의 `[data-theme="dark"]`/`prefers-color-scheme` 변수. 인쇄는 늘 밝게.
 - '피드백·댓글' → '코멘트'로 통일. DB 39 `20261129000000_comment_author_titles.sql`: 코멘트·답글 알림 제목에 남긴 사람 이름('○○님이 보고서에 코멘트를 남겼습니다'). 예전 알림 제목은 loadNotifications에서 표현만 바꾼다.
 - 알림함: 누르면 바로 이동하고 읽음은 `/api/notifications/read`(keepalive fetch)로 따로 보낸다. 예전에는 서버 액션을 기다린 뒤 이동해 늦고, '이동 중' 상태가 남아 다른 알림을 못 눌렀다. 휴대폰에서 왼쪽으로 밀면 읽음.
+
+## 2026-11-05 팀 태그·이번 주 공지 (feature/pc-layout, 미리보기)
+- DB 40 `20261130000000_team_tags_sunday_notice.sql`
+  - `report_team_tags` + RPC `tag_report_teams(rid,gids,note)`/`untag_report_team`: 목사님·사모님·교역자(is_clergy)가 제출된 보고를 다른 팀에 메모와 함께 공유. 태그된 팀원은 `is_mentioned_member`로 보기만 가능, 알림(report_event_key → 앱이 휴대폰 알림도 보냄). 작성자 멘션(report_mentions)과 따로 둬서 보고 수정 때 지워지지 않음.
+  - `sunday_notices`(주일마다 하나): 교역자·관리자 작성, 승인된 사용자 모두 읽기. 홈 첫 화면 팝업(`sunday-notice-popup.tsx`, 같은 수정본은 기기별 한 번), `/sunday-notice` 작성 화면, 사이드바 '주중 기도회 보고' 아래 버튼.
+- 이 SQL 전에는 앱이 오류 없이 빈 상태로 보인다(조회 실패를 무시).
+- 6번(팀원 → 담당 교역자 → 목사님·사모님) 흐름은 기존 기능으로 이미 됨: 담당교역자(reviewer)도 같은 예배 보고를 따로 쓸 수 있고(can_write_group), 코멘트로 첨언, 확인 처리, 목사님·사모님은 전체 열람.

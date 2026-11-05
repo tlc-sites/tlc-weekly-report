@@ -1,4 +1,5 @@
 import {FailureDialog} from "@/components/form-validation";
+import { ReportTeamTags } from "./team-tags";
 import Link from "@/components/pending-link";
 import {ReportReadStatus} from "@/components/report-read-status";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
@@ -363,6 +364,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
       {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="report-mobile-only mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
       <PrivateSharing reportId={id}/>
+      {report.status !== "draft" && !editMode ? <ReportTeamTags reportId={id} groups={mentionGroups} /> : null}
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
           <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임 목사님께 드리는 글" : "담임 사모님께 드리는 글"}</p>

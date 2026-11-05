@@ -41,11 +41,12 @@ export function DesktopSidebarNav({clergy,manage,sections,name,role}:{clergy:boo
  const link=(it:Item)=><Link key={it.href} href={it.href} aria-current={active(it)?"page":undefined} className="app-sidebar-item">{it.icon}<span>{it.label}</span></Link>;
  // 자주 쓰지 않는 묶음은 접어 두고, 지금 보고 있는 화면이 들어 있으면 펼친다.
  const block=(title:string,items:Item[],open=false)=>items.length?<div className="app-sidebar-block"><details className="app-sidebar-group" open={open||items.some(active)||undefined}><summary><span className="chev" aria-hidden="true">▾</span><span className="flex-1">{title}</span><span className="app-sidebar-count">{items.length}</span></summary>{items.map(link)}</details></div>:null;
- const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 작성",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...(clergy?[{href:"/prayer-meetings",label:"주중 기도회 보고",hint:"목회"}]:[]),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"설정",hint:"메뉴"}];
+ const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 작성",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...(clergy?[{href:"/prayer-meetings",label:"주중 기도회 보고",hint:"목회"}]:[]),...(clergy||manage?[{href:"/sunday-notice",label:"이번 주 공지",hint:"목회"}]:[]),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"설정",hint:"메뉴"}];
  return <>
   <QuickSwitcher items={quick}/>
   <Link href="/write" className="app-sidebar-write">{I.pen}보고 작성</Link>
   {clergy?<Link href="/prayer-meetings" aria-current={path.startsWith("/prayer-meetings")?"page":undefined} className="app-sidebar-write is-prayer">{I.pray}주중 기도회 보고</Link>:null}
+  {clergy||manage?<Link href="/sunday-notice" aria-current={path.startsWith("/sunday-notice")?"page":undefined} className="app-sidebar-write is-prayer">{I.notice}이번 주 공지</Link>:null}
   <nav className="app-sidebar-scroll" aria-label="주요 메뉴">
    <div className="app-sidebar-block">{main.map(link)}</div>
    {sections.length?<div className="app-sidebar-block">
