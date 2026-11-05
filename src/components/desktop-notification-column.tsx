@@ -2,10 +2,11 @@
 import Link from "@/components/pending-link";
 import {usePathname,useRouter} from "next/navigation";
 import {useCallback,useEffect,useState} from "react";
-import {loadNotifications,readNotification} from "@/app/notifications/actions";
+import {loadNotifications} from "@/app/notifications/actions";
 import {NOTIFICATION_CATEGORIES,notificationCategory,type NotificationCategory} from "@/lib/notification-category";
 import type {NotificationItem} from "./notification-list";
-import {announceNotificationsChanged,setNotificationPanel} from "./notification-panel-store";
+import {setNotificationPanel} from "./notification-panel-store";
+import {markNotificationRead} from "./notification-read";
 
 const when = (iso: string) => {
  const d = new Date(iso), now = Date.now(), min = Math.round((now - d.getTime()) / 60000);
@@ -43,8 +44,7 @@ export function DesktopNotificationColumn({initialItems = null}: {initialItems?:
   router.push(safe(item.url));
   if (!item.read_at) {
    setItems(prev => prev?.map(i => (i.id === item.id ? {...i, read_at: new Date().toISOString()} : i)) ?? prev);
-   try { await readNotification(item.id); } catch {}
-   announceNotificationsChanged();
+   void markNotificationRead(item.id);
   }
  };
  return <aside data-print-hide className="app-listcol" aria-label="알림 목록">

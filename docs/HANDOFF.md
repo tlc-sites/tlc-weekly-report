@@ -802,3 +802,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 사이드바 '보고 작성' 밑에 교역자용 '주중 기도회 보고' 버튼.
 - 예배위원 한 달 표 `/worship-staff/month`: 요일·month_week로 그 달 예배 날짜를 만들고, 스프레드시트 붙여넣기(`src/lib/worship-staff-month.ts`, 테스트 `tests/worship-staff-month.test.mjs`)로 채운 뒤 바뀐 줄만 저장. 저장은 기존 `worship_staff`(교역자 RLS)에 같은 '안내위원: …' 글 형식으로, updated_at이 다르면 덮어쓰지 않음. 미래 날짜도 저장 가능(DB는 원래 막지 않음, 기존 /worship-staff 화면만 오늘까지). DB 변경 없음.
 - PC 가운데 칸 알림 목록: 사이드바 종(`NotificationBell panel`)을 1280px 이상에서 누르면 `notification-panel-store`(sessionStorage) 상태가 켜지고 `DesktopReportColumn`이 `DesktopNotificationColumn`을 보여 준다. 더 좁으면 예전처럼 /notifications로 이동. 위원표 붙여넣기는 탭이 없으면 띄어쓰기 4칸을 칸 구분으로 읽는다(`tabsFromSpaces`).
+
+## 2026-11-05 다크 모드·코멘트 용어·알림함 수정 (feature/pc-layout, 미리보기)
+- 다크 모드: `theme-switch.tsx`(기기 설정/라이트/다크, localStorage `tlc-theme`, layout `<head>` 스크립트로 깜빡임 방지). 색은 globals.css 끝의 `[data-theme="dark"]`/`prefers-color-scheme` 변수. 인쇄는 늘 밝게.
+- '피드백·댓글' → '코멘트'로 통일. DB 39 `20261129000000_comment_author_titles.sql`: 코멘트·답글 알림 제목에 남긴 사람 이름('○○님이 보고서에 코멘트를 남겼습니다'). 예전 알림 제목은 loadNotifications에서 표현만 바꾼다.
+- 알림함: 누르면 바로 이동하고 읽음은 `/api/notifications/read`(keepalive fetch)로 따로 보낸다. 예전에는 서버 액션을 기다린 뒤 이동해 늦고, '이동 중' 상태가 남아 다른 알림을 못 눌렀다. 휴대폰에서 왼쪽으로 밀면 읽음.

@@ -2,7 +2,7 @@
 // 새 알림 문구를 추가하면 여기에도 넣는다. 맞는 게 없으면 '기타'로 보인다.
 export const NOTIFICATION_CATEGORIES = [
   ["report", "새 보고서"],
-  ["feedback", "피드백·답글"],
+  ["feedback", "코멘트·답글"],
   ["request", "다른 부서 요청"],
   ["message", "비공개 메시지"],
   ["notice", "공지"],

@@ -1,4 +1,5 @@
 "use client";
+import {ThemeSwitch} from "./theme-switch";
 import Link from "@/components/pending-link";
 import {usePathname} from "next/navigation";
 import type {ReactNode} from "react";
@@ -59,6 +60,7 @@ export function DesktopSidebarNav({clergy,manage,sections,name,role}:{clergy:boo
    {block("관리",admin)}
   </nav>
   <div className="app-sidebar-foot">
+   <ThemeSwitch className="mb-2 w-full [&>button]:flex-1"/>
    <div className="app-sidebar-me"><span className="app-sidebar-avatar" aria-hidden="true">{name.slice(0,1)}</span><span className="min-w-0 flex-1"><b>{name}</b><small>{role}</small></span></div>
    <div className="app-sidebar-links">
     <Link href="/settings" aria-current={path==="/settings"?"page":undefined} className="app-sidebar-mini">{I.gear}설정</Link>

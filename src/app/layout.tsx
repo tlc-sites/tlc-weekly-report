@@ -6,6 +6,7 @@ import { MenuIcon } from "@/components/menu-heading";
 import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
 import {BottomNavigation} from "@/components/bottom-navigation";
 import {DesktopSidebar} from "@/components/desktop-sidebar";
+import {THEME_SCRIPT} from "@/components/theme-switch";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,7 +25,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className="h-full antialiased">
+    <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body className="min-h-full"><TranslationLanguage>
         <Suspense fallback={null}><DesktopSidebar/></Suspense>
         <header data-print-hide className="app-header border-b border-border/70 bg-background">

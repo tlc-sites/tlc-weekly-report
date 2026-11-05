@@ -104,7 +104,7 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
           <input type="hidden" name="reportId" value={reportId} />
           <textarea name="body" required maxLength={1000} rows={2} placeholder="보고서에 대한 코멘트를 바로 남겨 주세요." className={textareaClass} />
           <SubmitButton className={`${smallButtonClass} self-end`} pendingText="코멘트 등록 중…">코멘트 등록</SubmitButton>
-        </form> : <p className="text-xs text-muted">담임 목사님·담임 사모님과 교역자가 남긴 피드백을 확인하실 수 있습니다.</p>}
+        </form> : <p className="text-xs text-muted">담임 목사님·담임 사모님과 교역자가 남긴 코멘트를 확인하실 수 있습니다.</p>}
       </Card>
     </section>
   );

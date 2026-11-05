@@ -444,3 +444,37 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   body:has(.app-sidebar) .home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
   body:has(.app-sidebar) .home-col-side { position: sticky; top: 1.5rem; }
 }
+
+/* 다크 모드: 설정(라이트/다크/기기 설정 따르기)은 <html data-theme>로, '기기 설정'이면 data-theme 없이 기기 설정을 따른다.
+   색은 모두 :root 변수로 쓰고 있어 변수만 바꾼다. 인쇄는 늘 밝게. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: #1b1615; --surface: #241d1c; --foreground: #eee3df; --muted: #b5a29d; --border: #3f3432;
+    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f;
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #1b1615; --surface: #241d1c; --foreground: #eee3df; --muted: #b5a29d; --border: #3f3432;
+    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f;
+  }
+}
+@media screen {
+  :root[data-theme="dark"] .app-sidebar { --side: #2a1414; }
+  :root[data-theme="dark"] .app-pill.is-rev { background: #24382a; color: #a9d4b3; }
+  :root[data-theme="dark"] .app-pill.is-minor { border-color: #8a6a2c; color: #e8c27a; }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app-sidebar { --side: #2a1414; }
+  :root:not([data-theme="light"]) .app-pill.is-rev { background: #24382a; color: #a9d4b3; }
+  :root:not([data-theme="light"]) .app-pill.is-minor { border-color: #8a6a2c; color: #e8c27a; }
+}
+/* 테마 고르기(사이드바 아래, 설정 화면) */
+.theme-switch { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); }
+.theme-switch button { border: 0; border-radius: 6px; background: none; padding: 4px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.theme-switch button[aria-pressed="true"] { background: var(--surface); color: var(--foreground); font-weight: 600; box-shadow: 0 1px 2px #0000001f; }
+.app-sidebar .theme-switch { border-color: var(--side-line); background: #0000001f; }
+.app-sidebar .theme-switch button { color: var(--side-muted); font-size: 12px; padding: 3px 8px; }
+.app-sidebar .theme-switch button[aria-pressed="true"] { background: var(--side-hover); color: var(--side-fg); box-shadow: none; }

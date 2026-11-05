@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BackLink, Card, Loading, PageTitle, secondaryButtonClass } from "@/components/ui";
+import { ThemeSwitch } from "@/components/theme-switch";
 import { requireActive } from "@/lib/auth";
 import { setNotifyEnabled } from "./actions";
 import { PushManager } from "./push-manager";
@@ -25,6 +26,12 @@ async function SettingsContent() {
     <>
       <BackLink href="/">홈</BackLink>
       <PageTitle info={HELP.push} sub="수요일·금요일 오전 작성 알림과 금요일 오후 5시 사역 보고 안내를 받습니다.">알림 설정</PageTitle>
+
+      <h2 className="mb-2 text-sm font-semibold">화면 밝기</h2>
+      <Card className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm">이 기기에서 볼 화면 색입니다. 기기 설정을 따르면 휴대폰·PC가 다크 모드일 때 어둡게 보입니다.</p>
+        <ThemeSwitch />
+      </Card>
 
       <h2 className="mb-2 text-sm font-semibold">이 기기</h2>
       <Card className="mb-6">

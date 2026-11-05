@@ -36,7 +36,7 @@ async function Content({ searchParams }: PageProps<"/notices">) {
     </nav>
     <p className="mb-4 text-sm text-muted">{restricted?"특정 부서·직급에 보낸 소식과 내게 공개된 비공개 메시지만 표시됩니다.":"대상 분류의 전체 구성원에게 보낸 공지입니다. 기존 부서별 열람 범위는 유지됩니다."}</p>
     {error ? <p role="alert" className="mb-4 text-sm text-danger">{error === "invalid" ? "제목·내용·대상을 확인해 주세요." : "저장하지 못했습니다. 공지 권한과 입력 내용을 확인해 주세요."}</p> : null}
-    {targets.length || canSend ? <details className="mb-6 rounded-xl border border-border bg-white p-4">
+    {targets.length || canSend ? <details className="mb-6 rounded-xl border border-border bg-surface p-4">
       <summary className="cursor-pointer font-medium">{restricted?"+ 대상 지정 소식 보내기":"+ 공지 보내기"}</summary>
       <form action={createNotice} className="mt-4 flex flex-col gap-3">
         <Field label="받는 부서"><select name="target" required className={selectClass} defaultValue="">

@@ -22,7 +22,7 @@ export async function notifyUsers(userIds: string[], noticeId: string, title: st
     if (subsError) return false;
 
     const result = await sendToSubscriptions(admin, subs ?? [], {
-      title, body: "앱에서 공지와 댓글을 확인해 주세요.", url: `/notices/${noticeId}`, tag: `notice:${noticeId}`,
+      title, body: "앱에서 공지와 코멘트를 확인해 주세요.", url: `/notices/${noticeId}`, tag: `notice:${noticeId}`,
     }, targets);
     return result.failed === 0;
   } catch {

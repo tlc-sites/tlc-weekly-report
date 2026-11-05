@@ -10,7 +10,7 @@ import { HELP } from "@/lib/help-text";
 export function NoMeeting({ groupId, week, noMeeting, reason }: { groupId: string; week: string; noMeeting: boolean; reason: string | null }) {
   const [expanded, setExpanded] = useState(false);
   const [state, action] = useActionState(setNoMeeting, { error: "", saved: false });
-  return <section className="rounded-xl border border-border bg-white p-4">
+  return <section className="rounded-xl border border-border bg-surface p-4">
     <InfoTip className="mb-3" title={<span className="text-sm font-semibold">이번 주 모임이 없었나요?</span>} guide={HELP.noMeeting.guide}>{HELP.noMeeting.body}</InfoTip>
     {noMeeting ? <>
       <p role="status" className="mb-2 font-medium text-accent">✓ 이번 주 모임 및 사역 해당 사항 없음으로 등록했습니다.</p>

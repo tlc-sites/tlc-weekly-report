@@ -36,6 +36,6 @@ export async function addNoticeComment(formData: FormData) {
     notice_id: parsed.data.noticeId, author_id: profile.id, body: parsed.data.body,
   });
   if (error) redirect(path + "?error=comment");
-  const pushed = notice.author_id === profile.id || await notifyUsers([notice.author_id], parsed.data.noticeId, "공지에 댓글이 달렸습니다");
+  const pushed = notice.author_id === profile.id || await notifyUsers([notice.author_id], parsed.data.noticeId, `${profile.real_name ?? "누군가"}님이 공지에 코멘트를 남겼습니다`);
   redirect(path + "?commented=1" + (pushed ? "" : "&push=failed") + "#comments");
 }
