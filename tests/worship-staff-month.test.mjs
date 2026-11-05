@@ -107,3 +107,12 @@ test("교회 월별 예배 위원표 모양(주일·수요·금요 블록)을 �
   assert.equal(get("2026-11-22", "s2"), undefined);
   assert.deepEqual(unmatched, ["다른 달 날짜 1개는 건너뛰었습니다"]);
 });
+
+test("금요 블록은 그 금요일의 예배(첫째 어웨이크·둘째 리바이브드 등)에 들어간다", () => {
+  const svc = [{ id: "awake", name: "어웨이크 AWAKE", weekday: 5, month_week: 1 }, { id: "rev", name: "리바이브드 REVIVED", weekday: 5, month_week: 2 }];
+  const occ = monthOccurrences("2026-11", svc);
+  const sheet = ["금요 예배 위원", "날짜\t구분\t명단", "11월 6일\t안내위원\t금1", "\t헌금위원\t금2", "11월 13일\t안내위원\t금3", "\t헌금위원\t금4"].join("\n");
+  const { updates, unmatched } = applyPaste(sheet, "2026-11", occ);
+  assert.deepEqual(unmatched, []);
+  assert.deepEqual(updates.map(u => [occ[u.index].serviceId, u.cells.guide, u.cells.offering]), [["awake", "금1", "금2"], ["rev", "금3", "금4"]]);
+});
