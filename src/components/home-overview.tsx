@@ -59,8 +59,9 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
         const drafting = rows.length - submitted;
         const no = noMeeting.includes(g.id);
         const required = g.type !== "worship" && g.schedule === "weekly";
-        return <li key={g.id}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
-          <span className="font-medium">{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
+        const state = submitted ? "done" : drafting ? "draft" : no ? "none" : "todo";
+        return <li key={g.id} className={"home-part is-" + state}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
+          <span className="flex min-w-0 items-center gap-2 font-medium"><span className="home-part-dot" aria-hidden="true"/>{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
             {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
             {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
             {no ? <span className="text-muted">모임 없음</span> : !rows.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "등록된 보고 없음"}</span> : null}

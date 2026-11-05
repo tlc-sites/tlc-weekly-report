@@ -305,7 +305,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     <>
       {/* PC에서는 제목줄을 위에 고정하고 확인·수정 버튼을 오른쪽에 둔다. 휴대폰은 기존 배치 그대로. */}
       <div className="report-head">
-      <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{groupDisplayName(group.name)}</BackLink>
+      <div className="report-mobile-only"><BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{groupDisplayName(group.name)}</BackLink></div>
+      <p className="report-crumb"><Link href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}># {groupDisplayName(group.name)}</Link><span aria-hidden="true"> › </span><span>{title}</span></p>
       <div className="report-head-row">
       <div className="min-w-0 flex-1">
       <PageTitle sub={`${group.parent ? `${groupDisplayName(group.parent.name)} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
@@ -325,8 +326,9 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </div>
       </div>
 
-      {mentionedNames.length?<p className="mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
-      {notify||notifiedMinisterNames.length?<p className="mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
+      {mentionedNames.length||notify||notifiedMinisterNames.length?<div className="report-chips">{mentionedNames.map(n=><span key={"m"+n} className="report-chip"># {n} 함께 보기</span>)}{notify==="leadership"?<span className="report-chip">🔔 리더십 전체</span>:notify==="clergy"?<span className="report-chip">🔔 교역자 전체</span>:null}{notifiedMinisterNames.map(n=><span key={"n"+n} className="report-chip">🔔 {n}</span>)}</div>:null}
+      {mentionedNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
+      {notify||notifiedMinisterNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
       {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}

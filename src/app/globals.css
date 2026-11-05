@@ -302,11 +302,53 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   body:has(.app-sidebar) .home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
   body:has(.app-sidebar) .home-col-side { position: sticky; top: 1.5rem; }
 }
-@media (min-width: 1440px) {
-  body:has(.app-sidebar) .home-parts { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.5rem; }
-  body:has(.app-sidebar) .home-parts > li { border-top: 1px solid var(--border); border-bottom-width: 0 !important; }
-  body:has(.app-sidebar) .home-parts > li:nth-child(-n+2) { border-top: 0; }
+/* 파트별 현황은 PC에서 타일로: 상태 점(초록 제출 · 노랑 작성 중 · 빈 원 아직 없음 · 흐린 점 모임 없음) */
+.home-part-dot { display: none; }
+@media (min-width: 1024px) {
+  body:has(.app-sidebar) .home-parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr)); gap: 8px; }
+  body:has(.app-sidebar) .home-parts > li { border: 1px solid var(--border) !important; border-radius: 12px; background: var(--background); }
+  body:has(.app-sidebar) .home-parts > li:hover { border-color: var(--accent) !important; }
+  body:has(.app-sidebar) .home-parts > li > a { min-height: 56px; padding: 8px 12px; }
+  body:has(.app-sidebar) .home-part-dot { display: inline-block; width: 9px; height: 9px; flex: none; border-radius: 50%; }
+  body:has(.app-sidebar) .is-done .home-part-dot { background: #4f8a5e; }
+  body:has(.app-sidebar) .is-draft .home-part-dot { background: #d9a441; }
+  body:has(.app-sidebar) .is-todo .home-part-dot { border: 1.5px solid var(--muted); }
+  body:has(.app-sidebar) .is-none .home-part-dot { background: var(--border); }
 }
 
 /* 목록이 긴 화면(주간 요약·제출현황·보고 목록·공지 등)은 PC에서 본문을 넓힌다. 페이지에 .page-wide 표시를 둔다. */
 @media (min-width: 1024px) { body:has(.app-sidebar):has(.page-wide) main { max-width: 64rem; } }
+
+/* 사이드바 빠른 찾기 (Ctrl K) */
+.app-sidebar-search { margin: 12px 14px 0; display: flex; align-items: center; gap: 8px; width: calc(100% - 28px); min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid #ffffff24; background: #ffffff12; color: var(--side-muted); font-size: 13px; cursor: pointer; text-align: left; }
+.app-sidebar-search:hover { background: #ffffff1c; color: var(--side-fg); }
+.app-sidebar-search svg { width: 15px; height: 15px; flex: none; }
+.app-sidebar-search span { flex: 1; }
+.app-sidebar-search kbd { font: inherit; font-size: 11px; border: 1px solid #ffffff33; border-radius: 4px; padding: 0 5px; }
+.app-sidebar-write { margin-top: 10px; }
+.quick-switcher { position: fixed; inset: 0; z-index: 60; display: grid; place-items: start center; padding: 14vh 16px 0; background: #2a141466; }
+.quick-switcher-box { width: min(520px, 100%); overflow: hidden; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); box-shadow: 0 24px 60px #0000003d; font-size: 15px; }
+.quick-switcher-box input { width: 100%; border: 0; border-bottom: 1px solid var(--border); background: none; padding: 14px 16px; font-size: 16px; color: var(--foreground); outline: none; }
+.quick-switcher-box ul { max-height: 340px; overflow-y: auto; margin: 0; padding: 6px; list-style: none; }
+.quick-switcher-box li button { display: flex; width: 100%; align-items: center; gap: 8px; border: 0; border-radius: 8px; background: none; padding: 9px 10px; text-align: left; cursor: pointer; color: var(--foreground); }
+.quick-switcher-box li button.is-on { background: var(--accent-soft); color: var(--accent); }
+.quick-switcher-box li small { margin-left: auto; font-size: 12px; color: var(--muted); }
+.quick-switcher-empty { padding: 12px 10px; color: var(--muted); }
+.quick-switcher-help { margin: 0; border-top: 1px solid var(--border); padding: 8px 14px; font-size: 12px; color: var(--muted); }
+
+/* 보고 화면 PC: '# 팀 › 예배' 경로, 알림 대상 칩, 코멘트 입력창은 카드 아래쪽에 붙어 있게 */
+.report-crumb, .report-chips { display: none; }
+@media (min-width: 1024px) {
+  body:has(.app-sidebar) .report-crumb { display: flex; gap: 4px; margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+  body:has(.app-sidebar) .report-crumb a { font-weight: 600; color: var(--accent); }
+  body:has(.app-sidebar) .report-head h1 { font-size: 23px; }
+  body:has(.app-sidebar) .report-head header { margin-bottom: 12px; }
+  body:has(.app-sidebar) .report-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  body:has(.app-sidebar) .report-chip { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); padding: 2px 10px; font-size: 12.5px; }
+  body:has(.app-sidebar) .report-comment-form { position: sticky; bottom: 0; z-index: 2; margin: 0 -18px -18px; padding: 12px 18px 16px; border-radius: 0 0 14px 14px; background: var(--surface); }
+}
+.app-listcol-weeknav { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.app-listcol-weeknav button { border: 0; background: none; border-radius: 6px; padding: 4px 8px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.app-listcol-weeknav button:hover:not(:disabled) { background: var(--background); color: var(--accent); }
+.app-listcol-weeknav button:disabled { opacity: .35; cursor: default; }
+.app-listcol-weeknav .app-listcol-weeklabel { flex: 1; font-weight: 600; color: var(--foreground); }
