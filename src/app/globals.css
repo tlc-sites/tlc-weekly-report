@@ -478,3 +478,10 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 .app-sidebar .theme-switch { border-color: var(--side-line); background: #0000001f; }
 .app-sidebar .theme-switch button { color: var(--side-muted); font-size: 12px; padding: 3px 8px; }
 .app-sidebar .theme-switch button[aria-pressed="true"] { background: var(--side-hover); color: var(--side-fg); box-shadow: none; }
+
+/* 넓은 화면: 본문을 왼쪽에 붙이지 않고 남은 공간 가운데에 둔다. 일반 화면 60rem, 목록이 긴 화면·홈은 80rem. */
+@media (min-width: 900px) {
+  body:has(.app-sidebar) main { --content-w: 60rem; max-width: calc(var(--content-w) + 2 * var(--pc-pad)); margin-inline: auto; }
+  body:has(.app-sidebar):has(.page-wide) main, body:has(.app-sidebar):has(.home-cols) main { --content-w: 80rem; }
+  body:has(.app-sidebar) main > *, body:has(.app-sidebar):has(.page-wide) main > *, body:has(.app-sidebar) main > .home-cols { max-width: none; }
+}
