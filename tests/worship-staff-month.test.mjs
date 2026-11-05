@@ -116,3 +116,11 @@ test("금요 블록은 그 금요일의 예배(첫째 어웨이크·둘째 리�
   assert.deepEqual(unmatched, []);
   assert.deepEqual(updates.map(u => [occ[u.index].serviceId, u.cells.guide, u.cells.offering]), [["awake", "금1", "금2"], ["rev", "금3", "금4"]]);
 });
+
+test("탭이 띄어쓰기 4칸으로 바뀐 붙여넣기도 읽는다", () => {
+  const S = "    ";
+  const text = [["날짜", "구분", "1부", "2부"].join(S), ["11월 1일", "안내위원(1층)", "가1", "가2"].join(S), ["", "헌금위원", "라1 마1", ""].join(S)].join("\n");
+  const occ = monthOccurrences("2026-11", services);
+  const { updates } = applyPaste(text, "2026-11", occ);
+  assert.deepEqual(updates.map(u => [occ[u.index].serviceId, u.cells.guide, u.cells.offering]), [["s1", "가1(1층)", "라1, 마1"], ["s2", "가2(1층)", ""]]);
+});
