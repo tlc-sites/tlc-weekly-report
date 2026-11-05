@@ -3,6 +3,8 @@ import Link from "@/components/pending-link";
 import {usePathname} from "next/navigation";
 import {useEffect,useState} from "react";
 import {loadReportColumn,type ReportColumn,type ColumnReport} from "./report-column-actions";
+import {DesktopNotificationColumn} from "./desktop-notification-column";
+import {useNotificationPanel} from "./notification-panel-store";
 
 const STATUS: Record<ColumnReport["status"], [string, string]> = { draft: ["임시저장", "is-draft"], submitted: ["확인 대기", "is-sub"], reviewed: ["확인됨", "is-rev"] };
 const RESULT: Record<string, [string, string]> = { minor: ["경미한 문제", "is-minor"], incident: ["사고", "is-incident"], other: ["기타", ""] };
@@ -22,8 +24,13 @@ const addWeek = (iso: string, n: number) => addDays(iso, n * 7);
 const todayKST = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
 
-// PC 가운데 열: 파트 화면·보고 화면에서 그 파트의 보고 목록을 옆에 띄워, 페이지를 오가지 않고 다음 보고로 넘어갈 수 있게 한다.
+// PC 가운데 열: 사이드바 종으로 알림 목록을 열었으면 알림을, 아니면 파트·보고 화면에서 그 파트의 보고 목록을 보여 준다.
 export function DesktopReportColumn(){
+ return useNotificationPanel()?<DesktopNotificationColumn/>:<ReportListColumn/>;
+}
+
+// 파트 화면·보고 화면에서 그 파트의 보고 목록을 옆에 띄워, 페이지를 오가지 않고 다음 보고로 넘어갈 수 있게 한다.
+function ReportListColumn(){
  const path=usePathname();
  const group=path.match(new RegExp(`^/groups/(${UUID})`))?.[1];
  const report=path.match(new RegExp(`^/reports/(${UUID})`))?.[1];

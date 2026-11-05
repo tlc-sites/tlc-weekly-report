@@ -30,7 +30,7 @@ export async function DesktopSidebar(){
  return <><aside data-print-hide className="app-sidebar" aria-label="사이드 메뉴">
   <div className="app-sidebar-brand">
    <Link href="/" className="min-w-0 flex-1"><b>TLC 교회 보고서</b><small>이번 주 {formatWeek(week)}</small></Link>
-   <NotificationBell userId={profile.id} staff={canManage(profile)||isClergy(profile)}/>
+   <NotificationBell panel userId={profile.id} staff={canManage(profile)||isClergy(profile)}/>
   </div>
   <DesktopSidebarNav clergy={isClergy(profile)} manage={canManage(profile)} sections={sections} name={profile.real_name??"이름 없음"} role={role}/>
  </aside><DesktopReportColumn/></>;
