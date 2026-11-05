@@ -176,7 +176,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   :root:has(.app-sidebar) { --bottom-nav-height: 0px; --sidebar-w: 268px; }
   body:has(.app-sidebar) { padding-left: var(--sidebar-w); }
   body:has(.app-sidebar) .app-header, body:has(.app-sidebar) .app-bottom-nav { display: none; }
-  body:has(.app-sidebar) main { max-width: 48rem; min-height: 100dvh; padding-top: 2.25rem; }
+  body:has(.app-sidebar) main { --pc-pad: 2rem; max-width: none; margin: 0; min-height: 100dvh; padding: 0 var(--pc-pad) 3rem; font-size: 15px; }
   .app-sidebar {
     --side: #4a1f1f; --side-fg: #f6ebe7; --side-muted: #cdb2ab; --side-line: #ffffff1c; --side-hover: #ffffff12; --side-on: #f0e2dc; --side-on-fg: #4a1f1f;
     position: fixed; inset: 0 auto 0 0; z-index: 30; width: var(--sidebar-w);
@@ -273,8 +273,8 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 .report-head-actions { display: none; }
 @media (min-width: 1024px) {
   body:has(.app-sidebar) .report-head {
-    position: sticky; top: 0; z-index: 10; margin: -2.25rem -1.25rem 1.25rem; padding: 1.25rem 1.25rem .25rem;
-    background: color-mix(in srgb, var(--background) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10; max-width: none; margin: 0 calc(-1 * var(--pc-pad)) 1.25rem; padding: 1rem var(--pc-pad) .25rem;
+    background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
   }
   body:has(.app-sidebar) .report-head-row { display: flex; align-items: flex-start; gap: 16px; }
   body:has(.app-sidebar) .report-head-actions { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 4px; }
@@ -298,7 +298,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 @media (min-width: 1024px) {
   body:has(.app-sidebar) .home-pc-only { display: block; }
   body:has(.app-sidebar) .home-mobile-only, body:has(.app-sidebar) .home-pc-hide { display: none; }
-  body:has(.app-sidebar):has(.home-cols) main { max-width: 76rem; }
+  body:has(.app-sidebar) main > .home-cols { max-width: 76rem; }
   body:has(.app-sidebar) .home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
   body:has(.app-sidebar) .home-col-side { position: sticky; top: 1.5rem; }
 }
@@ -317,7 +317,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 }
 
 /* 목록이 긴 화면(주간 요약·제출현황·보고 목록·공지 등)은 PC에서 본문을 넓힌다. 페이지에 .page-wide 표시를 둔다. */
-@media (min-width: 1024px) { body:has(.app-sidebar):has(.page-wide) main { max-width: 64rem; } }
+@media (min-width: 1024px) { body:has(.app-sidebar):has(.page-wide) main > * { max-width: 76rem; } }
 
 /* 사이드바 빠른 찾기 (Ctrl K) */
 .app-sidebar-search { margin: 12px 14px 0; display: flex; align-items: center; gap: 8px; width: calc(100% - 28px); min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid #ffffff24; background: #ffffff12; color: var(--side-muted); font-size: 13px; cursor: pointer; text-align: left; }
@@ -352,3 +352,47 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 .app-listcol-weeknav button:hover:not(:disabled) { background: var(--background); color: var(--accent); }
 .app-listcol-weeknav button:disabled { opacity: .35; cursor: default; }
 .app-listcol-weeknav .app-listcol-weeklabel { flex: 1; font-weight: 600; color: var(--foreground); }
+
+/* PC 화면을 '휴대폰 화면을 크게 띄운 것'이 아니라 데스크톱 앱처럼: 본문은 흰 판 전체를 쓰고, 제목은 위에 붙은 줄,
+   버튼·입력칸·카드는 마우스에 맞게 작고 촘촘하게. 휴대폰(1024px 미만)은 그대로다. */
+@media (min-width: 1024px) {
+  body:has(.app-sidebar) { background: var(--surface); }
+  body:has(.app-sidebar) main > * { max-width: 60rem; }
+  body:has(.app-sidebar) main:not(:has(> .page-title)):not(:has(.report-head)) { padding-top: 1.75rem; }
+  /* 제목 줄: 화면 위에 붙어 있고 아래 선으로 본문과 나뉜다 */
+  body:has(.app-sidebar) main > .page-title {
+    position: sticky; top: 0; z-index: 10; max-width: none; margin: 0 calc(-1 * var(--pc-pad)) 1.5rem; padding: 14px var(--pc-pad) 12px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
+  }
+  body:has(.app-sidebar) .page-title h1 { font-family: var(--font-sans); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; }
+  body:has(.app-sidebar) .page-title > p { margin-top: 2px; font-size: 13px; }
+  body:has(.app-sidebar) .report-head h1 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.01em; }
+  /* 돌아가기 단추는 제목 줄 위의 작은 경로 글씨로 */
+  body:has(.app-sidebar) main > .page-back {
+    max-width: none; align-self: stretch; margin: 0 calc(-1 * var(--pc-pad)); min-height: 0; padding: 12px var(--pc-pad) 0;
+    border: 0; border-radius: 0; box-shadow: none; background: var(--surface); font-size: 13px; font-weight: 500; color: var(--muted);
+  }
+  body:has(.app-sidebar) main > .page-back:hover { background: var(--surface); color: var(--accent); }
+  body:has(.app-sidebar) main > .page-back ~ .page-title { padding-top: 2px; }
+  /* 카드: 흰 판 위의 얇은 테두리 상자 */
+  body:has(.app-sidebar) .ui-card { border-radius: 10px; padding: 16px 20px; }
+  body:has(.app-sidebar) main .rounded-xl { border-radius: 8px; }
+  body:has(.app-sidebar) main .rounded-2xl { border-radius: 10px; }
+  /* 버튼·입력칸: 손가락 대신 마우스 크기 */
+  body:has(.app-sidebar) .ui-btn { min-height: 40px; padding: 7px 16px; font-size: 15px; border-radius: 8px; }
+  body:has(.app-sidebar) .ui-btn-sm { min-height: 34px; padding: 4px 12px; font-size: 14px; border-radius: 7px; }
+  body:has(.app-sidebar) :is(.ui-btn, .ui-btn-sm):active { transform: none; }
+  body:has(.app-sidebar) .ui-input { height: 40px; font-size: 15px; border-radius: 8px; }
+  body:has(.app-sidebar) .ui-textarea { font-size: 15px; border-radius: 8px; padding-block: 8px; }
+  body:has(.app-sidebar) main .min-h-11 { min-height: 2.25rem; }
+  body:has(.app-sidebar) main .min-h-12 { min-height: 2.5rem; }
+  body:has(.app-sidebar) main .min-h-14 { min-height: 2.75rem; }
+  body:has(.app-sidebar) main .min-h-16 { min-height: 3rem; }
+  body:has(.app-sidebar) main .min-h-20 { min-height: 3.5rem; }
+  /* 주 이동: 붙어 있는 단추 묶음 */
+  body:has(.app-sidebar) .week-nav { gap: 0; }
+  body:has(.app-sidebar) .week-nav > .ui-btn-sm { border-radius: 0; margin-left: -1px; }
+  body:has(.app-sidebar) .week-nav > .ui-btn-sm:first-child { border-radius: 7px 0 0 7px; margin-left: 0; }
+  body:has(.app-sidebar) .week-nav > .ui-btn-sm:last-child { border-radius: 0 7px 7px 0; }
+  body:has(.app-sidebar) .week-nav > .ui-btn-sm:only-child { border-radius: 7px; }
+}

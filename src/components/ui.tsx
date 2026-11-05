@@ -5,7 +5,7 @@ import Link from "@/components/pending-link";
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="mb-4 inline-flex max-w-full min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
+    <Link href={href} className="page-back mb-4 inline-flex max-w-full min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
       ← {children}
     </Link>
   );
@@ -36,13 +36,13 @@ export function pickMessage(messages: Record<string, string>, code: string | str
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-[14px] border border-border bg-surface p-[18px] ${className}`}>{children}</section>;
+  return <section className={`ui-card rounded-[14px] border border-border bg-surface p-[18px] ${className}`}>{children}</section>;
 }
 
 export function PageTitle({ children, sub, info }: { children: ReactNode; sub?: ReactNode; info?: { body: ReactNode; guide?: string } }) {
   const heading = <h1 className="text-[26px]">{children}</h1>;
   return (
-    <header className="mb-5">
+    <header className="page-title mb-5">
       {info ? <InfoTip title={heading} guide={info.guide}>{info.body}</InfoTip> : heading}
       {sub ? <p className="mt-2 text-[15px] leading-relaxed text-muted">{sub}</p> : null}
     </header>
@@ -58,14 +58,14 @@ export function Loading() {
 }
 
 export const buttonClass =
-  "inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent bg-accent px-[18px] py-3 text-[17px] font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "ui-btn inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent bg-accent px-[18px] py-3 text-[17px] font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const secondaryButtonClass =
-  "inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent/50 bg-surface px-[18px] py-3 text-[17px] font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "ui-btn inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent/50 bg-surface px-[18px] py-3 text-[17px] font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const smallButtonClass =
-  "inline-flex min-h-11 min-w-0 max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "ui-btn-sm inline-flex min-h-11 min-w-0 max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const inputClass =
-  "h-12 min-w-0 max-w-full w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
+  "ui-input h-12 min-w-0 max-w-full w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =
-  "h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
+  "ui-input h-12 w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const textareaClass =
-  "min-h-28 w-full rounded-xl border border-border bg-surface px-3 py-3 text-base transition focus:border-accent";
+  "ui-textarea min-h-28 w-full rounded-xl border border-border bg-surface px-3 py-3 text-base transition focus:border-accent";

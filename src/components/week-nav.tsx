@@ -6,7 +6,7 @@ import { addDays, formatWeek, reportWeek, todayKST } from "@/lib/week";
 export function WeekNav({ week, href, label = "보고 주차 이동" }: { week: string; href: string; label?: string }) {
   const current = reportWeek(undefined, todayKST());
   const to = (w: string) => `${href}?week=${w}`;
-  return <nav aria-label={label} className="mb-4 flex flex-wrap gap-2"><Link className={smallButtonClass} href={to(addDays(week, -7))}>← 지난 주</Link>{week < current ? <><Link className={smallButtonClass} href={to(addDays(week, 7))}>다음 주 →</Link><Link className={smallButtonClass} href={to(current)}>이번 주</Link></> : null}</nav>;
+  return <nav aria-label={label} className="week-nav mb-4 flex flex-wrap gap-2"><Link className={smallButtonClass} href={to(addDays(week, -7))}>← 지난 주</Link>{week < current ? <><Link className={smallButtonClass} href={to(addDays(week, 7))}>다음 주 →</Link><Link className={smallButtonClass} href={to(current)}>이번 주</Link></> : null}</nav>;
 }
 
 /** 지난 주 보고를 쓰는 중이라는 것을 이번 주와 헷갈리지 않게 알린다. */
