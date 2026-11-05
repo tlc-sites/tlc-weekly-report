@@ -41,7 +41,7 @@ export function MonthStaffGrid({month,rows,editable}:{month:string;rows:Row[];ed
  return <div className="flex flex-col gap-4">
   {editable?<section className="rounded-xl border border-border bg-surface p-4">
    <h2 className="font-semibold">스프레드시트 붙여넣기</h2>
-   <p className="mt-1 text-xs leading-relaxed text-muted">구글 시트·엑셀에서 표를 머리글까지 함께 복사해 붙여넣으세요. 날짜(11/2, 11월 2일 등)와 예배 이름(1부, 2부…)으로 줄을 찾고, 안내·헌금·봉독 머리글로 칸을 찾습니다. 날짜가 가로로 놓인 표도 읽습니다. 날짜가 없는 표는 표에서 마지막으로 누른 줄부터 차례로 채웁니다. 표의 칸에 바로 붙여넣어도 됩니다.</p>
+   <p className="mt-1 text-xs leading-relaxed text-muted"><b>월별 예배 위원표</b>는 그 달 시트를 통째로(시트 클릭 → Ctrl+A → Ctrl+C) 복사해 붙여넣으면 주일·수요·금요 블록을 모두 읽습니다. 다른 표는 머리글까지 함께 복사해 주세요. 날짜(11/2, 11월 2일 등)와 예배 이름(1부, 2부…)으로 줄을 찾고, 안내·헌금·봉독 머리글로 칸을 찾습니다. 날짜가 가로로 놓인 표도 읽습니다. 날짜가 없는 표는 표에서 마지막으로 누른 줄부터 차례로 채웁니다. 표의 칸에 바로 붙여넣어도 됩니다.</p>
    <textarea value={paste} onChange={e=>setPaste(e.target.value)} rows={4} className={textareaClass+" mt-3 font-mono text-sm"} placeholder={"날짜\t예배\t안내위원\t헌금위원\t말씀봉독\n11/2\t1부\t홍길동, 김철수\t이영희\t박민수"} aria-label="스프레드시트에서 복사한 표"/>
    <div className="mt-2 flex flex-wrap items-center gap-2"><button type="button" className={smallButtonClass} disabled={!paste.trim()} onClick={fillFromPaste}>표에 채우기</button><span className="text-xs text-muted">날짜 없는 표는 {label(rows[focusRow].date)} {rows[focusRow].serviceName}부터</span></div>
   </section>:null}

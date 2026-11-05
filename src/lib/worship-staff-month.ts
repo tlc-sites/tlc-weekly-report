@@ -139,6 +139,8 @@ export function applyPaste(text: string, month: string, rows: Occurrence[], star
   const unmatched: string[] = [];
   const updates: PasteResult["updates"] = [];
   if (!table.length) return { updates, unmatched };
+  const roster = parseRosterSheet(table, month, rows);
+  if (roster) return roster;
   const width = Math.max(...table.map(r => r.length));
   table = table.map(r => [...r, ...Array(width - r.length).fill("")]);
   const firstColRoles = table.slice(1).filter(r => isRoleLabel(r[0])).length;
@@ -202,6 +204,92 @@ export function applyPaste(text: string, month: string, rows: Occurrence[], star
     updates.push({ index, cells });
   }
   return { updates, unmatched };
+}
+
+// 교회 '월별 예배 위원표' 모양: 한 시트에 주일·수요·금요 블록이 나란히 있고, 각 블록은
+//   (위 줄) 블록 제목  예) 주일 예배 위원 / 수요 예배 위원
+//   날짜 | 구분 | 1부 | 2부 | 3부 | 라이프라인 예배      또는   날짜 | 구분 | 명단
+//   11월 1일 | 안내위원(1층) | 이름 … / (빈 날짜) | 헌금위원 | 이름 이름 …
+// 구분이 비어 있으면 위 구분을 이어 쓰고(금요 안내위원 여러 줄), 빈 줄이 나오면 블록이 끝난다(아래 메모·명단은 읽지 않음).
+// 안내위원은 층을 괄호로 남긴다: '홍길동(1층), 김철수(2층 입구)'. 한 칸 안 이름은 띄어쓰기로 나뉜다.
+const splitNames = (v: string) => v.split(/[\s,/·;、]+/).map(x => x.trim()).filter(Boolean)
+  .reduce<string[]>((out, x) => (x.startsWith("(") && out.length ? (out[out.length - 1] += x, out) : (out.push(x), out)), []);
+function rosterRole(label: string): { key: keyof StaffCells; place: string } | null {
+  const v = label.replace(/\s+/g, " ").trim();
+  if (!v) return null;
+  const place = v.match(/\(([^)]*)\)/)?.[1]?.trim() ?? "";
+  if (v.includes("안내")) return { key: "guide", place };
+  if (v.includes("헌금")) return { key: "offering", place };
+  if (v.includes("봉독") || v.includes("말씀")) return { key: "reading", place };
+  return { key: "other", place: v };
+}
+function parseRosterSheet(table: string[][], month: string, rows: Occurrence[]): PasteResult | null {
+  const width = Math.max(...table.map(r => r.length));
+  const cell = (r: number, c: number) => (table[r]?.[c] ?? "").trim();
+  type Block = { headerRow: number; dateCol: number; cols: { col: number; name: string }[]; title: string };
+  const blocks: Block[] = [];
+  table.forEach((row, r) => row.forEach((v, c) => {
+    if (norm(v) !== "날짜" || norm(cell(r, c + 1)) !== "구분") return;
+    const cols: Block["cols"] = [];
+    for (let k = c + 2; k < width && cell(r, k) && norm(cell(r, k)) !== "날짜"; k++) cols.push({ col: k, name: cell(r, k) });
+    let title = "";
+    for (let k = c; k >= 0 && !title; k--) title = cell(r - 1, k);
+    if (cols.length) blocks.push({ headerRow: r, dateCol: c, cols, title });
+  }));
+  if (!blocks.length) return null;
+
+  const acc = new Map<number, { guide: string[]; offering: string[]; reading: string[]; other: string[] }>();
+  const unmatched = new Set<string>();
+  let otherMonth = 0;
+  for (const b of blocks) {
+    // 날짜 칸이 있는 줄들을 찾고, 한 날짜가 차지하는 줄 수(다음 날짜까지 간격)만큼만 읽는다.
+    // 블록 안 빈 줄(수요·금요는 칸이 적다)은 건너뛰고, 마지막 날짜 아래 메모·명단은 읽지 않는다.
+    const looksDate = (v: string) => /\d\s*[-./월]\s*\d/.test(v);
+    const dateRows: number[] = [];
+    for (let r = b.headerRow + 1; r < table.length; r++) {
+      const d = cell(r, b.dateCol);
+      if (!d) continue;
+      if (!looksDate(d)) break;
+      dateRows.push(r);
+    }
+    const gaps = dateRows.slice(1).map((r, i) => r - dateRows[i]);
+    const height = gaps.length ? Math.min(...gaps) : (() => { let h = 1; while (dateRows[0] + h < table.length && table[dateRows[0] + h].some(v => v.trim())) h++; return h; })();
+    for (const [k, start] of dateRows.entries()) {
+     const end = Math.min(dateRows[k + 1] ?? Infinity, start + height, table.length);
+     const rawDate = cell(start, b.dateCol), date = parseDateCell(rawDate, month);
+     if (!date) { otherMonth++; continue; }
+     let role: ReturnType<typeof rosterRole> = null;
+     for (let r = start; r < end; r++) {
+      const g = cell(r, b.dateCol + 1);
+      const names = b.cols.map(x => cell(r, x.col));
+      if (g) role = rosterRole(g);
+      if (!role) continue;
+      const sameDay = rows.map((o, i) => ({ o, i })).filter(x => x.o.date === date);
+      b.cols.forEach((x, k) => {
+        const list = splitNames(names[k]);
+        if (!list.length) return;
+        // '명단' 한 칸짜리 블록은 블록 제목(수요·금요)으로, 여러 칸이면 칸 머리글(1부·2부…)로 예배를 찾는다.
+        const single = b.cols.length === 1;
+        const hit = matchService(single ? b.title.replace(/위원|예배/g, "") : x.name, sameDay.map(y => y.o)) ?? (single && sameDay.length === 1 ? sameDay[0].o : null);
+        if (!hit) { unmatched.add(`${rawDate} ${single ? b.title.replace(/\s*위원\s*$/, "") : x.name}: 이 날짜에 맞는 예배가 목록에 없습니다`); return; }
+        const index = sameDay.find(y => y.o === hit)!.i;
+        const a = acc.get(index) ?? { guide: [], offering: [], reading: [], other: [] };
+        if (role!.key === "guide") a.guide.push(...list.map(n => role!.place ? `${n}(${role!.place})` : n));
+        else if (role!.key === "other") a.other.push(`${role!.place}: ${list.join(", ")}`);
+        else a[role!.key].push(...list);
+        acc.set(index, a);
+      });
+     }
+    }
+  }
+  const updates = [...acc].sort((x, y) => x[0] - y[0]).map(([index, a]) => {
+    const cells: Partial<StaffCells> = { guide: a.guide.join(", "), offering: a.offering.join(", "), reading: a.reading.join(", ") };
+    if (a.other.length) cells.other = a.other.join("\n");
+    return { index, cells };
+  });
+  const list = [...unmatched];
+  if (otherMonth) list.push(`다른 달 날짜 ${otherMonth}개는 건너뛰었습니다`);
+  return { updates, unmatched: list };
 }
 
 // 칸 하나에 여러 칸짜리 표를 붙여넣으면 그 칸부터 오른쪽·아래로 채운다(스프레드시트처럼).
