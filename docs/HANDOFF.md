@@ -795,3 +795,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 ## 2026-11-02 지난 주 보고 작성 (보고 작성 화면)
 - `/write`에 지난 주/다음 주/이번 주 이동(`src/components/week-nav.tsx`), 지난 주면 `PastWeekNotice` 안내. 파트 화면도 주차 유지·「이 주 보고」 표기.
 - DB 변경 없음(DB는 미래 날짜만 막음). 미래 주차 URL은 `reportWeek`가 이번 주로 제한.
+
+## 2026-11-05 PC 화면 개편 (feature/pc-layout 브랜치, 운영 미배포)
+- PC(1024px 이상)만 사이드바·가운데 보고 목록·데스크톱 밀도 CSS(`globals.css` 끝부분, `ui.tsx`의 `ui-btn`/`ui-input`/`page-title`/`page-back` 표시 클래스). 휴대폰 화면은 그대로.
+- 홈 파트별 제출현황은 분류별 묶음 + '완료 n/m · 작성 중 k' 막대(완료 = 제출 또는 모임 없음).
+- 사이드바 '보고 작성' 밑에 교역자용 '주중 기도회 보고' 버튼.
+- 예배위원 한 달 표 `/worship-staff/month`: 요일·month_week로 그 달 예배 날짜를 만들고, 스프레드시트 붙여넣기(`src/lib/worship-staff-month.ts`, 테스트 `tests/worship-staff-month.test.mjs`)로 채운 뒤 바뀐 줄만 저장. 저장은 기존 `worship_staff`(교역자 RLS)에 같은 '안내위원: …' 글 형식으로, updated_at이 다르면 덮어쓰지 않음. 미래 날짜도 저장 가능(DB는 원래 막지 않음, 기존 /worship-staff 화면만 오늘까지). DB 변경 없음.
