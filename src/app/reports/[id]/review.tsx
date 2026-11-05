@@ -15,14 +15,16 @@ export function ReviewPanel({
   status,
   canEditAsReviewer,
   editing,
+  className = "",
 }: {
   reportId: string;
   status: "submitted" | "reviewed";
   canEditAsReviewer: boolean;
   editing: boolean;
+  className?: string;
 }) {
   return (
-    <Card className="mb-4 flex flex-wrap items-center gap-2">
+    <Card className={`mb-4 flex flex-wrap items-center gap-2 ${className}`}>
       <InfoTip className="min-w-0 flex-1" title={<p className="text-sm">{status === "reviewed" ? "확인 처리한 보고입니다." : "검토자로서 내용을 확인했으면 확인 처리해 주세요."}</p>} guide={HELP.review.guide}>{HELP.review.body}</InfoTip>
       {canEditAsReviewer ? (
         <Link href={editing ? `/reports/${reportId}` : `/reports/${reportId}?edit=1`} className={`${secondaryButtonClass} h-9 text-xs`}>
@@ -38,6 +40,18 @@ export function ReviewPanel({
       </form>
     </Card>
   );
+}
+
+// PC 제목줄에 붙는 확인 버튼 (휴대폰은 위의 ReviewPanel 카드를 쓴다)
+export function ReviewActions({ reportId, status, canEditAsReviewer, editing }: { reportId: string; status: "submitted" | "reviewed"; canEditAsReviewer: boolean; editing: boolean }) {
+  return <>
+    {canEditAsReviewer ? <Link href={editing ? `/reports/${reportId}` : `/reports/${reportId}?edit=1`} className="inline-flex h-9 items-center rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-accent">{editing ? "읽기 화면으로" : "검토자 수정"}</Link> : null}
+    <form action={setReviewStatus}>
+      <input type="hidden" name="reportId" value={reportId} />
+      <input type="hidden" name="reviewed" value={String(status !== "reviewed")} />
+      <button type="submit" className={status === "reviewed" ? "inline-flex h-9 items-center rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-accent" : "inline-flex h-9 items-center rounded-xl bg-accent px-4 text-xs font-semibold text-accent-foreground"}>{status === "reviewed" ? "확인 취소" : "확인 처리"}</button>
+    </form>
+  </>;
 }
 
 type CommentRow = {
@@ -62,9 +76,11 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
   return (
     <section id="comments" className="mt-6">
       <h2 className="mb-2 text-sm font-semibold">보고서 코멘트 {comments.length}</h2>
-      <Card className="flex flex-col gap-3">
+      <Card className="report-comments flex flex-col gap-3">
         {comments.map((c) => (
-          <div key={c.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
+          <div key={c.id} className="report-comment border-b border-border pb-3 last:border-0 last:pb-0">
+            <span className="report-comment-avatar" aria-hidden="true">{(c.author?.real_name ?? "?").slice(0, 1)}</span>
+            <div className="min-w-0">
             <div className="mb-1 flex items-center justify-between text-xs text-muted">
               <span>
                 <strong className="text-foreground">{c.author?.real_name}</strong>{" "}
@@ -81,9 +97,10 @@ export async function Comments({ reportId, myId, isSenior, canComment }: { repor
               ) : null}
             </div>
             <AutoTranslation kind="comment" id={c.id} source={c.body} senior={isSenior}/><p className="whitespace-pre-wrap break-words text-sm">{c.body}</p>{c.author_id===myId?<FeedbackEdit kind="report" id={c.id} body={c.body}/>:null}<FeedbackReplies kind="report" commentId={c.id} items={replies} myId={myId}/>
+            </div>
           </div>
         ))}
-        {canComment ? <form action={addComment} className="flex flex-col gap-2">
+        {canComment ? <form action={addComment} className="report-comment-form flex flex-col gap-2">
           <input type="hidden" name="reportId" value={reportId} />
           <textarea name="body" required maxLength={1000} rows={2} placeholder="보고서에 대한 코멘트를 바로 남겨 주세요." className={textareaClass} />
           <SubmitButton className={`${smallButtonClass} self-end`} pendingText="코멘트 등록 중…">코멘트 등록</SubmitButton>

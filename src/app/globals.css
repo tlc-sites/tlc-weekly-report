@@ -268,3 +268,27 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 .app-pill.is-draft { border-style: dashed; }
 .app-pill.is-minor { border-color: #e2c48f; color: #8a5d14; }
 .app-pill.is-incident { border-color: #e3a79e; color: var(--danger); }
+
+/* 보고 화면 PC 배치: 제목줄 고정 + 버튼 오른쪽, 항목은 '이름 | 내용' 두 칸, 코멘트는 대화처럼. 휴대폰은 그대로. */
+.report-head-actions { display: none; }
+@media (min-width: 1024px) {
+  body:has(.app-sidebar) .report-head {
+    position: sticky; top: 0; z-index: 10; margin: -2.25rem -1.25rem 1.25rem; padding: 1.25rem 1.25rem .25rem;
+    background: color-mix(in srgb, var(--background) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
+  }
+  body:has(.app-sidebar) .report-head-row { display: flex; align-items: flex-start; gap: 16px; }
+  body:has(.app-sidebar) .report-head-actions { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 4px; }
+  body:has(.app-sidebar) .report-mobile-only { display: none; }
+  body:has(.app-sidebar) .report-readonly { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0; }
+  body:has(.app-sidebar) .report-readonly > div { display: contents; }
+  body:has(.app-sidebar) .report-readonly dt, body:has(.app-sidebar) .report-readonly dd { padding: 10px 0; border-top: 1px solid var(--border); }
+  body:has(.app-sidebar) .report-readonly > div:first-child dt, body:has(.app-sidebar) .report-readonly > div:first-child dd { border-top: 0; }
+  body:has(.app-sidebar) .report-readonly dt { padding-right: 16px; font-size: 13px; font-weight: 600; }
+  body:has(.app-sidebar) .report-readonly dd { font-size: 15px; line-height: 1.65; }
+  body:has(.app-sidebar) .report-comment { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+  body:has(.app-sidebar) .report-comment-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; }
+  body:has(.app-sidebar) .report-comment-form { flex-direction: row; align-items: flex-end; border-top: 1px solid var(--border); padding-top: 12px; }
+  body:has(.app-sidebar) .report-comment-form textarea { flex: 1; }
+}
+.report-comment-avatar { display: none; }
+@media print { .report-head-actions { display: none !important; } }

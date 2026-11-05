@@ -36,7 +36,7 @@ import {
 import { formatDate, weekOf, todayKST } from "@/lib/week";
 import { deleteDraft, saveReport } from "./actions";
 import { PrivateSharing } from "./sharing";
-import { Comments, ReviewPanel } from "./review";
+import { Comments, ReviewActions, ReviewPanel } from "./review";
 import { CampusForm } from "./campus-form";
 import { EducationForm, type RosterMember } from "./education-form";
 import type { Issue, Messages } from "./form-parts";
@@ -303,7 +303,11 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 
   return (
     <>
+      {/* PC에서는 제목줄을 위에 고정하고 확인·수정 버튼을 오른쪽에 둔다. 휴대폰은 기존 배치 그대로. */}
+      <div className="report-head">
       <BackLink href={`/groups/${report.group_id}?week=${weekOf(report.meeting_date)}`}>{groupDisplayName(group.name)}</BackLink>
+      <div className="report-head-row">
+      <div className="min-w-0 flex-1">
       <PageTitle sub={`${group.parent ? `${groupDisplayName(group.parent.name)} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
         <span className="flex items-center gap-2">
           {title}
@@ -312,6 +316,14 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           </Badge>
         </span>
       </PageTitle>
+      </div>
+      <div className="report-head-actions">
+        {canReview && report.status !== "draft" ? <ReviewActions reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} /> : null}
+        {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="inline-flex h-9 items-center justify-center rounded-xl border border-border px-3 text-xs font-semibold text-accent">{editMode?"열람 화면으로":"보고서 수정"}</Link>:null}
+        {!editMode && report.status !== "draft" ? <a href="#comments" className="inline-flex h-9 items-center justify-center rounded-xl border border-border px-3 text-xs font-semibold text-muted hover:text-accent">코멘트 ↓</a> : null}
+      </div>
+      </div>
+      </div>
 
       {mentionedNames.length?<p className="mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
       {notify||notifiedMinisterNames.length?<p className="mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
@@ -344,10 +356,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </div>
 
       {canReview && report.status !== "draft" ? (
-        <ReviewPanel reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
+        <ReviewPanel className="report-mobile-only" reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
       ) : null}
 
-      {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
+      {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="report-mobile-only mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
       <PrivateSharing reportId={id}/>
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
@@ -376,7 +388,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
 function ReadOnly({ rows }: { rows: [string, string][] }) {
   return (
     <Card>
-      <dl className="flex flex-col gap-3 text-sm">
+      <dl className="report-readonly flex flex-col gap-3 text-sm">
         {rows
           .filter(([, value]) => value)
           .map(([label, value], i) => (
