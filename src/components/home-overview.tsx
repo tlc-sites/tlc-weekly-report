@@ -53,7 +53,7 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
     {!failed && parts.length ? <Card className="mt-3">
       <h3 className="mb-1 font-semibold">{allParts ? "파트별 제출현황" : "내 담당 파트"}</h3>
       <p className="mb-2 text-xs text-muted">{adminStatus ? "파트를 누르면 제출현황을 볼 수 있습니다." : "파트를 누르면 보고를 작성하거나 제출 내역을 볼 수 있습니다."}</p>
-      <ul className="divide-y divide-border">{parts.map(g => {
+      <ul className="home-parts divide-y divide-border">{parts.map(g => {
         const rows = reports.filter(r => r.group_id === g.id);
         const submitted = rows.filter(r => r.status !== "draft").length;
         const drafting = rows.length - submitted;

@@ -292,3 +292,21 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 }
 .report-comment-avatar { display: none; }
 @media print { .report-head-actions { display: none !important; } }
+
+/* 홈 PC 배치: 왼쪽 이번 주 현황, 오른쪽 공지·관리. 사이드바와 겹치는 바로가기는 PC에서만 감춘다. */
+.home-pc-only { display: none; }
+@media (min-width: 1024px) {
+  body:has(.app-sidebar) .home-pc-only { display: block; }
+  body:has(.app-sidebar) .home-mobile-only, body:has(.app-sidebar) .home-pc-hide { display: none; }
+  body:has(.app-sidebar):has(.home-cols) main { max-width: 76rem; }
+  body:has(.app-sidebar) .home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
+  body:has(.app-sidebar) .home-col-side { position: sticky; top: 1.5rem; }
+}
+@media (min-width: 1440px) {
+  body:has(.app-sidebar) .home-parts { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.5rem; }
+  body:has(.app-sidebar) .home-parts > li { border-top: 1px solid var(--border); border-bottom-width: 0 !important; }
+  body:has(.app-sidebar) .home-parts > li:nth-child(-n+2) { border-top: 0; }
+}
+
+/* 목록이 긴 화면(주간 요약·제출현황·보고 목록·공지 등)은 PC에서 본문을 넓힌다. 페이지에 .page-wide 표시를 둔다. */
+@media (min-width: 1024px) { body:has(.app-sidebar):has(.page-wide) main { max-width: 64rem; } }
