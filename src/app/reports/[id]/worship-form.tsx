@@ -13,13 +13,14 @@ type Props<T> = {
   initial: T;
   showMessages: boolean;
   mentionGroups?: { id: string; label: string }[];
+  ministers?: { id: string; label: string }[];
 };
 
 const personHint = (category: string) =>
   category === "인력" || category === "인력·관계" ? "특정인을 비난하기보다 상황과 개선 방안 위주로 적어 주세요." : null;
 
 // 예배팀: 진행 결과, 이슈, 요청사항
-export function WorshipForm({ action, reportId, initial, showMessages, mentionGroups=[], worshipTeam=false, staffReport=false }: Props<WorshipPayload> & {worshipTeam?:boolean;staffReport?:boolean}) {
+export function WorshipForm({ action, reportId, initial, showMessages, mentionGroups=[], ministers=[], worshipTeam=false, staffReport=false }: Props<WorshipPayload> & {worshipTeam?:boolean;staffReport?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="worship" payload={p}>
@@ -60,7 +61,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
       <Section title="사역 보고">
         <TextArea label="사역 내용" value={p.details.notes} placeholder={staffReport?"예: 수요예배도 2층 대예배실처럼 그레이스홀 강단 바닥에 봉독자 위치를 표시해 주시면 좋겠습니다.":"진행한 사역, 있었던 일, 필요한 조치와 다음 주 준비를 한 번에 적어 주세요."} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
       </Section>
-      <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} notify={p.details.notify} onNotify={notify=>setP({...p,details:{...p.details,notify}})}/>
+      <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} ministers={ministers} notify={p.details.notify} ministerIds={p.details.notify_ministers} onNotify={patch=>setP({...p,details:{...p.details,...patch}})}/>
       <ReportAttentionFields needed={p.details.needs_attention===true} status={p.details.attention_status??"open"} onChange={(needed,status)=>setP({...p,details:{...p.details,needs_attention:needed,attention_status:status as "open"|"temporary"|"resolved"}})}/>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>
@@ -68,7 +69,7 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
 }
 
 // 학교: 출결 없이 예배·교육 내용과 이슈를 보고한다.
-export function OtherForm({ action, reportId, initial, showMessages, mentionGroups=[], internship=false }: Props<OtherPayload> & {internship?:boolean}) {
+export function OtherForm({ action, reportId, initial, showMessages, mentionGroups=[], ministers=[], internship=false }: Props<OtherPayload> & {internship?:boolean}) {
   const [p, setP] = useState(initial);
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
@@ -100,7 +101,7 @@ export function OtherForm({ action, reportId, initial, showMessages, mentionGrou
       </Section>
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setP({ ...p, details: { ...p.details, notes } })} />
-        <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} notify={p.details.notify} onNotify={notify=>setP({...p,details:{...p.details,notify}})}/>
+        <MentionPicker groups={mentionGroups} value={p.details.mentions??[]} onChange={mentions=>setP({...p,details:{...p.details,mentions}})} ministers={ministers} notify={p.details.notify} ministerIds={p.details.notify_ministers} onNotify={patch=>setP({...p,details:{...p.details,...patch}})}/>
       </Section>
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>

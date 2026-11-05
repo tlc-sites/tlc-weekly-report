@@ -47,6 +47,8 @@ const text = (max: number) => z.string().trim().max(max);
 const mentions = z.array(z.uuid()).max(5).optional();
 // 교역자 전체 또는 리더십 전체(담임목사님·사모님·교역자)에 알린다 (DB 트리거가 제출 시 보낸다)
 const notify = z.enum(["clergy", "leadership"]).optional();
+// 알림을 받을 교역자를 직접 고른다 (DB 트리거가 활성 교역자인지 다시 확인한다)
+const notify_ministers = z.array(z.uuid()).max(50).optional();
 const longText = text(1000);
 
 const requestSchema = z.object({ category: z.enum(REQUEST_CATEGORIES), content: text(500).min(1) });
@@ -67,6 +69,7 @@ export const educationPayload = z.object({
     sermon_summary: longText.default(""),
     mentions,
     notify,
+    notify_ministers,
     activity: longText,
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -111,6 +114,7 @@ export const worshipPayload = z.object({
     attention_status: z.enum(["open","temporary","resolved"]).optional(),
     mentions,
     notify,
+    notify_ministers,
     result: z.union([z.enum(["normal", "minor", "incident", "other"]), z.literal("")]),
     notes: longText,
     requests: z.array(requestSchema).max(20),
@@ -129,6 +133,7 @@ export const otherPayload = z.object({
     content: text(2000).default(""),
     mentions,
     notify,
+    notify_ministers,
     notes: longText,
     requests: z.array(requestSchema).max(20),
   }),

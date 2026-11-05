@@ -141,6 +141,10 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const mentions = Array.isArray(d.mentions) ? (d.mentions as unknown[]).filter((v): v is string => typeof v === "string") : [];
   const mentionGroups = (await listGroupsOrdered(supabase)).filter((g) => g.childCount === 0 && g.id !== group.id).map((g) => ({ id: g.id, label: groupDisplayName(g.name) }));
   const notify = d.notify === "clergy" || d.notify === "leadership" ? d.notify : undefined;
+  const notify_ministers = Array.isArray(d.notify_ministers) ? (d.notify_ministers as unknown[]).filter((v): v is string => typeof v === "string") : [];
+  const allMinisters = ((await supabase.from("profiles").select("id,real_name").eq("status","active").eq("is_minister",true).order("real_name")).data ?? []).map((m) => ({ id: m.id as string, label: m.real_name as string }));
+  const ministers = allMinisters.filter((m) => m.id !== profile.id);
+  const notifiedMinisterNames = allMinisters.filter((m) => notify_ministers.includes(m.id)).map((m) => m.label);
   const mentionedNames = mentionGroups.filter((g) => mentions.includes(g.id)).map((g) => g.label);
 
   let body: React.ReactNode = null;
@@ -157,7 +161,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
     const roster = (members ?? []) as RosterMember[];
     const att = new Map((attendance ?? []).map((a) => [a.member_id as string, a]));
     const initial: EducationPayload = {
-      details: { sermon_passage: str("sermon_passage"), preacher: str("preacher"), sermon_summary: str("sermon_summary"), activity: str("activity"), notes: str("notes"), requests, mentions, notify },
+      details: { sermon_passage: str("sermon_passage"), preacher: str("preacher"), sermon_summary: str("sermon_summary"), activity: str("activity"), notes: str("notes"), requests, mentions, notify, notify_ministers },
       attendance: roster.map((m) => {
         const a = att.get(m.id);
         return {
@@ -180,7 +184,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         initial={(draftPayload??initial) as typeof initial}
         roster={roster}
         canEditPrayer={Boolean(privateRes.data)}
-        mentionGroups={mentionGroups}
+        mentionGroups={mentionGroups} ministers={ministers}
         guardianCheck={Boolean(group.settings?.guardian_check)}
         showMessages={isAuthor}
       />
@@ -218,20 +222,20 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         <WorshipForm
           worshipTeam={group.name==="예배팀"}
           staffReport={group.name==="예배위원"}
-          mentionGroups={mentionGroups}
+          mentionGroups={mentionGroups} ministers={ministers}
           key={draftVersion}
           action={saveReport}
           reportId={id}
-          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff"),worship_leader:str("worship_leader"),rotation:str("rotation"),needs_attention:report.details.needs_attention===true,attention_status:str("attention_status")||"open",mentions,notify }, issues, messages }) as WorshipPayload}
+          initial={(draftPayload??{ details: { result, notes: str("notes"), requests, sermon_passage:str("sermon_passage"),sermon_content:str("sermon_content"),service_staff:str("service_staff"),worship_leader:str("worship_leader"),rotation:str("rotation"),needs_attention:report.details.needs_attention===true,attention_status:str("attention_status")||"open",mentions,notify,notify_ministers }, issues, messages }) as WorshipPayload}
           showMessages={isAuthor}
         />
       );
     } else if (editMode) {
       const initial: OtherPayload = {
-        details: { song_list: str("song_list"), sharing_topic:str("sharing_topic"),sharing_passage:str("sharing_passage"),sharing_place:str("sharing_place"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests, mentions, notify },
+        details: { song_list: str("song_list"), sharing_topic:str("sharing_topic"),sharing_passage:str("sharing_passage"),sharing_place:str("sharing_place"), sermon_passage: str("sermon_passage"), preacher: str("preacher"), content: str("content"), notes: str("notes"), requests, mentions, notify, notify_ministers },
         issues, messages,
       };
-      body = <OtherForm mentionGroups={mentionGroups} internship={group.settings?.report_category==="internship"} key={draftVersion} action={saveReport} reportId={id} initial={(draftPayload??initial) as typeof initial} showMessages={isAuthor} />;
+      body = <OtherForm mentionGroups={mentionGroups} ministers={ministers} internship={group.settings?.report_category==="internship"} key={draftVersion} action={saveReport} reportId={id} initial={(draftPayload??initial) as typeof initial} showMessages={isAuthor} />;
     } else {
       body = (
         <ReadOnly
@@ -310,7 +314,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </PageTitle>
 
       {mentionedNames.length?<p className="mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
-      {notify?<p className="mb-2 text-sm text-accent">함께 알림: {notify==="clergy"?"교역자":"리더십 전체(담임목사님·사모님·교역자)"}</p>:null}
+      {notify||notifiedMinisterNames.length?<p className="mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
       <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
       {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}

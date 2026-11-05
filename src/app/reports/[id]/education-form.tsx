@@ -39,6 +39,7 @@ export function EducationForm({
   showMessages,
   canEditPrayer,
   mentionGroups = [],
+  ministers = [],
 }: {
   action: (formData: FormData) => Promise<void>;
   reportId: string;
@@ -48,6 +49,7 @@ export function EducationForm({
   showMessages: boolean;
   canEditPrayer: boolean;
   mentionGroups?: { id: string; label: string }[];
+  ministers?: { id: string; label: string }[];
 }) {
   const [p, setP] = useState(initial);
   const byId = new Map(p.attendance.map((a) => [a.member_id, a]));
@@ -241,7 +243,7 @@ export function EducationForm({
 
       <Section title="특이사항">
         <TextArea value={p.details.notes} onChange={(notes) => setDetails({ notes })} />
-        <MentionPicker groups={mentionGroups} value={p.details.mentions ?? []} onChange={(mentions) => setDetails({ mentions })} notify={p.details.notify} onNotify={(notify) => setDetails({ notify })} />
+        <MentionPicker groups={mentionGroups} value={p.details.mentions ?? []} onChange={(mentions) => setDetails({ mentions })} ministers={ministers} notify={p.details.notify} ministerIds={p.details.notify_ministers} onNotify={(patch) => setDetails(patch)} />
       </Section>
 
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}

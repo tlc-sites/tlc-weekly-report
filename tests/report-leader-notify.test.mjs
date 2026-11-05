@@ -46,4 +46,17 @@ test('제출하면 교역자 전체 또는 리더십 전체(목사님·사모님
  // 교역자가 직접 쓴 보고면 본인은 빠진다
  await db.query("update report.reports set details='{\"notify\":\"clergy\"}' where id=$1",[r2.id]);
  assert.deepEqual((await db.query('select user_id from report.inbox_notifications where report_id=$1',[r2.id])).rows.map(x=>x.user_id),[ids.minister2]);
+ // 교역자를 골라서 보내면 고른 교역자에게만 간다. 교역자가 아닌 계정·비활성 교역자·모르는 id·잘못된 값은 무시한다
+ const r3=(await db.query("insert into report.reports(group_id,author_id,author_name,meeting_date,meeting_label,status,details) values($1,$2,'작성자',current_date,'수요예배','draft',$3::jsonb) returning id",[team,ids.writer,JSON.stringify({notify_ministers:[ids.minister2,ids.member,ids.oldMinister,ids.pastor,randomUUID(),'x']})])).rows[0];
+ assert.equal((await db.query('select 1 from report.inbox_notifications where report_id=$1',[r3.id])).rows.length,0);
+ await db.query("update report.reports set status='submitted' where id=$1",[r3.id]);
+ assert.deepEqual((await db.query('select user_id from report.inbox_notifications where report_id=$1',[r3.id])).rows.map(x=>x.user_id),[ids.minister2]);
+ // 나중에 한 명 더 고르면 그 사람만 새로 받는다
+ await db.query("update report.reports set details=jsonb_set(details,'{notify_ministers}',$2::jsonb) where id=$1",[r3.id,JSON.stringify([ids.minister2,ids.minister])]);
+ assert.deepEqual((await db.query('select user_id from report.inbox_notifications where report_id=$1 order by created_at,user_id',[r3.id])).rows.map(x=>x.user_id).sort(),[ids.minister,ids.minister2].sort());
 }finally{await db.close();}});
+
+test('교역자 개별 선택값 검증',()=>{
+ assert.ok(worshipPayload.safeParse({...base,details:{...base.details,notify_ministers:[randomUUID()]}}).success);
+ assert.ok(!worshipPayload.safeParse({...base,details:{...base.details,notify_ministers:['x']}}).success);
+});
