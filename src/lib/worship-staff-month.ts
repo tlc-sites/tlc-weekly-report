@@ -135,7 +135,7 @@ export type PasteResult = { updates: { index: number; cells: Partial<StaffCells>
 // - 머리글이 없으면 '날짜, (예배), 안내, 헌금, 봉독, 그 외' 순서로 보고, 날짜도 없으면 startIndex부터 차례로 채운다.
 // - 병합된 날짜 칸(아래 줄이 비어 있음)은 위 날짜를 이어 쓴다. 같은 날 예배가 여럿인데 예배 칸이 없으면 순서대로 넣는다.
 // 메신저·메모장 등을 거치면 탭이 띄어쓰기 4칸으로 바뀌어 온다. 탭이 하나도 없을 때만 4칸을 한 칸 구분으로 본다.
-export const tabsFromSpaces = (text: string) => (text.includes("	") ? text : text.replace(/ {4}/g, "	"));
+export const tabsFromSpaces = (text: string) => (text.includes("\t") ? text : text.replace(/ {4}/g, "\t"));
 
 export function applyPaste(text: string, month: string, rows: Occurrence[], startIndex = 0): PasteResult {
   let table = parseTable(tabsFromSpaces(text));
