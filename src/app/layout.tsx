@@ -5,6 +5,7 @@ import Link from "@/components/pending-link";
 import { MenuIcon } from "@/components/menu-heading";
 import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
 import {BottomNavigation} from "@/components/bottom-navigation";
+import {DesktopSidebar} from "@/components/desktop-sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,7 +26,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full"><TranslationLanguage>
-        <header data-print-hide className="border-b border-border/70 bg-background">
+        <Suspense fallback={null}><DesktopSidebar/></Suspense>
+        <header data-print-hide className="app-header border-b border-border/70 bg-background">
           <div className="mx-auto flex min-h-16 w-full max-w-2xl items-center gap-2 px-4 sm:px-5">
             <Link href="/" className="app-brand inline-flex min-w-0 flex-1 items-center gap-2 text-sm sm:text-base text-accent">
               <span className="shrink-0"><MenuIcon name="report" small /></span><span className="min-w-0 break-keep">TLC 교회 보고서</span>
