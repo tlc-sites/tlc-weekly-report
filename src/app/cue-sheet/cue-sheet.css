@@ -8,12 +8,12 @@
 .cue .cue-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media screen and (max-width: 860px) { .cue .cue-body { grid-template-columns: minmax(0, 1fr); } }
 .cue .cue-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.cue .cue-t.songs tbody th { text-align: center; }
+.cue .cue-t.songs tbody th { text-align: center; white-space: nowrap; overflow-wrap: normal; padding-inline: 4px; }
 .cue table.cue-t { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
 .cue .cue-t col.c-time { width: 8.2em; }
 .cue .cue-t col.c-what { width: 10em; }
 .cue .cue-t col.c-role { width: 11.5em; }
-.cue .cue-t col.c-num { width: 5em; }
+.cue .cue-t col.c-num { width: 6.5em; }
 .cue .cue-t thead th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 10px 12px 6px; border-bottom: 1px solid var(--line2); }
 .cue .cue-t tbody th, .cue .cue-t td { border-bottom: 1px solid var(--line); padding: 0 12px; height: 42px; text-align: left; vertical-align: middle; }
 .cue .cue-t tbody tr:last-child > * { border-bottom: 0; }
@@ -50,6 +50,7 @@
   .cue .cue-t col.c-time { width: 30mm; }
   .cue .cue-t col.c-what { width: 39mm; }
   .cue .cue-t col.c-role { width: 45mm; }
+  .cue .cue-t col.c-num { width: 22mm; }
   .cue .cue-t thead th { font-size: 7.5pt; padding: 2mm 3mm 1.4mm; }
   .cue .cue-col { gap: 3.4mm; }
   .cue .cue-t tbody th, .cue .cue-t td { height: 8.9mm; padding: 0 3mm; border-color: var(--line2); }
@@ -70,7 +71,7 @@
   .cue .compact .cue-t col.c-time { width: 21mm; }
   .cue .compact .cue-t col.c-what { width: 25mm; }
   .cue .compact .cue-t col.c-role { width: 23mm; }
-  .cue .compact .cue-t col.c-num { width: 10mm; }
+  .cue .compact .cue-t col.c-num { width: 15mm; }
   .cue .compact .cue-t thead th { font-size: 6.4pt; padding: 1.2mm 1.8mm 1mm; }
   .cue .compact .cue-t tbody th, .cue .compact .cue-t td { height: 6.8mm; padding: 0 1.8mm; }
   .cue .compact .cue-t td.time { font-size: 8.2pt; white-space: normal; }
