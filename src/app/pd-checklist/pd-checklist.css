@@ -176,7 +176,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .flow .hide { display: none; }
 
 .pdc .roster { margin-top: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 6px 16px; display: grid; grid-template-columns: 76px repeat(6, minmax(0, 1fr)); column-gap: 14px; }
-.pdc .roster .rl { font-weight: 600; font-size: 13px; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
+.pdc .roster .rl { grid-column: 1; font-weight: 600; font-size: 13px; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
 .pdc .roster .rl small { font-weight: 500; font-size: 11px; color: var(--faint); }
 .pdc .slot { border-bottom: 1px solid var(--line); padding: 8px 0 6px; display: flex; flex-direction: column; min-width: 0; }
 .pdc .roster > :nth-last-child(-n+7) { border-bottom: 0; }
@@ -199,6 +199,15 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
 @media screen and (max-width: 900px) { .pdc .cols3 { grid-template-columns: minmax(0, 1fr); } }
 .pdc .cols3 .blk-h .tm { font-size: 17px; font-weight: 600; letter-spacing: 0; }
+.pdc .cols3 .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pdc .songs { display: flex; flex-direction: column; }
+.pdc .song-row { display: grid; grid-template-columns: 2.8em minmax(0, 1fr); align-items: center; gap: 6px; border-bottom: 1px solid var(--line); padding: 4px 0; }
+.pdc .song-row:last-child { border-bottom: 0; }
+.pdc .song-row .k { font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; }
+.pdc .song-row input { border: 0; background: transparent; padding: 6px 4px; font-size: 14px; width: 100%; min-width: 0; border-radius: 6px; }
+.pdc .song-row input:hover { background: var(--soft); }
+.pdc .song-row input:focus { background: var(--accent-soft); outline: none; }
+.pdc .song-row .pv { grid-column: 2; }
 .pdc .rp { display: grid; grid-template-columns: 84px minmax(0, 1fr); margin-top: 4px; }
 .pdc .rp-row { display: contents; }
 .pdc .rp-row > div { border-bottom: 1px solid var(--line); padding: 6px 2px; font-size: 13px; min-width: 0; }
@@ -279,6 +288,11 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .slot .pv { display: block; font-size: 9.3pt; line-height: 1.2; }
   .pdc .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2mm; }
   .pdc .cols3 .blk-h .tm { font-size: 11.5pt; }
+  .pdc .cols3 .stack { gap: 2.4mm; }
+  .pdc .song-row { padding: 0; min-height: 7mm; gap: 1.5mm; }
+  .pdc .song-row .k { font-size: 8pt; }
+  .pdc .song-row input { display: none; }
+  .pdc .song-row .pv { display: block; font-size: 9.5pt; }
   .pdc .cols3 .ck { padding: .3mm .6mm; }
   .pdc .cols3 .grid .ck { padding: .35mm 1.2mm; }
   .pdc .rp { grid-template-columns: 21mm minmax(0, 1fr); margin-top: .6mm; }

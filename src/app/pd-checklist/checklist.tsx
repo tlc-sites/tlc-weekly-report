@@ -146,6 +146,8 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const simple=(title:string,tag:string,body:ReactNode)=><div className="blk"><div className="blk-h"><span className="tm">{title}</span>{tag?<span className="tt">{tag}</span>:null}</div><div className="blk-b">{body}</div></div>;
 
  const r=t.page2.report;
+ // 송리스트(칸 ID가 모두 song…인 구분)는 담당자 칸 대신 2쪽 아래 가운데 박스로 보인다.
+ const songs=t.page2.roster.find(g=>g.fields.length>0&&g.fields.every(f=>f.id.startsWith("song")));
  const reportBody=<>
   <div className="shd">문제 분류</div>
   <div className="grid rp-cats" style={{gridTemplateColumns:"repeat(2,minmax(0,1fr))"}}>{r.categories.map(c=>ck(c.id,c.text))}</div>
@@ -205,11 +207,18 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {t.page2.flow.map(s=><div key={s.id} className={"fc"+(isOn(s.condition,conds)?"":" hide")}>{ck(s.id,null,{label:s.label})}</div>)}
    </div></div>
 
-   <div className="roster">{t.page2.roster.map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>
+   <div className="roster">{t.page2.roster.filter(g=>g!==songs).map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>
 
    <div className="cols3">
-    {simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items))}
-    {simple(t.page2.after.title,"",items(t.page2.after.items))}
+    <div className="stack">
+     {simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items))}
+     {simple(t.page2.after.title,"",items(t.page2.after.items))}
+    </div>
+    {songs?simple(songs.group,"큐시트와 같은 값",<div className="songs">{songs.fields.map(f=><div key={f.id} className="song-row">
+     <label htmlFor={"pd-r-"+f.id} className="k">{f.label}</label>
+     <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} onChange={e=>setRosterField(f.id,e.target.value)} onBlur={()=>flush("roster:"+f.id)}/>
+     <div className="pv">{roster[f.id]??""}</div>
+    </div>)}</div>):null}
     {simple(r.title??"PD REPORT","종료 후 보고",reportBody)}
    </div>
   </section>
