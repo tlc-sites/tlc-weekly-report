@@ -28,7 +28,7 @@ export type RosterGroup = { group: string; sub: string; fields: { id: string; la
 export type ReportField = { id: string; label: string; type: "text" | "choice"; options?: string[]; placeholder?: string };
 
 /** 주일예배 큐시트 양식. lines·staff의 key는 회차 roster의 키(PD 담당자 칸과 같은 키면 같은 값). 'pd'는 회차의 PD 이름. */
-export type CueRow = { id: string; ko: string; en: string; from: number; to: number | null; lines: { key: string; hint?: string }[] };
+export type CueRow = { id: string; ko: string; en: string; from: number; to: number | null; condition?: string | null; lines: { key: string; hint?: string }[] };
 export type Cue = { label: string; rows: CueRow[]; staff: { key: string; ko: string; en: string }[]; songs: number };
 
 export type PdTemplate = {

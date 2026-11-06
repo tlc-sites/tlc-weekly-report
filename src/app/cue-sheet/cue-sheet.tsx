@@ -1,14 +1,22 @@
 "use client";
-import {useCallback,useEffect,useRef,useState} from "react";
+import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSProperties} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {cueSongKeys,cueTime,cueTitle,type Cue,type PdRun} from "@/lib/pd-checklist";
+import {cueSongKeys,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
-export type CueService={key:string;name:string;start:string;cue:Cue;roster:Record<string,string>;pd:string};
+export type CueService={key:string;name:string;start:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
 type Lang="ko"|"en";
+type Patch={pd?:string;roster?:Record<string,string>;conditions?:Conditions};
 const POLL_MS=15000;
+const PRINT_KEY="tlc-cue-print-lang";
+// 인쇄할 언어는 기기마다 기억한다(기본: 한글·영어 모두).
+const printLang={
+ read:()=>{try{return localStorage.getItem(PRINT_KEY)??"both";}catch{return "both";}},
+ write:(v:string)=>{try{localStorage.setItem(PRINT_KEY,v);}catch{}window.dispatchEvent(new Event(PRINT_KEY));},
+ subscribe:(fn:()=>void)=>{window.addEventListener(PRINT_KEY,fn);return ()=>window.removeEventListener(PRINT_KEY,fn);},
+};
 
 // 'pd'는 회차의 PD 이름, 나머지는 roster 키. 영어 값은 '키_en'(비우면 한글 값을 쓴다).
 const valuesOf=(s:{roster:Record<string,string>;pd:string})=>({...s.roster,pd:s.pd});
@@ -17,37 +25,50 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
  const router=useRouter();
  const [supabase]=useState(createClient);
  const [vals,setVals]=useState<Values>(()=>Object.fromEntries(services.map(s=>[s.key,valuesOf(s)])));
+ const [conds,setConds]=useState<Record<string,Conditions>>(()=>Object.fromEntries(services.map(s=>[s.key,s.conditions])));
+ const [lang,setLang]=useState<Lang>("ko");
+ const printWhich=useSyncExternalStore(printLang.subscribe,printLang.read,()=>"both");
  const [status,setStatus]=useState<"idle"|"saving"|"saved"|"error">("idle");
  const timers=useRef(new Map<string,ReturnType<typeof setTimeout>>());
  const latest=useRef(new Map<string,{service:string;key:string;value:string}>());
  const pending=useRef(0);
  const root=useRef<HTMLDivElement>(null);
 
- const send=useCallback(async(service:string,key:string,value:string)=>{
+ const send=useCallback(async(service:string,patch:Patch)=>{
   pending.current++;setStatus("saving");
-  const patch=key==="pd"?{pd:value}:{roster:{[key]:value}};
   const {error}=await supabase.rpc("pd_run_save",{p_service:service,p_date:date,p_patch:patch});
   pending.current--;
   setStatus(error?"error":pending.current?"saving":"saved");
  },[supabase,date]);
  const flush=useCallback((id?:string)=>{
-  for(const [k,t] of [...timers.current]){if(id&&k!==id)continue;clearTimeout(t);timers.current.delete(k);const v=latest.current.get(k);latest.current.delete(k);if(v)void send(v.service,v.key,v.value);}
+  for(const [k,t] of [...timers.current]){
+   if(id&&k!==id)continue;
+   clearTimeout(t);timers.current.delete(k);const v=latest.current.get(k);latest.current.delete(k);
+   if(v)void send(v.service,v.key==="pd"?{pd:v.value}:{roster:{[v.key]:v.value}});
+  }
  },[send]);
  const set=(service:string,key:string,value:string)=>{
   setVals(v=>({...v,[service]:{...v[service],[key]:value}}));
   const id=service+":"+key;const old=timers.current.get(id);if(old)clearTimeout(old);
   latest.current.set(id,{service,key,value});timers.current.set(id,setTimeout(()=>flush(id),700));setStatus("saving");
  };
+ // 성찬주간은 주일 예배 세트 전체에 한 번에 켜고 끈다(PD 체크리스트의 같은 스위치).
+ const communionOn=services.some(s=>s.hasCommunion&&conds[s.key]?.communion);
+ const setCommunion=(on:boolean)=>{
+  setConds(c=>Object.fromEntries(Object.entries(c).map(([k,v])=>[k,services.find(s=>s.key===k)?.hasCommunion?{...v,communion:on}:v])));
+  for(const s of services)if(s.hasCommunion)void send(s.key,{conditions:{communion:on}});
+ };
 
  // 다른 기기(PD 체크리스트 포함)에서 고친 값을 주기적으로 가져온다. 글을 쓰는 중이면 건너뛴다.
  useEffect(()=>{
   const pull=async()=>{
    if(document.hidden||pending.current||timers.current.size)return;
-   if(root.current?.contains(document.activeElement)&&document.activeElement?.tagName==="INPUT")return;
-   const {data}=await supabase.from("pd_runs").select("service_key,roster,pd_name").eq("run_date",date);
+   if(root.current?.contains(document.activeElement)&&document.activeElement?.tagName==="INPUT"&&(document.activeElement as HTMLInputElement).type==="text")return;
+   const {data}=await supabase.from("pd_runs").select("service_key,roster,pd_name,conditions").eq("run_date",date);
    if(!data||pending.current||timers.current.size)return;
-   const got=new Map((data as Pick<PdRun,"service_key"|"roster"|"pd_name">[]).map(r=>[r.service_key,valuesOf({roster:r.roster,pd:r.pd_name})]));
-   setVals(v=>Object.fromEntries(Object.keys(v).map(k=>[k,got.get(k)??{}])));
+   const got=new Map((data as Pick<PdRun,"service_key"|"roster"|"pd_name"|"conditions">[]).map(r=>[r.service_key,r]));
+   setVals(v=>Object.fromEntries(Object.keys(v).map(k=>{const r=got.get(k);return [k,r?valuesOf({roster:r.roster,pd:r.pd_name}):{}];})));
+   setConds(c=>Object.fromEntries(Object.entries(c).map(([k,v])=>[k,{...v,...got.get(k)?.conditions}])));
   };
   const id=setInterval(pull,POLL_MS);
   const vis=()=>{if(document.hidden)flush();else void pull();};
@@ -58,58 +79,76 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
 
  const go=(d:string)=>{flush();router.push(`/cue-sheet?date=${d}`);};
  const statusText={idle:"",saving:"저장 중…",saved:"저장됨",error:"저장하지 못했습니다. 연결을 확인하고 다시 입력해 주세요."}[status];
+ const printLangs:Lang[]=printWhich==="ko"?["ko"]:printWhich==="en"?["en"]:["ko","en"];
 
- const field=(s:CueService,key:string,label:string,hint?:string)=><div className="cue-field" key={key}>
-  <div className="cue-k">{label}</div>
-  <input aria-label={`${label} 한글`} value={vals[s.key]?.[key]??""} placeholder={hint??""} maxLength={key==="pd"?40:1000} autoComplete="off" onChange={e=>set(s.key,key,e.target.value)} onBlur={()=>flush(s.key+":"+key)}/>
-  <input aria-label={`${label} 영어`} value={vals[s.key]?.[key+"_en"]??""} placeholder={vals[s.key]?.[key]||"English"} maxLength={1000} autoComplete="off" lang="en" onChange={e=>set(s.key,key+"_en",e.target.value)} onBlur={()=>flush(s.key+":"+key+"_en")}/>
- </div>;
-
- return <div ref={root} className="cue">
-  <div className="cue-bar" data-print-hide>
-   <b>주일예배 큐시트</b>
-   <label>날짜 <input type="date" value={date} onChange={e=>e.target.value&&go(e.target.value)}/></label>
-   {date!==defaultDate?<button type="button" onClick={()=>go(defaultDate)}>돌아오는 주일</button>:null}
-   <span className="cue-status" role={status==="error"?"alert":"status"}>{statusText}</span>
-   <button type="button" className="primary" onClick={()=>{flush();window.print();}}>인쇄 · PDF</button>
-  </div>
-  <p className="cue-help" data-print-hide>예배마다 한글판·영어판이 한 장씩(양면) 인쇄됩니다. 영어 칸을 비우면 한글 값이 그대로 들어갑니다. 예배인도·담당 팀·PD·송리스트는 PD 체크리스트의 담당자 칸과 같은 값이라 어느 쪽에서 적어도 함께 바뀝니다.</p>
-
-  {services.map(s=><section key={s.key} className="cue-edit" data-print-hide aria-label={s.name}>
-   <header><h2>{s.name}</h2><span>{cueTitle(date,s.cue.label,s.start)}</span><Link href={`/pd-checklist?service=${s.key}&date=${date}`} onClick={()=>flush()}>PD 체크리스트 ›</Link></header>
-   <div className="cue-cols">
-    <div><h3>순서 <small>한글 / English</small></h3>
-     {s.cue.rows.map(r=><div key={r.id} className="cue-row"><div className="cue-t">{cueTime(s.start,r)} · {r.ko}</div>{r.lines.map(l=>field(s,l.key,l.hint??r.ko,l.hint))}</div>)}</div>
-    <div><h3>담당 <small>한글 / English</small></h3>{s.cue.staff.map(st=>field(s,st.key,st.ko))}
-     <h3 className="mt">Song List</h3>{cueSongKeys(s.cue).map((k,i)=>field(s,k,i<s.cue.songs?String(i+1):"헌금"))}</div>
+ return <div ref={root} className="pdc cue">
+  <div className="bar">
+   <div className="bar-in">
+    <div className="brand"><b>주일예배 큐시트</b></div>
+    <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go(e.target.value)}/></label>
+    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go(defaultDate)}>돌아오는 주일</button>:null}
+    {services.some(s=>s.hasCommunion)?<div className="toggles"><label className="tg"><input type="checkbox" checked={communionOn} onChange={e=>setCommunion(e.target.checked)}/><span className="sw"/>성찬주간 (1주차)</label></div>:null}
+    <div className="seg" role="group" aria-label="작성 언어">
+     <button type="button" aria-pressed={lang==="ko"} onClick={()=>setLang("ko")}>한글</button>
+     <button type="button" aria-pressed={lang==="en"} onClick={()=>setLang("en")}>English</button>
+    </div>
+    <div className="actions">
+     <span className="hint">인쇄</span>
+     <div className="seg" role="group" aria-label="인쇄할 언어">
+      {([["both","한·영"],["ko","한글"],["en","English"]] as const).map(([k,l])=><button key={k} type="button" aria-pressed={printWhich===k} onClick={()=>printLang.write(k)}>{l}</button>)}
+     </div>
+     <button type="button" className="btn primary" onClick={()=>{flush();window.print();}}>인쇄 · PDF</button>
+    </div>
+    <p className={"save-status"+(status==="error"?" is-error":"")} role={status==="error"?"alert":"status"}>
+     {statusText||(lang==="en"?"English 칸을 비우면 한글 값이 그대로 인쇄됩니다.":"칸을 눌러 바로 적으면 자동 저장됩니다. 예배인도·담당 팀·PD·송리스트는 PD 체크리스트와 같은 값입니다.")}
+    </p>
    </div>
-  </section>)}
+  </div>
 
-  {services.flatMap(s=>(["ko","en"] as const).map(lang=><CuePage key={s.key+lang} s={s} date={date} lang={lang} v={vals[s.key]??{}}/>))}
+  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
+  <div className="cue-print">{services.flatMap(s=>printLangs.map(l=><Sheet key={s.key+l} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
  </div>;
 }
 
-// 인쇄용 한 장(스프레드시트 양식과 같은 배치). 화면에서는 숨긴다.
-function CuePage({s,date,lang,v}:{s:CueService;date:string;lang:Lang;v:Record<string,string>}){
- const val=(k:string)=>lang==="en"?(v[k+"_en"]||v[k]||""):(v[k]||"");
+// 한 장(A4 가로). onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
+function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;
+ onChange?:(key:string,value:string)=>void;onBlur?:(key:string)=>void;onLeave?:()=>void}){
  const en=lang==="en";
+ const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
+ const shown=(k:string)=>en?(v[k+"_en"]||v[k]||""):(v[k]||"");
+ const cell=(k:string,label:string,hint?:string)=>{
+  const key=en?k+"_en":k;
+  return <>{onChange?<input type="text" aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"}
+   placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{shown(k)}</span></>;
+ };
  // 시간이 같은 연속 행은 시간 칸을 합친다.
- const lines=s.cue.rows.flatMap((r,ri)=>r.lines.map((l,li)=>({r,ri,l,li})));
- const span=(ri:number)=>{const r=s.cue.rows[ri];const p=s.cue.rows[ri-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=ri;j<s.cue.rows.length&&s.cue.rows[j].from===r.from&&s.cue.rows[j].to===r.to;j++)n+=s.cue.rows[j].lines.length;return n;};
+ const timeSpan=(i:number)=>{const r=rows[i],p=rows[i-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=i;j<rows.length&&rows[j].from===r.from&&rows[j].to===r.to;j++)n+=rows[j].lines.length;return n;};
  const songs=cueSongKeys(s.cue);
- return <section className={"cue-page"+(en?" en":"")} lang={en?"en":"ko"}>
-  <h2>{cueTitle(date,s.cue.label,s.start)}</h2>
-  <div className="cue-grid">
-   <table><colgroup><col style={{width:"25%"}}/><col style={{width:"30%"}}/><col/></colgroup><thead><tr><th>Time</th><th colSpan={2}>Contents</th></tr></thead>
-    <tbody>{lines.map(({r,ri,l,li})=><tr key={r.id+li}>
-     {li===0&&span(ri)?<td className="time" rowSpan={span(ri)}>{cueTime(s.start,r)}</td>:null}
-     {li===0?<th scope="row" rowSpan={r.lines.length}>{en?r.en:r.ko}</th>:null}
-     <td>{val(l.key)}</td>
-    </tr>)}</tbody></table>
-   <table><colgroup><col style={{width:"40%"}}/><col/></colgroup><thead><tr><th colSpan={2}>Staffs</th></tr></thead>
-    <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td>{val(st.key)}</td></tr>)}</tbody></table>
+ return <section className="sheet cue-sheet" lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
+  <div className="sheet-head">
+   <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
+   <div className="right">
+    {onLeave?<Link className="btn" href={`/pd-checklist?service=${s.key}&date=${date}`} onClick={onLeave} data-print-hide>PD 체크리스트 ›</Link>:null}
+    <div className="lockup"><small>{s.name}</small><b className="num">{s.start}</b></div>
+   </div>
   </div>
-  <table className="songs"><colgroup><col style={{width:"16%"}}/><col/></colgroup><thead><tr><th colSpan={2}>Song List</th></tr></thead>
-   <tbody>{songs.map((k,i)=><tr key={k}><th scope="row">{i<s.cue.songs?i+1:en?"Offering":"헌금"}</th><td>{val(k)}</td></tr>)}</tbody></table>
+  <div className="cue-body">
+   <div className="blk"><table className="cue-t">
+    <colgroup><col className="c-time"/><col className="c-what"/><col/></colgroup>
+    <thead><tr><th scope="col">Time</th><th scope="col" colSpan={2}>Contents</th></tr></thead>
+    <tbody>{rows.flatMap((r,i)=>r.lines.map((l,li)=><tr key={r.id+li} className={r.condition?"opt":undefined}>
+     {li===0&&timeSpan(i)?<td className="time num" rowSpan={timeSpan(i)}>{cueTime(s.start,r)}</td>:null}
+     {li===0?<th scope="row" rowSpan={r.lines.length}>{en?r.en:r.ko}</th>:null}
+     <td className="in">{cell(l.key,`${r.ko} ${l.hint??""}`.trim(),l.hint)}</td>
+    </tr>))}</tbody></table></div>
+   <div className="blk"><table className="cue-t">
+    <colgroup><col className="c-role"/><col/></colgroup>
+    <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
+    <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>
+  </div>
+  <div className="blk cue-songs" style={{"--n":songs.length} as CSSProperties}>
+   <div className="lab">Song List</div>
+   {songs.map((k,i)=><div key={k} className="song"><small>{i<s.cue.songs?i+1:en?"Offering":"헌금"}</small>{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</div>)}
+  </div>
  </section>;
 }

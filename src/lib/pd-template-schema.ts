@@ -40,7 +40,7 @@ export const pdTemplateSchema=z.object({
  handoverTo:opt(40).optional(),
  cue:z.object({
   label:text(20),
-  rows:z.array(z.object({id,ko:text(20),en:text(30),from:offset,to:offset.nullable(),lines:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),hint:opt(30).optional()})).min(1).max(3)})).min(1).max(20),
+  rows:z.array(z.object({id,ko:text(20),en:text(30),from:offset,to:offset.nullable(),condition:cond,lines:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),hint:opt(30).optional()})).min(1).max(3)})).min(1).max(20),
   staff:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),ko:text(20),en:text(30)})).max(20),
   songs:z.number().int().min(0).max(10),
  }).optional(),
@@ -100,7 +100,7 @@ export function parseTemplate(raw:unknown):ParseResult{
  const conds=new Set(t.conditions.map(c=>c.id));
  const bad=(c:string|null|undefined)=>!!c&&!conds.has(c);
  const all=[...t.page1.rows.flat().flatMap(b=>b.items),...t.page2.during.items,...t.page2.after.items];
- if(all.some(i=>i.type==="check"&&bad(i.condition))||t.page2.flow.some(s=>bad(s.condition)||Object.keys(s.subWhen??{}).some(bad)))errors.push("없는 조건을 쓰는 항목이 있습니다");
+ if(all.some(i=>i.type==="check"&&bad(i.condition))||t.page2.flow.some(s=>bad(s.condition)||Object.keys(s.subWhen??{}).some(bad))||t.cue?.rows.some(r=>bad(r.condition)))errors.push("없는 조건을 쓰는 항목이 있습니다");
  if(t.page2.report.fields.some(f=>f.type==="choice"&&(f.options?.length??0)<2))errors.push("PD REPORT의 선택 항목에는 선택지가 두 개 이상 있어야 합니다");
  return errors.length?{ok:false,errors}:{ok:true,data:t};
 }
