@@ -814,3 +814,11 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
   - `sunday_notices`(주일마다 하나): 교역자·관리자 작성, 승인된 사용자 모두 읽기. 홈 첫 화면 팝업(`sunday-notice-popup.tsx`, 같은 수정본은 기기별 한 번), `/sunday-notice` 작성 화면, 사이드바 '주중 기도회 보고' 아래 버튼.
 - 이 SQL 전에는 앱이 오류 없이 빈 상태로 보인다(조회 실패를 무시).
 - 6번(팀원 → 담당 교역자 → 목사님·사모님) 흐름은 기존 기능으로 이미 됨: 담당교역자(reviewer)도 같은 예배 보고를 따로 쓸 수 있고(can_write_group), 코멘트로 첨언, 확인 처리, 목사님·사모님은 전체 열람.
+
+## 2026-11-06 예배 PD 체크리스트 1단계 (thelord-office/checklist-design-import, 로컬)
+- 설계서·데이터·프로토타입: `docs/pd-checklist/`. 결정: 보고 앱 안 새 메뉴 `/pd-checklist`, 승인된 사용자 누구나 회차 작성(PD 지정 없음), 이번 범위는 화면·공유 저장·인쇄(편집 모드·예배 복제는 2단계).
+- DB 41 `20261201000000_pd_checklist.sql`: `pd_templates`(service_key·version·content, 고치지 않고 새 버전 추가, 주일 1부 v1 시드), `pd_runs`(service_key × 주일 날짜, template_version 기억). 읽기는 승인된 사용자, 쓰기는 `pd_run_save(service,date,patch)`·`pd_run_reset(service,date,'checks'|'all')` 함수로만. 체크는 칸 하나씩 합쳐 저장(동시 저장해도 서로 안 지움), 해제·빈 글은 지운다. 기본 조건은 `pd_default_conditions`(성찬 = 1~7일).
+- 화면: `src/app/pd-checklist/`(page·checklist·pd-checklist.css, 모든 CSS는 `.pdc` 아래), 계산은 `src/lib/pd-checklist.ts`(시각 offset, 조건, 진행률 — 리포트 분류 제외). 다른 기기 변경은 15초마다·화면 복귀 시 가져온다(저장 중·입력 중이면 건너뜀). 인쇄 형식(작성본/빈 양식)은 기기별 localStorage. 인쇄는 이름 붙인 `@page pdc`(A4 가로)라 다른 화면 인쇄에 영향 없음.
+- 메뉴: PC 사이드바 '예배 PD 체크리스트', 휴대폰 홈 '예배위원' 아래 카드.
+- 확인: test:db 153/153(새 `tests/pd-checklist.test.mjs`), tsc, eslint, next build --webpack 통과. 임시 미리보기(가짜 DB)로 1440/820/390px 가로 스크롤 없음, 다크 모드, 작성본·빈 양식 PDF 모두 정확히 2페이지 확인. 실제 DB 저장·다른 기기 동기화·로그인 상태 화면은 운영 DB 적용 전이라 미확인.
+- 남은 일: 운영 DB에 DB 41 적용(승인 필요), 2단계 편집 모드·예배 복제·2페이지 초과 경고, 2·3부·라이프라인 템플릿(설계서 8장, 담당 PD 확인 필요), 지난 회차 목록.

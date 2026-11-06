@@ -91,6 +91,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         </Card>
       ) : null}
       <Link href="/worship-staff" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="people" small/>예배위원</span><span aria-hidden className="text-muted">›</span></Link>
+      <Link href="/pd-checklist" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="checklist" small/>예배 PD 체크리스트</span><span aria-hidden className="text-muted">›</span></Link>
       {isClergy(profile)?<Link href={`/meeting?week=${week}`} className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex min-w-0 items-center gap-3"><MenuIcon name="meeting" small/>교역자 회의 자료</span><span aria-hidden className="text-muted">›</span></Link>:null}
 
 

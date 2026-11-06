@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>TLC 예배 PD 체크리스트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 조용한 큐시트 — 흰 카드 위에 시간이 주인공, 강조는 T-2·T-1·START와 부산 ATEM에만 */
+:root {
+  --bg: #f2f4f7;
+  --paper: #ffffff;
+  --ink: #172235;
+  --muted: #677386;
+  --faint: #98a2b2;
+  --line: #e2e7ee;
+  --line2: #cfd7e2;
+  --soft: #f6f8fb;
+  --accent: #2b62c4;
+  --accent-soft: #eaf0fb;
+  --navy: #15284a;
+  --on-strong: #ffffff;
+  --on-strong-2: #b9c9e6;
+  --amber: #a85a17;
+  --amber-soft: #fbf0e3;
+  --box: #b3bfcf;
+  --font: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --num: "IBM Plex Sans", "IBM Plex Sans KR", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131b; --paper: #161d28; --ink: #e5ebf3; --muted: #9aa6b8; --faint: #6d7889; --line: #253041; --line2: #334055;
+    --soft: #1b2431; --accent: #6b9bf0; --accent-soft: #1d2b44; --navy: #2a4677; --on-strong: #ffffff; --on-strong-2: #c3d2ee;
+    --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131b; --paper: #161d28; --ink: #e5ebf3; --muted: #9aa6b8; --faint: #6d7889; --line: #253041; --line2: #334055;
+  --soft: #1b2431; --accent: #6b9bf0; --accent-soft: #1d2b44; --navy: #2a4677; --on-strong: #ffffff; --on-strong-2: #c3d2ee;
+  --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 56px; -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.wrap { max-width: 1380px; margin: 0 auto; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+
+/* ---------- toolbar ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--paper) 92%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 12px max(16px, env(safe-area-inset-left, 0px));
+}
+@media (max-width: 760px) { .bar { position: static; } }
+.bar-in { max-width: 1380px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
+.brand b { font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+.svc { font-size: 13px; color: var(--muted); }
+.svc span { font-family: var(--num); font-weight: 600; color: var(--ink); margin-left: 2px; }
+.field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.field input { border: 1px solid var(--line2); background: var(--paper); border-radius: 8px; padding: 6px 10px; min-width: 0; width: 9.5em; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg { position: relative; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 5px 12px 5px 7px; font-size: 13px; cursor: pointer; user-select: none; background: var(--soft); color: var(--muted); border: 1px solid transparent; transition: background .15s, color .15s; }
+.tg:has(input:checked) { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tg input { position: absolute; opacity: 0; pointer-events: none; }
+.tg .sw { width: 26px; height: 16px; border-radius: 999px; background: var(--line2); position: relative; transition: background .15s; flex: none; }
+.tg .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px rgba(0,0,0,.15); transition: transform .15s; }
+.tg input:checked + .sw { background: var(--accent); }
+.tg input:checked + .sw::after { transform: translateX(10px); }
+.tg input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+.progress { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.progress .meter { width: 80px; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.progress .meter i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .2s; }
+.progress b { font-family: var(--num); color: var(--ink); font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seg { display: inline-flex; background: var(--soft); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 13px; cursor: pointer; color: var(--muted); border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(20,30,50,.12); }
+.btn { border: 1px solid var(--line2); background: var(--paper); border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.btn:hover { color: var(--ink); border-color: var(--faint); }
+.btn.primary { background: var(--navy); border-color: var(--navy); color: var(--on-strong); font-weight: 600; }
+.btn.danger-armed { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); font-weight: 600; }
+.hint { font-size: 12px; color: var(--faint); }
+
+/* ---------- sheet ---------- */
+.sheet { margin-top: 36px; }
+.sheet-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.sheet-head .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .14em; color: var(--faint); text-transform: uppercase; }
+.sheet-head h2 { margin: 2px 0 0; font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+.sheet-head .right { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
+.sheet-head .meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+.sheet-head .meta span { display: inline-block; min-width: 6.5em; border-bottom: 1px solid var(--line2); color: var(--ink); font-weight: 600; padding: 0 4px 1px; margin-left: 6px; font-size: 13px; }
+.lockup { text-align: right; line-height: 1.05; }
+.lockup small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+.lockup b { font-family: var(--num); font-size: 32px; font-weight: 600; letter-spacing: -.01em; }
+
+.row { display: grid; gap: 14px; align-items: start; }
+.row1 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.row2 { grid-template-columns: 1.25fr 1.05fr .95fr .8fr .85fr; margin-top: 14px; }
+@media (max-width: 1100px) { .row1, .row2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .row1, .row2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* card */
+.blk { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; min-width: 0; overflow: hidden; }
+.blk-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 16px 10px; }
+.blk-h .tm { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 26px; line-height: 1; letter-spacing: -.01em; }
+.blk-h .tt { font-family: var(--num); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 8px; }
+.blk-h .ti { font-size: 13px; color: var(--muted); }
+.blk-b { padding: 2px 16px 16px; display: flex; flex-direction: column; gap: 1px; }
+
+/* 부산: 한 톤 들어간 카드 */
+.blk.accent { background: var(--accent-soft); border-color: transparent; }
+.blk.accent .blk-h .tm { color: var(--accent); }
+.blk.accent .blk-h .tt { background: var(--accent); color: var(--on-strong); }
+/* T-2, T-1: 큐 */
+.blk.cue { border: 1.5px solid var(--accent); }
+.blk.cue .blk-h .tm { color: var(--accent); }
+.blk.cue .blk-h .tt { background: var(--accent); color: var(--on-strong); }
+/* START */
+.blk.go { background: var(--navy); border-color: var(--navy); color: var(--on-strong); }
+.blk.go .blk-h .tt { background: rgba(255,255,255,.16); color: var(--on-strong); }
+.blk.go .blk-h .ti { color: var(--on-strong-2); }
+.blk.go .ck .box { border-color: rgba(255,255,255,.55); background: transparent; }
+.blk.go .ck:hover { background: rgba(255,255,255,.08); }
+.blk.go .ck.strong .tx { color: var(--on-strong); }
+.blk.go .ck input:checked ~ .tx { color: var(--on-strong-2); }
+
+.arr { background: var(--soft); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; display: grid; gap: 3px; }
+.blk.accent .arr { background: var(--paper); }
+.arr div { display: flex; gap: 10px; align-items: baseline; }
+.arr b { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); flex: none; }
+.arr .at { color: var(--faint); font-size: 12px; }
+
+.ck { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 4px 6px; margin: 0 -6px; cursor: pointer; border-radius: 8px; min-width: 0; transition: background .12s; }
+.ck:hover { background: var(--soft); }
+.ck input { position: absolute; opacity: 0; pointer-events: none; }
+.ck .box { flex: none; width: 18px; height: 18px; border: 1.5px solid var(--box); border-radius: 5px; margin-top: 2px; display: grid; place-items: center; background: var(--paper); transition: background .12s, border-color .12s; }
+.ck input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.ck input:checked + .box::after { content: ""; width: 5px; height: 9px; border: solid var(--on-strong); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.ck input:focus-visible + .box { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ck .tx { min-width: 0; }
+.ck.strong .tx { font-weight: 600; }
+.ck.hl .tx { font-weight: 600; }
+.ck.hl .tx::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; vertical-align: 2px; }
+.ck input:checked ~ .tx { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--line2); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 1px 7px; margin-left: 5px; line-height: 1.6; vertical-align: 1px; white-space: nowrap; }
+.cond-tag { display: inline-block; font-size: 11px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 1px 7px; margin-left: 5px; line-height: 1.6; vertical-align: 1px; white-space: nowrap; }
+.sub { font-size: 12px; color: var(--muted); margin-left: 4px; }
+.off { opacity: .4; }
+.off .tx { text-decoration: line-through; }
+
+.grid { display: grid; gap: 5px; margin: 3px 0 4px; }
+.grid .ck { background: var(--soft); padding: 5px 8px; margin: 0; font-size: 14px; }
+.grid .ck:hover { background: var(--accent-soft); }
+.grid.flexy { display: flex; flex-wrap: wrap; }
+.grid.flexy .ck { white-space: nowrap; }
+.blk.accent .grid .ck { background: var(--paper); }
+.shd { font-size: 11px; font-weight: 700; color: var(--muted); margin: 10px 0 3px; letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
+.shd::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.blk.accent .shd::after { background: var(--line2); }
+.note { font-size: 12px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line2); }
+.note b { color: var(--ink); font-weight: 600; }
+
+table.floor { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 3px; font-size: 13px; background: var(--paper); border-radius: 10px; overflow: hidden; }
+table.floor th, table.floor td { padding: 5px 8px; text-align: center; border-bottom: 1px solid var(--line); }
+table.floor tr:last-child td { border-bottom: 0; }
+table.floor th { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .04em; }
+table.floor td:first-child, table.floor th:first-child { text-align: left; }
+table.floor td:first-child { font-weight: 500; }
+table.floor .ck { justify-content: center; padding: 0; margin: 0; }
+table.floor .ck:hover { background: transparent; }
+
+/* ---------- sheet 2 ---------- */
+.banner { display: flex; align-items: center; justify-content: center; gap: 14px; background: var(--navy); color: var(--on-strong); border-radius: 14px; font-weight: 600; font-size: 20px; padding: 16px 20px; letter-spacing: -.005em; text-align: center; text-wrap: balance; }
+.banner small { font-size: 12px; font-weight: 600; letter-spacing: .14em; color: var(--on-strong-2); }
+.flow-wrap { overflow-x: auto; margin-top: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.flow { display: grid; grid-template-columns: 76px repeat(var(--n), minmax(84px, 1fr)); column-gap: 6px; row-gap: 6px; min-width: calc(76px + var(--n) * 90px); }
+.flow .lab { display: flex; flex-direction: column; justify-content: center; font-weight: 700; font-size: 13px; }
+.flow .lab small { font-weight: 600; color: var(--faint); font-size: 10px; letter-spacing: .12em; }
+.st { background: var(--soft); border-radius: 10px; text-align: center; padding: 12px 4px 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 72px; position: relative; }
+.st b { font-size: 14px; font-weight: 600; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; }
+.st b.sm { font-size: 12px; letter-spacing: -.01em; }
+.st small { font-size: 11px; color: var(--muted); line-height: 1.3; word-break: keep-all; font-family: var(--num); }
+.st.d { background: var(--c); }
+.st.d b { color: var(--on-strong); }
+.st.d small { color: var(--on-strong-2); }
+.st.opt { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--accent); border: 0; }
+.st.opt::before { content: ""; position: absolute; inset: 3px; border: 1px dashed var(--accent); border-radius: 8px; opacity: .5; }
+.st.end { background: var(--accent-soft); }
+.st.end b { color: var(--accent); }
+.st .flag { display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 1px 6px; }
+.nx { text-align: center; font-size: 12px; font-weight: 500; color: var(--accent); padding: 2px 2px; display: flex; align-items: flex-start; justify-content: center; word-break: keep-all; line-height: 1.35; }
+.fc { display: flex; justify-content: center; padding: 2px 0; }
+.fc .ck { padding: 2px; margin: 0; }
+.fc .ck .box { width: 20px; height: 20px; }
+.flow .hide { display: none; }
+
+.roster { margin-top: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 6px 16px; display: grid; grid-template-columns: 76px repeat(6, minmax(0, 1fr)); column-gap: 14px; }
+.roster .rl { font-weight: 700; font-size: 13px; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
+.roster .rl small { font-weight: 500; font-size: 11px; color: var(--faint); }
+.slot { border-bottom: 1px solid var(--line); padding: 8px 0 6px; display: flex; flex-direction: column; min-width: 0; }
+.roster > :nth-last-child(-n+7) { border-bottom: 0; }
+.slot label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.slot input { border: 0; border-bottom: 1px solid var(--line2); background: transparent; padding: 3px 0; font-size: 14px; width: 100%; min-width: 0; border-radius: 0; }
+.slot input:focus { border-bottom-color: var(--accent); outline: none; }
+.slot .pv { display: none; min-height: 1.3em; }
+.span2 { grid-column: span 2; } .span3 { grid-column: span 3; } .span6 { grid-column: span 6; }
+@media (max-width: 760px) {
+  .roster { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .roster .rl { grid-column: 1 / -1; flex-direction: row; gap: 8px; align-items: baseline; padding-top: 14px; border-bottom: 0; }
+  .span2, .span3, .span6 { grid-column: 1 / -1; }
+}
+
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
+@media (max-width: 900px) { .cols3 { grid-template-columns: minmax(0, 1fr); } }
+.cols3 .blk-h .tm { font-family: var(--font); font-size: 17px; font-weight: 700; letter-spacing: 0; }
+.rp { display: grid; grid-template-columns: 84px minmax(0, 1fr); margin-top: 4px; }
+.rp > div { border-bottom: 1px solid var(--line); padding: 6px 2px; font-size: 13px; min-width: 0; }
+.rp .k { font-weight: 600; color: var(--muted); font-size: 12px; }
+.rp textarea { width: 100%; border: 0; background: transparent; resize: vertical; min-height: 1.6em; padding: 0; font-size: 13px; }
+.rp textarea:focus { outline: none; }
+.rp .pv { display: none; }
+.rp .inline { display: flex; gap: 16px; }
+.rp .inline .ck { padding: 0; margin: 0; }
+.print-only { display: none; }
+
+/* ---------- print: A4 가로 2페이지 ---------- */
+@page { size: A4 landscape; margin: 7mm 8mm; }
+@media print {
+  :root:root:root {
+    --bg: #ffffff; --paper: #ffffff; --ink: #172235; --muted: #5f6b7e; --faint: #8b95a5; --line: #dfe5ed; --line2: #c7d0dc;
+    --soft: #f4f6f9; --accent: #2b62c4; --accent-soft: #e9eff9; --navy: #15284a; --on-strong: #ffffff; --on-strong-2: #c0cfe8;
+    --amber: #a85a17; --amber-soft: #fbefe1; --box: #8f9cb0; color-scheme: light;
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { padding: 0; font-size: 10.2pt; line-height: 1.32; background: #fff; }
+  body::before { display: none; }
+  .bar { display: none !important; }
+  .wrap { max-width: none; }
+  .sheet { margin: 0; break-after: page; }
+  .sheet:last-child { break-after: auto; }
+  .sheet-head { margin-bottom: 2.6mm; flex-wrap: nowrap; padding-bottom: 2mm; border-bottom: 1px solid var(--line2); }
+  .sheet-head .eyebrow { font-size: 7pt; }
+  .sheet-head h2 { font-size: 15pt; }
+  .sheet-head .meta { font-size: 8.5pt; }
+  .sheet-head .meta span { min-width: 30mm; font-size: 9.5pt; }
+  .lockup small { font-size: 8.5pt; }
+  .lockup b { font-size: 19pt; }
+  #sheet1 { font-size: 10.9pt; }
+  #sheet1 .blk-h .tm { font-size: 16.5pt; }
+  #sheet1 .grid .ck { font-size: 9.8pt; }
+  #sheet1 .ck { padding: .6mm .6mm; }
+  .row { gap: 2.4mm; }
+  .row1 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .row2 { grid-template-columns: 1.25fr 1.05fr .95fr .8fr .85fr; margin-top: 2.4mm; }
+  .blk { break-inside: avoid; border-radius: 2.6mm; }
+  .blk-h { padding: 2mm 2.6mm 1.2mm; gap: 1.6mm; }
+  .blk-h .tm { font-size: 15pt; }
+  .blk-h .tt { font-size: 7.4pt; padding: .3mm 1.8mm; }
+  .blk-h .ti { font-size: 8.6pt; }
+  .blk-b { padding: 0 2.6mm 2.2mm; gap: 0; }
+  .arr { font-size: 8.8pt; padding: 1.2mm 1.8mm; margin-bottom: 1.2mm; border-radius: 1.8mm; gap: .3mm; }
+  .arr .at { font-size: 8pt; }
+  .ck { padding: .45mm .6mm; margin: 0 -.6mm; gap: 1.8mm; }
+  .ck .box { width: 4mm; height: 4mm; border-width: 1.3px; border-radius: 1mm; margin-top: .15mm; }
+  .ck input:checked ~ .tx { color: var(--ink); text-decoration: none; }
+  .grid { gap: 1mm; margin: .6mm 0 .8mm; }
+  .grid .ck { font-size: 9.2pt; padding: .6mm 1.4mm; margin: 0; border-radius: 1.4mm; }
+  .chip, .cond-tag { font-size: 7pt; padding: 0 1.4mm; }
+  .sub { font-size: 8pt; }
+  .shd { font-size: 7.6pt; margin: 1.6mm 0 .3mm; }
+  .note { font-size: 8pt; margin-top: 1.2mm; padding-top: 1.2mm; }
+  table.floor { font-size: 9pt; border-radius: 1.6mm; }
+  table.floor th, table.floor td { padding: .6mm 1.6mm; }
+  table.floor th { font-size: 7.6pt; }
+  .banner { font-size: 13pt; padding: 2.2mm; border-radius: 2.6mm; }
+  .banner small { font-size: 7pt; }
+  .flow-wrap { overflow: visible; margin-top: 2.4mm; padding: 2mm; border-radius: 2.6mm; }
+  .flow { min-width: 0; grid-template-columns: 15mm repeat(var(--n), minmax(0, 1fr)); column-gap: 1mm; row-gap: 1mm; }
+  .flow .lab { font-size: 8.6pt; }
+  .flow .lab small { font-size: 6pt; }
+  .st { padding: 2mm .6mm 1.8mm; min-height: 0; border-radius: 1.8mm; }
+  .st.opt::before { inset: .6mm; border-radius: 1.4mm; }
+  .st b { font-size: 9.6pt; }
+  .st b.sm { font-size: 7pt; letter-spacing: -.02em; }
+  .st small { font-size: 7pt; }
+  .st .flag { font-size: 6.4pt; }
+  .nx { font-size: 7.6pt; padding: 0 .4mm; }
+  .fc { padding: 0; }
+  .fc .ck .box { width: 4.4mm; height: 4.4mm; }
+  .roster { margin-top: 2.4mm; padding: .6mm 3mm; border-radius: 2.6mm; grid-template-columns: 15mm repeat(6, minmax(0, 1fr)); column-gap: 2.6mm; break-inside: avoid; }
+  .roster .rl { font-size: 8.8pt; padding: 1mm 0; }
+  .roster .rl small { font-size: 6.6pt; }
+  .slot { padding: 1mm 0 .6mm; min-height: 9mm; }
+  .slot label { font-size: 7.2pt; }
+  .slot input { display: none; }
+  .slot .pv { display: block; font-size: 9.5pt; }
+  .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2.4mm; }
+  .cols3 .blk-h .tm { font-size: 11.5pt; }
+  .cols3 .ck { padding: .3mm .6mm; }
+  .cols3 .grid .ck { padding: .35mm 1.2mm; }
+  .rp { grid-template-columns: 21mm minmax(0, 1fr); margin-top: .6mm; }
+  .rp > div { font-size: 8.8pt; padding: .6mm .6mm; }
+  .rp .k { font-size: 8pt; }
+  .rp textarea { display: none; }
+  .rp .pv { display: block; min-height: 1.15em; white-space: pre-wrap; }
+
+  body:not(.blank) .off, body:not(.blank) .flow .hide { display: none !important; }
+  body.blank .off { opacity: 1; }
+  body.blank .off .tx { text-decoration: none; }
+  body.blank .flow .hide { display: flex !important; }
+  body.blank .ck input:checked + .box { background: transparent; border-color: var(--box); }
+  body.blank .blk.go .ck input:checked + .box { border-color: rgba(255,255,255,.55); }
+  body.blank .ck input:checked + .box::after { display: none; }
+  body.blank .pv, body.blank .sheet-head .meta span { color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <div class="bar">
+    <div class="bar-in">
+      <div class="brand"><b>TLC 예배 PD</b><span class="svc">주일 1부<span>08:20</span></span></div>
+      <label class="field" for="f-date">날짜 <input id="f-date" type="date"></label>
+      <label class="field" for="f-pd">PD <input id="f-pd" type="text" placeholder="이름" autocomplete="off"></label>
+      <div class="toggles" role="group" aria-label="이번 주 예배 조건">
+        <label class="tg" for="c-communion"><input id="c-communion" type="checkbox"><span class="sw"></span>성찬주간 (1주차)</label>
+        <label class="tg" for="c-news"><input id="c-news" type="checkbox"><span class="sw"></span>영상소식 있음</label>
+        <label class="tg" for="c-changes"><input id="c-changes" type="checkbox"><span class="sw"></span>변경사항 있음</label>
+      </div>
+      <div class="progress" aria-live="polite"><span class="meter"><i id="p-bar"></i></span><span><b id="p-done">0</b> / <span id="p-total">0</span></span></div>
+      <div class="actions">
+        <span class="hint">인쇄</span>
+        <div class="seg" role="group" aria-label="인쇄 형식">
+          <button type="button" id="m-filled" aria-pressed="true">작성본</button>
+          <button type="button" id="m-blank" aria-pressed="false">빈 양식</button>
+        </div>
+        <button type="button" class="btn primary" id="b-print" hidden>인쇄하기</button>
+        <span class="hint" id="print-hint" hidden>인쇄는 HTML 파일을 Chrome에서 열어 Ctrl+P</span>
+        <button type="button" class="btn" id="b-clear">체크 초기화</button>
+        <button type="button" class="btn" id="b-reset">전체 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="sheet" id="sheet1" aria-label="예배 시작 전">
+    <div class="sheet-head">
+      <div><div class="eyebrow">TLC 예배 PD Checklist</div><h2>예배 시작 전</h2></div>
+      <div class="right"><div class="meta"><div>날짜<span data-bind="date"></span></div><div>PD<span data-bind="pd"></span></div></div>
+      <div class="lockup"><small>주일 1부</small><b>08:20</b></div></div>
+    </div>
+    <div class="row row1" id="row1"></div>
+    <div class="row row2" id="row2"></div>
+  </section>
+
+  <section class="sheet" id="sheet2" aria-label="예배 진행 · 종료">
+    <div class="sheet-head">
+      <div><div class="eyebrow">TLC 예배 PD Checklist</div><h2>예배 진행 · 종료</h2></div>
+      <div class="right"><div class="meta"><div>날짜<span data-bind="date"></span></div><div>PD<span data-bind="pd"></span></div></div>
+      <div class="lockup"><small>주일 1부</small><b>08:20</b></div></div>
+    </div>
+    <div class="banner"><small>NOW → NEXT</small>현재 순서를 보면서 다음 순서를 준비합니다</div>
+    <div class="flow-wrap"><div class="flow" id="flow"></div></div>
+    <div class="roster" id="roster"></div>
+    <div class="cols3" id="cols3"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "tlc-pd-1bu-v1";
+  var COND_LABEL = { communion: "성찬주간", news: "영상소식 있을 때", changes: "변경 시" };
+
+  // ---------- 1부 데이터 ----------
+  var ROW1 = [
+    { time: "07:20", tag: "T-60", title: "전체 상황",
+      arr: [["07:20", "예배팀 · 음향팀 기도", "대예배실"], ["07:30", "영상 · 사진 · 조명팀 기도", "중계실"]],
+      body: [
+        { id: "a1", t: "오늘 예배 순서·특이사항 확인" },
+        { id: "a2", t: "헌금 메시지 인도자 확인" },
+        { id: "a3", t: "말씀 합독위원 확인" },
+        { id: "a4", t: "특별순서·특별영상 유무" },
+        { id: "a5", t: "변경사항 전체 공유 여부", cond: "changes" },
+        { id: "a6", t: "층별 TV 전원·입력" },
+        { id: "a7", t: "예배팀·음향팀 기도 시작" },
+        { id: "a8", t: "성전 전체 공조 ON", hl: true }
+      ] },
+    { time: "07:35", tag: "T-45", title: "콘텐츠",
+      body: [
+        { id: "b1", t: "영상소식 테스트", teams: ["자막", "영상", "음향"], cond: "news" },
+        { id: "b2", t: "특별영상·음원 확인" },
+        { id: "b3", t: "성찬 순서·자막", cond: "communion" },
+        { id: "b4", t: "말씀 합독 본문 확인", teams: ["자막"] },
+        { id: "b5", t: "설교 제목·본문 확인" },
+        { id: "b6", t: "담당자별 순서 숙지" },
+        { note: [["기준 ", 1], ["파일 있음 ✕ → ", 0], ["최종본 + 실제 재생", 1]] }
+      ] },
+    { time: "07:50", tag: "T-30", title: "시스템 · 도착",
+      arr: [["07:55", "예배팀 개인 준비"], ["08:00", "부산 ATEM 점검 · 안내위원 집결"]],
+      body: [
+        { h: "각 파트 이상 유무" },
+        { grid: "flex", items: [["c1", "음향"], ["c2", "자막"], ["c3", "영상"], ["c4", "사진"], ["c5", "조명"], ["c6", "스트리밍"], ["c7", "부산"]] },
+        { id: "c8", t: "예배팀에 오늘 순서 공지", strong: true },
+        { id: "c9", t: "성찬 순서 리마인드", cond: "communion" },
+        { h: "도착 확인" },
+        { id: "c10", t: "헌금 메시지 인도자" },
+        { id: "c11", t: "말씀 합독위원" }
+      ] },
+    { time: "08:00", tag: "부산 ATEM", title: "층별 송출 동시 진행", accent: true,
+      body: [
+        { h: "부산 캠퍼스 · 영상팀 + 부산 담당" },
+        { grid: 2, items: [["d1", "연결"], ["d2", "담당자 연락"], ["d3", "영상 수신"], ["d4", "음향 수신"]] },
+        { h: "층별 송출 (동시 진행)" },
+        { floor: [["d5", "1층 라운지"], ["d6", "3층 수유실"], ["d7", "3층 컨퍼런스룸"]] },
+        { note: [["기준 ", 1], ["연결 표시 ✕ → ", 0], ["실제로 받고 있는가", 1]] }
+      ] }
+  ];
+  var ROW2 = [
+    { time: "08:10", tag: "T-10", title: "STANDBY",
+      arr: [["08:10", "헌금위원 집결 → 바로 확인"]],
+      body: [
+        { id: "e1", t: "기술팀 인원·장비 STANDBY", strong: true },
+        { id: "e2", t: "예배팀 인원·장비 STANDBY", strong: true },
+        { id: "e3", t: "헌금 메시지 인도자 STANDBY" },
+        { id: "e4", t: "말씀 합독위원 사운드체크 + 순서 리마인드" },
+        { id: "e5", t: "성찬 준비 상태", cond: "communion" },
+        { id: "e6", t: "안내위원 STANDBY" }
+      ] },
+    { time: "08:15", tag: "T-5", title: "FINAL",
+      body: [
+        { grid: 2, items: [["f1", "라이브 송출"], ["f2", "첫 자막"], ["f3", "첫 조명"], ["f4", "첫 카메라"]] },
+        { id: "f5", t: "카운트다운 첫 화면" },
+        { id: "f6", t: "순서 변경사항 최종 반영" },
+        { h: "PD FINAL" },
+        { id: "f7", t: "지금 바로 시작할 수 있는가?", strong: true },
+        { id: "f8", t: "첫 순서(찬양과 경배)에 공백 없음?", strong: true },
+        { id: "f9", t: "다음 순서 담당자 준비?", strong: true }
+      ] },
+    { time: "08:18", tag: "T-2", title: "COUNTDOWN", dark: "--blue",
+      body: [
+        { id: "g1", t: "예배팀 등단", strong: true },
+        { id: "g2", t: "2분 전 카운트다운 확인" },
+        { id: "g3", t: "전체 팀에 2분 전 큐" }
+      ] },
+    { time: "08:19", tag: "T-1", title: "LIVE", dark: "--mid",
+      body: [
+        { h: "유튜브 LIVE 시작 확인" },
+        { id: "h1", t: "중계실", strong: true },
+        { id: "h2", t: "모바일", strong: true }
+      ] },
+    { time: "08:20", tag: "START", title: "", dark: "--navy",
+      body: [
+        { id: "i1", t: "정시 START", strong: true },
+        { id: "i2", t: "찬양과 경배 정상 진행" },
+        { id: "i3", t: "음향·영상·자막" },
+        { id: "i4", t: "조명·방송" }
+      ] }
+  ];
+  var FLOW = [
+    { id: "s1", t: "COUNTDOWN", sm: true, s: "08:18", c: "--accent", n: "예배팀 등단" },
+    { id: "s2", t: "유튜브 LIVE", s: "08:19", c: "--accent", n: "중계실·모바일 확인" },
+    { id: "s3", t: "START", s: "08:20", c: "--navy", n: "찬양 자막·조명" },
+    { id: "s4", t: "찬양과 경배", s: "worship", n: "마지막 곡 → 영상소식 전환 준비" },
+    { id: "s5", t: "영상소식", cond: "news", n: "헌금 메시지 인도자" },
+    { id: "s6", t: "헌금 메시지", n: "헌금위원" },
+    { id: "s7", t: "헌금", flag: "공조 OFF", n: "성찬·합독 대기" },
+    { id: "s8", t: "성찬", s: "1주차", cond: "communion", opt: true, n: "말씀 합독위원" },
+    { id: "s9", t: "말씀 합독", n: "설교자 마이크" },
+    { id: "s10", t: "설교", n: "마침 기도" },
+    { id: "s11", t: "마침 기도", n: "LIVE 종료 큐" },
+    { id: "s12", t: "유튜브 LIVE 종료", c: "--accent", n: "MP3 준비" },
+    { id: "s13", t: "MP3 전환", end: true, n: "녹화 저장 확인" }
+  ];
+  var ROSTER = [
+    { label: "순서", sub: "진행 담당", slots: [["r1", "예배 인도자"], ["r2", "설교자"], ["r3", "헌금 메시지 인도자"], ["r4", "말씀 합독위원"], ["r5", "담당 교역자"], ["r6", "성찬 담당 (1주차)"]] },
+    { label: "예배위원", sub: "", slots: [["r7", "헌금위원", 3], ["r8", "안내위원", 3]] },
+    { label: "예배팀", sub: "싱어 · 연주", slots: [["r9", "", 6]] },
+    { label: "기술팀", sub: "", slots: [["r10", "음향팀"], ["r11", "영상팀"], ["r12", "사진팀"], ["r13", "자막팀"], ["r14", "조명팀"], ["r15", "부산 담당"]] }
+  ];
+  var DURING = [
+    { id: "j1", t: "현재 순서 정상 진행" },
+    { id: "j2", t: "다음 순서 담당자 대기", strong: true },
+    { id: "j3", t: "마지막 곡 때 영상소식 순서 준비", cond: "news" },
+    { id: "j4", t: "모든 기술팀 영상소식 전환 준비", cond: "news" },
+    { id: "j5", t: "헌금 진행 시 성전 전체 공조 OFF", hl: true },
+    { id: "j6", t: "예배 진행 시간 확인" }
+  ];
+  var AFTER = [
+    { id: "k1", t: "라이브 방송 종료 확인" },
+    { id: "k2", t: "각 팀 녹화·녹음 이상 여부 확인 → 이슈 리포트 공지" },
+    { id: "k3", t: "MP3 전환 확인" },
+    { id: "k4", t: "성전 전체 공조 ON", hl: true },
+    { id: "k5", t: "문제사항 기록" },
+    { id: "k6", t: "2부 PD에게 인수인계", strong: true }
+  ];
+
+  // ---------- state ----------
+  var state = { checks: {}, fields: {}, cond: { communion: false, news: true, changes: false }, blank: false };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && typeof s === "object") { state.checks = s.checks || {}; state.fields = s.fields || {}; if (s.cond) state.cond = Object.assign(state.cond, s.cond); state.blank = !!s.blank; } } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  // ---------- render helpers ----------
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function chips(teams) { return (teams || []).map(function (t) { return '<span class="chip">' + esc(t) + "</span>"; }).join(""); }
+  function ck(id, text, o) {
+    o = o || {};
+    var cls = "ck" + (o.strong ? " strong" : "") + (o.hl ? " hl" : "");
+    return '<label class="' + cls + '"' + (o.cond ? ' data-cond="' + o.cond + '"' : "") + ' for="x-' + id + '">' +
+      '<input type="checkbox" id="x-' + id + '" data-ck="' + id + '"><span class="box" aria-hidden="true"></span>' +
+      (text ? '<span class="tx">' + esc(text) + chips(o.teams) + (o.cond ? '<span class="cond-tag">' + COND_LABEL[o.cond] + "</span>" : "") + "</span>" : "") +
+      "</label>";
+  }
+  function bodyHtml(items) {
+    return items.map(function (it) {
+      if (it.h) return '<div class="shd">' + esc(it.h) + "</div>";
+      if (it.note) return '<div class="note">' + it.note.map(function (p) { return p[1] ? "<b>" + esc(p[0]) + "</b>" : esc(p[0]); }).join("") + "</div>";
+      if (it.grid) return '<div class="grid' + (it.grid === "flex" ? ' flexy"' : '" style="grid-template-columns:repeat(' + it.grid + ',minmax(0,1fr))"') + '>' + it.items.map(function (g) { return ck(g[0], g[1]); }).join("") + "</div>";
+      if (it.floor) return '<table class="floor"><thead><tr><th scope="col">위치</th><th scope="col">영상</th><th scope="col">음향</th></tr></thead><tbody>' +
+        it.floor.map(function (f) { return "<tr><td>" + esc(f[1]) + "</td><td>" + ck(f[0] + "v", "") + "</td><td>" + ck(f[0] + "a", "") + "</td></tr>"; }).join("") + "</tbody></table>";
+      return ck(it.id, it.t, it);
+    }).join("");
+  }
+  function block(b) {
+    var cls = "blk" + (b.dark ? (b.dark === "--navy" ? " go" : " cue") : "") + (b.accent ? " accent" : "");
+    var style = "";
+    var arr = b.arr ? '<div class="arr">' + b.arr.map(function (a) { return "<div><b>" + a[0] + "</b><span>" + esc(a[1]) + (a[2] ? ' <span class="at">@' + esc(a[2]) + "</span>" : "") + "</span></div>"; }).join("") + "</div>" : "";
+    return '<div class="' + cls + '"' + style + '><div class="blk-h"><span class="tm">' + b.time + '</span><span class="tt">' + esc(b.tag) + "</span>" +
+      (b.title ? '<span class="ti">' + esc(b.title) + "</span>" : "") + chips(b.teams) +
+      '</div><div class="blk-b">' + arr + bodyHtml(b.body) + "</div></div>";
+  }
+  function simpleBlock(title, tag, inner) {
+    return '<div class="blk"><div class="blk-h"><span class="tm">' + esc(title) + '</span>' + (tag ? '<span class="tt">' + esc(tag) + '</span>' : '') + '</div><div class="blk-b">' + inner + "</div></div>";
+  }
+
+  document.getElementById("row1").innerHTML = ROW1.map(block).join("");
+  document.getElementById("row2").innerHTML = ROW2.map(block).join("");
+
+  // flow
+  var flowEl = document.getElementById("flow");
+  function renderFlow() {
+    var h = '<div class="lab">주일예배<small>FLOW</small></div>';
+    FLOW.forEach(function (s) {
+      var cls = "st" + (s.c ? " d" : "") + (s.opt ? " opt" : "") + (s.end ? " end" : "");
+      var sub = s.s === "worship" ? (state.cond.communion ? "성찬주간 15분" : "20분 · 성찬 15분") : (s.s || "");
+      h += '<div class="' + cls + '" data-step="' + s.id + '"' + (s.c ? ' style="--c: var(' + s.c + ')"' : "") + "><b" + (s.sm ? ' class="sm"' : "") + ">" + esc(s.t) + "</b>" +
+        (sub ? "<small>" + esc(sub) + "</small>" : "") + (s.cond ? "<small>" + (s.cond === "news" ? "없으면 생략" : "") + "</small>" : "") +
+        (s.flag ? '<span class="flag">' + esc(s.flag) + "</span>" : "") + "</div>";
+    });
+    h += '<div class="lab">이때 준비<small>NEXT</small></div>';
+    FLOW.forEach(function (s) { h += '<div class="nx" data-step="' + s.id + '">' + esc(s.n) + "</div>"; });
+    h += '<div class="lab">체크</div>';
+    FLOW.forEach(function (s) { h += '<div class="fc" data-step="' + s.id + '">' + ck(s.id, "") + "</div>"; });
+    flowEl.innerHTML = h;
+  }
+  renderFlow();
+
+  // roster
+  var rh = "";
+  ROSTER.forEach(function (r) {
+    rh += '<div class="rl">' + esc(r.label) + (r.sub ? "<small>" + esc(r.sub) + "</small>" : "") + "</div>";
+    r.slots.forEach(function (s) {
+      var span = s[2] ? " span" + s[2] : "";
+      var lab = s[1] || "이름";
+      rh += '<div class="slot' + span + '"><label for="n-' + s[0] + '">' + esc(s[1] || "싱어 · 연주 이름") + '</label>' +
+        '<input id="n-' + s[0] + '" data-field="' + s[0] + '" type="text" autocomplete="off" placeholder="' + (s[2] ? "여러 명은 쉼표로 구분" : "") + '"><div class="pv" data-pv="' + s[0] + '"></div></div>';
+    });
+  });
+  document.getElementById("roster").innerHTML = rh;
+
+  // bottom 3
+  var cats = [["q1", "기술"], ["q2", "진행"], ["q3", "콘텐츠"], ["q4", "인원·배치"], ["q5", "층별 송출"], ["q6", "부산 송출"], ["q7", "다음 예배 전 재확인"]];
+  function rpRow(k, inner) { return '<div class="k">' + k + "</div><div>" + inner + "</div>"; }
+  function rpText(id, ph) { return '<textarea id="t-' + id + '" data-field="' + id + '" rows="1" placeholder="' + ph + '" aria-label="' + ph + '"></textarea><div class="pv" data-pv="' + id + '"></div>'; }
+  var report = '<div class="shd">문제 분류</div><div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' + cats.map(function (c) { return ck(c[0], c[1]); }).join("") + "</div>" +
+    '<div class="shd">보고 항목</div><div class="rp">' +
+    rpRow("문제 유무", '<div class="inline">' + ck("w1", "없음") + ck("w2", "있음") + "</div>") +
+    rpRow("내용", rpText("w3", "어떤 문제가 있었는지")) +
+    rpRow("현장 처리", rpText("w4", "어떻게 처리했는지")) +
+    rpRow("추가 조치", '<div class="inline">' + ck("w5", "불필요") + ck("w6", "필요") + "</div>") +
+    rpRow("담당자", rpText("w7", "후속 조치 담당")) +
+    rpRow("다음 예배 전", rpText("w8", "재확인 사항")) + "</div>";
+  document.getElementById("cols3").innerHTML =
+    simpleBlock("예배 진행 중", "NOW → NEXT", bodyHtml(DURING)) +
+    simpleBlock("예배 종료 후", "", bodyHtml(AFTER)) +
+    simpleBlock("PD REPORT", "종료 후 보고", report);
+
+  // ---------- bind ----------
+  var fDate = document.getElementById("f-date"), fPd = document.getElementById("f-pd");
+  function nextSunday() { var d = new Date(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function fmtDate(v) { if (!v) return ""; var p = v.split("-"); var d = new Date(+p[0], +p[1] - 1, +p[2]); return (+p[1]) + "/" + (+p[2]) + " (" + "일월화수목금토"[d.getDay()] + ")"; }
+  if (!state.fields.date) { state.fields.date = nextSunday(); state.cond.communion = +state.fields.date.split("-")[2] <= 7; }
+  fDate.value = state.fields.date; fPd.value = state.fields.pd || "";
+
+  var cbs = document.querySelectorAll("[data-ck]");
+  cbs.forEach(function (cb) { cb.checked = !!state.checks[cb.dataset.ck]; cb.addEventListener("change", function () { state.checks[cb.dataset.ck] = cb.checked; save(); update(); }); });
+  document.querySelectorAll("[data-field]").forEach(function (el) {
+    el.value = state.fields[el.dataset.field] || "";
+    el.addEventListener("input", function () { state.fields[el.dataset.field] = el.value; save(); update(); });
+  });
+  fDate.addEventListener("change", function () {
+    state.fields.date = fDate.value;
+    if (fDate.value) { state.cond.communion = +fDate.value.split("-")[2] <= 7; document.getElementById("c-communion").checked = state.cond.communion; renderFlowAndBind(); }
+    save(); update();
+  });
+  fPd.addEventListener("input", function () { state.fields.pd = fPd.value; save(); update(); });
+
+  ["communion", "news", "changes"].forEach(function (k) {
+    var el = document.getElementById("c-" + k); el.checked = !!state.cond[k];
+    el.addEventListener("change", function () { state.cond[k] = el.checked; if (k === "communion") renderFlowAndBind(); save(); update(); });
+  });
+  function renderFlowAndBind() {
+    renderFlow();
+    flowEl.querySelectorAll("[data-ck]").forEach(function (cb) { cb.checked = !!state.checks[cb.dataset.ck]; cb.addEventListener("change", function () { state.checks[cb.dataset.ck] = cb.checked; save(); update(); }); });
+  }
+
+  var mF = document.getElementById("m-filled"), mB = document.getElementById("m-blank");
+  function setMode(blank) { state.blank = blank; document.body.classList.toggle("blank", blank); mF.setAttribute("aria-pressed", String(!blank)); mB.setAttribute("aria-pressed", String(blank)); save(); }
+  mF.addEventListener("click", function () { setMode(false); });
+  mB.addEventListener("click", function () { setMode(true); });
+  setMode(state.blank);
+
+  // print button only where the browser allows printing (opened as a file, not inside the viewer)
+  var pb = document.getElementById("b-print");
+  var inFrame = true; try { inFrame = window.self !== window.top; } catch (e) {}
+  if (!inFrame) { pb.hidden = false; pb.addEventListener("click", function () { window.print(); }); } else { document.getElementById("print-hint").hidden = false; }
+
+  function armed(btn, label, fn) {
+    var timer = null;
+    btn.addEventListener("click", function () {
+      if (btn.classList.contains("danger-armed")) { clearTimeout(timer); btn.classList.remove("danger-armed"); btn.textContent = label; fn(); return; }
+      btn.classList.add("danger-armed"); btn.textContent = "한 번 더 누르면 " + label;
+      timer = setTimeout(function () { btn.classList.remove("danger-armed"); btn.textContent = label; }, 3000);
+    });
+  }
+  armed(document.getElementById("b-clear"), "체크 초기화", function () {
+    state.checks = {}; document.querySelectorAll("[data-ck]").forEach(function (cb) { cb.checked = false; }); save(); update();
+  });
+  armed(document.getElementById("b-reset"), "전체 초기화", function () {
+    state.checks = {}; state.fields = { date: nextSunday() }; state.cond = { communion: +state.fields.date.split("-")[2] <= 7, news: true, changes: false };
+    document.querySelectorAll("[data-ck]").forEach(function (cb) { cb.checked = false; });
+    document.querySelectorAll("[data-field]").forEach(function (el) { el.value = ""; });
+    fDate.value = state.fields.date; fPd.value = "";
+    ["communion", "news", "changes"].forEach(function (k) { document.getElementById("c-" + k).checked = state.cond[k]; });
+    renderFlowAndBind(); save(); update();
+  });
+
+  function update() {
+    // conditional items
+    document.querySelectorAll("[data-cond]").forEach(function (el) { el.classList.toggle("off", !state.cond[el.dataset.cond]); });
+    FLOW.forEach(function (s) {
+      if (!s.cond) return;
+      flowEl.querySelectorAll('[data-step="' + s.id + '"]').forEach(function (el) { el.classList.toggle("hide-screen", false); el.classList.toggle("off", !state.cond[s.cond]); el.classList.toggle("hide", !state.cond[s.cond]); });
+    });
+    var shown = FLOW.filter(function (s) { return !s.cond || state.cond[s.cond]; }).length;
+    flowEl.style.setProperty("--n", shown);
+    document.body.style.setProperty("--n-all", FLOW.length);
+    // print-blank shows all steps
+    var st = document.getElementById("flow-n-style") || document.head.appendChild(Object.assign(document.createElement("style"), { id: "flow-n-style" }));
+    st.textContent = "@media print { body.blank .flow { --n: " + FLOW.length + " !important; } }";
+    // previews
+    document.querySelectorAll("[data-pv]").forEach(function (el) { el.textContent = state.fields[el.dataset.pv] || ""; });
+    document.querySelectorAll('[data-bind="date"]').forEach(function (el) { el.textContent = fmtDate(state.fields.date); });
+    document.querySelectorAll('[data-bind="pd"]').forEach(function (el) { el.textContent = state.fields.pd || ""; });
+    // progress (applicable items only)
+    var total = 0, done = 0;
+    document.querySelectorAll("[data-ck]").forEach(function (cb) {
+      var id = cb.dataset.ck; if (/^(q|w)/.test(id)) return;
+      var lab = cb.closest(".ck"), cell = cb.closest("[data-step]");
+      if ((lab && lab.classList.contains("off")) || (cell && cell.classList.contains("hide"))) return;
+      total++; if (cb.checked) done++;
+    });
+    document.getElementById("p-bar").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+    document.getElementById("p-done").textContent = done; document.getElementById("p-total").textContent = total;
+  }
+  update();
+})();
+</script>
+
+</body>
+</html>
