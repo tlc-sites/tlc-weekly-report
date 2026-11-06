@@ -18,7 +18,8 @@ async function Content({searchParams}:PageProps<"/pd-checklist">){
  for(const r of rows??[])if(!latest.has(r.service_key))latest.set(r.service_key,{version:r.version,content:r.content as PdTemplate});
  if(error||!latest.size)return <><PageTitle>예배 PD 체크리스트</PageTitle><Card><p>체크리스트를 불러오지 못했습니다.</p><p className="mt-1 text-sm text-muted">{error?"DB 적용 전이거나 연결 오류입니다. 관리자에게 알려 주세요.":"등록된 예배 템플릿이 없습니다."}</p></Card></>;
 
- const services=[...latest.entries()].map(([key,t])=>({key,name:t.content.name,start:t.content.start}));
+ // 예배 선택 목록은 시작 시각 순서(1부 → 2부 → 3부 → 라이프라인)
+ const services=[...latest.entries()].map(([key,t])=>({key,name:t.content.name,start:t.content.start})).sort((a,b)=>a.start.localeCompare(b.start));
  const service=typeof q.service==="string"&&latest.has(q.service)?q.service:services[0].key;
  // 모든 예배는 주일 날짜로 저장한다. 다른 요일을 고르면 그 주의 주일로 맞춘다.
  const picked=typeof q.date==="string"&&isIsoDate(q.date)?q.date:todayKST();

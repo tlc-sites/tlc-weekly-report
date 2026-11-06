@@ -22,11 +22,11 @@ const save=(as,n,date,patch)=>as(n,'select r.* from report.pd_run_save($1,$2,$3)
 
 test('PD 회차는 승인된 사용자 누구나 칸별로 저장하고 모두가 같은 내용을 본다',async()=>{
  const {db,as}=await setup();try{
- const tpl=(await as('pd',"select version,content from report.pd_templates where service_key='sun1'")).rows;
+ const tpl=(await as('pd',"select version,content from report.pd_templates where service_key='sun1' and version=1")).rows;
  assert.equal(tpl.length,1);assert.equal(tpl[0].content.name,'주일 1부');assert.equal(tpl[0].content.conditions.length,3);
  // 첫 저장에서 회차가 생기고, 1~7일 주일이면 성찬주간이 켜진다
  let r=await save(as,'pd','2026-12-06',{pd:'홍길동'});
- assert.equal(r.template_version,1);assert.equal(r.pd_name,'홍길동');
+ assert.equal(r.template_version,2);assert.equal(r.pd_name,'홍길동');
  assert.deepEqual(r.conditions,{communion:true,news:true,changes:false});
  r=await save(as,'pd','2026-11-08',{checks:{a1:true}});
  assert.deepEqual(r.conditions,{communion:false,news:true,changes:false});
@@ -78,4 +78,29 @@ test('진행률은 켜진 조건의 항목만 세고 PD REPORT는 뺀다',()=>{
  assert.deepEqual(visibleFlow(tpl,off).map(s=>s.id).filter(id=>['s5','s8'].includes(id)),[]);
  assert.deepEqual(defaultConditions(tpl,'2026-11-01'),{communion:true,news:true,changes:false});
  assert.deepEqual(defaultConditions(tpl,'2026-11-08'),{communion:false,news:true,changes:false});
+});
+
+test('2·3부·라이프라인 템플릿이 있고 1부는 v2에서 T-5가 빠진다',async()=>{
+ const {db,as}=await setup();try{
+ const rows=(await as('pd',"select distinct on (service_key) service_key,version,content from report.pd_templates order by service_key,version desc")).rows;
+ const by=Object.fromEntries(rows.map(r=>[r.service_key,r]));
+ assert.deepEqual(Object.fromEntries(rows.map(r=>[r.service_key,[r.version,r.content.name,r.content.start]])),
+  {life:[1,'라이프라인','18:00'],sun1:[2,'주일 1부','08:20'],sun2:[1,'주일 2부','10:40'],sun3:[1,'주일 3부','13:00']});
+ const labels=t=>t.page1.rows.flat().map(b=>b.label);
+ assert.ok(!labels(by.sun1.content).includes('T-5'));
+ assert.deepEqual(labels(by.sun2.content),['T-60','T-30','T-20','T-10','T-2','T-1','START']);
+ // 시작 시각 기준 시각: 2부 예배팀 기도 9:50, 영상팀 10:10, 안내위원 10:20, 전체 집결 10:30 / 3부는 2시간 20분 뒤
+ const arr=t=>t.page1.rows.flat().flatMap(b=>(b.arrivals??[]).map(a=>clockAt(t.start,a.offsetMin)+' '+a.text));
+ assert.deepEqual(arr(by.sun2.content),['09:50 예배팀 기도 시작','10:10 영상 · 사진 · 조명팀 집결 · 기도','10:20 안내위원 집결','10:30 전체 집결 상태 확인']);
+ assert.deepEqual(arr(by.sun3.content).map(s=>s.slice(0,5)),['12:10','12:30','12:40','12:50']);
+ assert.ok(by.sun3.content.page2.after.items.some(i=>i.text==='라이프라인 PD에게 인수인계'));
+ // 새 회차는 최신 버전으로 만든다. 라이프라인은 변경사항 조건만 있다
+ let r=await save(as,'pd','2026-11-08',{pd:'가'});assert.equal(r.template_version,2);
+ r=(await as('pd',"select r.* from report.pd_run_save('life','2026-12-06','{}') r")).rows[0];
+ assert.deepEqual([r.template_version,r.conditions],[1,{changes:false}]);
+ r=(await as('pd',"select r.* from report.pd_run_save('sun3','2026-12-06','{}') r")).rows[0];
+ assert.deepEqual(r.conditions,{communion:true,news:true,changes:false});
+ // 진행률 계산이 새 템플릿에서도 고유 ID로 동작
+ for(const {content:t} of rows){const ids=applicableCheckIds(t,{communion:true,news:true,changes:true});assert.equal(new Set(ids).size,ids.length,t.id);}
+ }finally{await db.close();}
 });
