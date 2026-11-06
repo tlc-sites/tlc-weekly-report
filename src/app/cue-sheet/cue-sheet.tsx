@@ -1,5 +1,5 @@
 "use client";
-import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSProperties} from "react";
+import {useCallback,useEffect,useRef,useState,useSyncExternalStore} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
@@ -133,7 +133,7 @@ function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:
    </div>
   </div>
   <div className="cue-body">
-   <div className="blk"><table className="cue-t">
+   <div className="cue-col"><div className="blk"><table className="cue-t">
     <colgroup><col className="c-time"/><col className="c-what"/><col/></colgroup>
     <thead><tr><th scope="col">Time</th><th scope="col" colSpan={2}>Contents</th></tr></thead>
     <tbody>{rows.flatMap((r,i)=>r.lines.map((l,li)=><tr key={r.id+li} className={r.condition?"opt":undefined}>
@@ -141,14 +141,14 @@ function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:
      {li===0?<th scope="row" rowSpan={r.lines.length}>{en?r.en:r.ko}</th>:null}
      <td className="in">{cell(l.key,`${r.ko} ${l.hint??""}`.trim(),l.hint)}</td>
     </tr>))}</tbody></table></div>
+   <div className="blk"><table className="cue-t songs">
+    <colgroup><col className="c-time"/><col/></colgroup>
+    <thead><tr><th scope="col" colSpan={2}>Song List</th></tr></thead>
+    <tbody>{songs.map((k,i)=><tr key={k}><th scope="row">{i<s.cue.songs?i+1:en?"Offering":"헌금"}</th><td className="in">{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</td></tr>)}</tbody></table></div></div>
    <div className="blk"><table className="cue-t">
     <colgroup><col className="c-role"/><col/></colgroup>
     <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
     <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>
-  </div>
-  <div className="blk cue-songs" style={{"--n":songs.length} as CSSProperties}>
-   <div className="lab">Song List</div>
-   {songs.map((k,i)=><div key={k} className="song"><small>{i<s.cue.songs?i+1:en?"Offering":"헌금"}</small>{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</div>)}
   </div>
  </section>;
 }

@@ -83,9 +83,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 
 .pdc .row { display: grid; gap: 14px; align-items: start; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
 .pdc .row + .row { margin-top: 14px; }
-.pdc .row2:has(> :nth-child(5):last-child) { grid-template-columns: 1.25fr 1.05fr .95fr .8fr .85fr; }
-@media screen and (max-width: 1100px) { .pdc .row, .pdc .row2:has(> :nth-child(5):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media screen and (max-width: 640px) { .pdc .row, .pdc .row2:has(> :nth-child(5):last-child) { grid-template-columns: minmax(0, 1fr); } }
+@media screen and (max-width: 1100px) { .pdc .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 640px) { .pdc .row { grid-template-columns: minmax(0, 1fr); } }
 
 .pdc .blk { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; min-width: 0; overflow: hidden; }
 .pdc .blk-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 16px 10px; }
@@ -271,14 +270,14 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .nx { font-size: 7.6pt; padding: 0 .4mm; }
   .pdc .fc { padding: 0; }
   .pdc .fc .ck .box { width: 4.4mm; height: 4.4mm; }
-  .pdc .roster { margin-top: 2.4mm; padding: .6mm 3mm; border-radius: 2.6mm; grid-template-columns: 15mm repeat(6, minmax(0, 1fr)); column-gap: 2.6mm; break-inside: avoid; }
+  .pdc .roster { margin-top: 2mm; padding: .4mm 3mm; border-radius: 2.6mm; grid-template-columns: 15mm repeat(6, minmax(0, 1fr)); column-gap: 2.6mm; break-inside: avoid; }
   .pdc .roster .rl { font-size: 8.8pt; padding: .6mm 0; }
   .pdc .roster .rl small { font-size: 6.6pt; }
-  .pdc .slot { padding: .6mm 0 .3mm; min-height: 7.2mm; }
+  .pdc .slot { padding: .5mm 0 .2mm; min-height: 6.8mm; }
   .pdc .slot label { font-size: 7.2pt; }
   .pdc .slot input { display: none; }
   .pdc .slot .pv { display: block; font-size: 9.3pt; line-height: 1.2; }
-  .pdc .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2.4mm; }
+  .pdc .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2mm; }
   .pdc .cols3 .blk-h .tm { font-size: 11.5pt; }
   .pdc .cols3 .ck { padding: .3mm .6mm; }
   .pdc .cols3 .grid .ck { padding: .35mm 1.2mm; }

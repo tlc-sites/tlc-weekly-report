@@ -131,12 +131,20 @@ test('관리자만 템플릿을 새 버전으로 저장하고, 동시에 고치�
  await assert.rejects(saveT('admin','sun2',b+1,JSON.stringify({...cur,start:'25:00'})),/bad template/);
  await assert.rejects(saveT('admin','Bad-Key',0),/bad service/);
  await assert.rejects(as('admin',"insert into report.pd_templates(service_key,version,content) values('sun2',9,'{}')"),/permission denied/);
- // 기존 회차는 만든 버전을 유지, 전체 초기화하면 최신 버전으로
- await save(as,'pd','2026-11-08',{pd:'가'});
- r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{}') r")).rows[0];assert.equal(r.template_version,b+1);
+ // 오늘(한국 시간)·앞으로의 회차는 템플릿을 저장하면 바로 최신 버전을 따른다. 지난 회차는 기록할 때의 버전으로 남는다.
+ const today=(await db.query("select (now() at time zone 'Asia/Seoul')::date::text d")).rows[0].d;
+ const next=(await db.query("select (d+((7-extract(dow from d)::int)%7))::text s from (select (now() at time zone 'Asia/Seoul')::date d) x")).rows[0].s;
+ const past=(await db.query("select (d-7-extract(dow from d)::int)::text s from (select (now() at time zone 'Asia/Seoul')::date d) x")).rows[0].s;
+ assert.ok(next>=today&&past<today);
+ for(const d of [next,past])await as('pd','select report.pd_run_save($1,$2,$3)',['sun2',d,JSON.stringify({checks:{a1:true},roster:{r1:'가'}})]);
+ const ver=async d=>(await as('pd','select template_version v,checks,roster from report.pd_runs where service_key=$1 and run_date=$2',['sun2',d])).rows[0];
+ assert.equal((await ver(next)).v,b+1);assert.equal((await ver(past)).v,b+1);
  assert.equal(await saveT('admin','sun2',b+1,JSON.stringify({...cur,name:'다음'})),b+2);
- r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{\"pd\":\"나\"}') r")).rows[0];assert.equal(r.template_version,b+1);
- r=(await as('pd',"select r.* from report.pd_run_reset('sun2','2026-11-08','all') r")).rows[0];assert.equal(r.template_version,b+2);
+ const n=await ver(next);assert.deepEqual([n.v,n.checks,n.roster],[b+2,{a1:true},{r1:'가'}]);
+ assert.equal((await ver(past)).v,b+1);
+ // 지난 회차에 적어도 버전은 그대로, 전체 초기화하면 최신으로
+ r=(await as('pd','select r.* from report.pd_run_save($1,$2,$3) r',['sun2',past,'{"pd":"나"}'])).rows[0];assert.equal(r.template_version,b+1);
+ r=(await as('pd','select r.* from report.pd_run_reset($1,$2,$3) r',['sun2',past,'all'])).rows[0];assert.equal(r.template_version,b+2);
  }finally{await db.close();}
 });
 
@@ -175,6 +183,8 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // PD 담당자 칸: 예배팀은 악기·싱어로 나뉘고 송리스트가 붙는다. 큐시트의 담당 키는 모두 PD 칸이거나 큐시트 전용 키
  const fields=t=>t.page2.roster.flatMap(g=>g.fields.map(f=>f.id));
+ // PD 담당자 칸에서 담당 교역자(r5)·성찬 담당(r6)은 뺐다(성찬 담당은 큐시트에서만)
+ for(const t of Object.values(by))assert.ok(!fields(t).some(k=>k==='r5'||k==='r6'),t.id);
  assert.deepEqual(s1.page2.roster.find(g=>g.group==='예배팀').fields.map(f=>[f.id,f.label]),[['r18','악기'],['r9','싱어']]);
  assert.ok(cueSongKeys(s1.cue).every(k=>fields(s1).includes(k)));
  for(const k of ['r1','r10','r11','r13','r14','r8','r2','r3','r4','r7'])assert.ok(fields(s1).includes(k),k);

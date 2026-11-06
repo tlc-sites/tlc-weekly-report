@@ -34,7 +34,7 @@ export function PdTemplateEditor({services,service,version,template,history,sund
  const router=useRouter();
  const [draft,setDraft]=useState<T>(()=>clone(template));
  const [tab,setTab]=useState<"edit"|"preview">("edit");
- const [msg,setMsg]=useState<{kind:"error"|"ok";lines:string[]}|null>(saved?{kind:"ok",lines:[`v${saved}으로 저장했습니다. 새로 시작하는 회차부터 이 내용으로 보입니다.`]}:null);
+ const [msg,setMsg]=useState<{kind:"error"|"ok";lines:string[]}|null>(saved?{kind:"ok",lines:[`v${saved}으로 저장했습니다. 오늘과 앞으로의 회차에 바로 보입니다.`]}:null);
  const [copy,setCopy]=useState({name:"",start:template.start});
  const [busy,startSave]=useTransition();
  const dirty=useMemo(()=>JSON.stringify(draft)!==JSON.stringify(template),[draft,template]);
@@ -84,7 +84,7 @@ export function PdTemplateEditor({services,service,version,template,history,sund
   </div>
 
   {tab==="preview"?<div className="-mx-4"><PdChecklist preview services={[]} service={service} date={sunday} defaultDate={sunday} template={draft} version={version} latestVersion={version} initialRun={null}/></div>:<>
-  <p className="text-sm text-muted">저장하면 새 버전이 됩니다. 이미 기록 중인 회차는 기록을 시작할 때의 버전으로 보이고, 새로 시작하는 회차(또는 &lsquo;전체 초기화&rsquo;한 회차)부터 새 내용이 보입니다. 시각은 <b>시작 시각 기준 분</b>(예: -30 = 30분 전)으로 적으면 자동 계산됩니다.</p>
+  <p className="text-sm text-muted">저장하면 새 버전이 되고, 오늘과 앞으로의 회차에 바로 보입니다(이미 적은 체크·담당자 값은 그대로). 지난 회차는 그때 내용으로 남습니다. 시각은 <b>시작 시각 기준 분</b>(예: -30 = 30분 전)으로 적으면 자동 계산됩니다.</p>
 
   <Section title="기본">
    <div className="grid gap-3 sm:grid-cols-2">

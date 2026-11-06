@@ -7,6 +7,8 @@
 
 .cue .cue-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media screen and (max-width: 860px) { .cue .cue-body { grid-template-columns: minmax(0, 1fr); } }
+.cue .cue-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cue .cue-t.songs tbody th { text-align: center; }
 .cue table.cue-t { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
 .cue .cue-t col.c-time { width: 8.2em; }
 .cue .cue-t col.c-what { width: 10em; }
@@ -18,10 +20,10 @@
 .cue .cue-t td.time { font-weight: 600; color: var(--accent); background: var(--soft); border-right: 1px solid var(--line); white-space: nowrap; font-size: 13px; }
 .cue .cue-t tr.opt th { color: var(--accent); }
 .cue .cue-t td.in { padding: 0 6px; }
-.cue .cue-t td.in input, .cue .cue-songs input { width: 100%; min-width: 0; border: 0; border-radius: 6px; background: transparent; padding: 8px 6px; font-size: 15px; color: var(--ink); }
-.cue .cue-t td.in input:hover, .cue .cue-songs input:hover { background: var(--soft); }
-.cue .cue-t td.in input:focus, .cue .cue-songs input:focus { background: var(--accent-soft); outline: none; }
-.cue .cue-t td.in input::placeholder, .cue .cue-songs input::placeholder { color: var(--faint); }
+.cue .cue-t td.in input { width: 100%; min-width: 0; border: 0; border-radius: 6px; background: transparent; padding: 8px 6px; font-size: 15px; color: var(--ink); }
+.cue .cue-t td.in input:hover { background: var(--soft); }
+.cue .cue-t td.in input:focus { background: var(--accent-soft); outline: none; }
+.cue .cue-t td.in input::placeholder { color: var(--faint); }
 .cue .pv { display: none; }
 @media screen and (max-width: 520px) {
   .cue table.cue-t { font-size: 13px; }
@@ -30,16 +32,6 @@
   .cue .cue-t col.c-role { width: 6.5em; }
   .cue .cue-t tbody th, .cue .cue-t td { padding: 0 8px; }
   .cue .cue-t td.time { white-space: normal; font-size: 12px; }
-}
-
-.cue .cue-songs { margin-top: 14px; display: grid; grid-template-columns: 6.5em repeat(var(--n), minmax(0, 1fr)); align-items: stretch; }
-.cue .cue-songs .lab { display: flex; align-items: center; padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); background: var(--soft); }
-.cue .cue-songs .song { display: flex; flex-direction: column; min-width: 0; border-left: 1px solid var(--line); padding: 6px 6px 4px; }
-.cue .cue-songs .song small { font-size: 11px; font-weight: 600; color: var(--muted); padding: 0 6px; }
-@media screen and (max-width: 860px) {
-  .cue .cue-songs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cue .cue-songs .lab { grid-column: 1 / -1; padding: 10px 12px; }
-  .cue .cue-songs .song { border-top: 1px solid var(--line); }
 }
 
 @media print {
@@ -58,12 +50,8 @@
   .cue .cue-t col.c-what { width: 39mm; }
   .cue .cue-t col.c-role { width: 45mm; }
   .cue .cue-t thead th { font-size: 7.5pt; padding: 2mm 3mm 1.4mm; }
-  .cue .cue-t tbody th, .cue .cue-t td { height: 10.4mm; padding: 0 3mm; border-color: var(--line2); }
+  .cue .cue-col { gap: 3.4mm; }
+  .cue .cue-t tbody th, .cue .cue-t td { height: 8.9mm; padding: 0 3mm; border-color: var(--line2); }
   .cue .cue-t td.time { font-size: 10.5pt; }
   .cue .pv { display: block; font-size: 11.5pt; line-height: 1.25; }
-  .cue .cue-songs { margin-top: 4mm; grid-template-columns: 24mm repeat(var(--n), minmax(0, 1fr)); }
-  .cue .cue-songs .lab { font-size: 7.5pt; padding: 0 3mm; }
-  .cue .cue-songs .song { padding: 1.6mm 2mm; min-height: 15mm; border-color: var(--line2); }
-  .cue .cue-songs .song small { font-size: 7.5pt; padding: 0; }
-  .cue .cue-songs .song .pv { font-size: 11pt; margin-top: .8mm; }
 }
