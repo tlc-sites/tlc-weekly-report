@@ -1,5 +1,5 @@
 import {Suspense} from "react";
-import {requireActive} from "@/lib/auth";
+import {requireActive,canManage} from "@/lib/auth";
 import {addDays,isIsoDate,todayKST,weekdayOf} from "@/lib/week";
 import {upcomingSunday} from "@/lib/sunday-notice";
 import type {PdRun,PdTemplate} from "@/lib/pd-checklist";
@@ -11,7 +11,7 @@ export default function Page(props:PageProps<"/pd-checklist">){return <Suspense 
 
 // 예배 PD 체크리스트: 템플릿(예배별 최신 버전)과 날짜 × 예배 회차를 읽어 화면에 넘긴다. 회차가 있으면 그 회차를 만든 버전의 템플릿으로 그린다.
 async function Content({searchParams}:PageProps<"/pd-checklist">){
- const {supabase}=await requireActive();
+ const {supabase,profile}=await requireActive();
  const q=await searchParams;
  const {data:rows,error}=await supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false});
  const latest=new Map<string,{version:number;content:PdTemplate}>();
@@ -31,5 +31,5 @@ async function Content({searchParams}:PageProps<"/pd-checklist">){
   const {data:old}=await supabase.from("pd_templates").select("content").eq("service_key",service).eq("version",run.template_version).maybeSingle();
   if(old)template=old.content as PdTemplate;
  }
- return <><span className="page-wide" hidden/><PdChecklist key={service+date} services={services} service={service} date={date} defaultDate={upcomingSunday(todayKST())} template={template} version={run?.template_version??cur.version} latestVersion={cur.version} initialRun={run??null}/></>;
+ return <><span className="page-wide" hidden/><PdChecklist key={service+date} services={services} service={service} date={date} defaultDate={upcomingSunday(todayKST())} template={template} version={run?.template_version??cur.version} latestVersion={cur.version} initialRun={run??null} canEdit={canManage(profile)}/></>;
 }

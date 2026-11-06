@@ -21,7 +21,9 @@
   }
 }
 /* 이 화면은 큐시트라 넓게 쓴다. 휴대폰·태블릿의 본문 폭 제한(max-w-2xl)도 푼다. */
-main:has(.pdc) { max-width: none; }
+main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
+.pdc-editor { width: 100%; min-width: 0; max-width: 72rem; margin-inline: auto; }
+.pdc-editor:has(.pdc) { max-width: none; }
 @media (min-width: 900px) { html body:has(.app-sidebar):has(.pdc) main { --content-w: 86rem; } }
 
 .pdc *, .pdc *::before, .pdc *::after { box-sizing: border-box; }

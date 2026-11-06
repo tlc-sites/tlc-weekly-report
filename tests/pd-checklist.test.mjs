@@ -5,6 +5,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
 import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions} from '../src/lib/pd-checklist.ts';
+import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
  const db=new PGlite();
@@ -103,4 +104,50 @@ test('2·3부·라이프라인 템플릿이 있고 1부는 v2에서 T-5가 빠�
  // 진행률 계산이 새 템플릿에서도 고유 ID로 동작
  for(const {content:t} of rows){const ids=applicableCheckIds(t,{communion:true,news:true,changes:true});assert.equal(new Set(ids).size,ids.length,t.id);}
  }finally{await db.close();}
+});
+
+test('관리자만 템플릿을 새 버전으로 저장하고, 동시에 고치면 뒤의 저장은 막힌다',async()=>{
+ const {db,as}=await setup();try{
+ const cur=(await as('admin',"select content from report.pd_templates where service_key='sun2' order by version desc limit 1")).rows[0].content;
+ const tpl=JSON.stringify({...cur,name:'주일 2부 (수정)'});
+ const saveT=(n,svc,base,c=tpl)=>as(n,'select report.pd_template_save($1,$2,$3) v',[svc,base,c]).then(x=>x.rows[0].v);
+ await assert.rejects(saveT('pd','sun2',1),/admin required/);
+ await assert.rejects(saveT('waiting','sun2',1),/admin required/);
+ assert.equal(await saveT('admin','sun2',1),2);
+ // 같은 v1을 보고 고친 두 번째 저장은 충돌
+ await assert.rejects(saveT('admin','sun2',1),/version conflict/);
+ const row=(await as('pd',"select version,content->>'name' nm,content->>'id' id,created_by is not null by from report.pd_templates where service_key='sun2' order by version desc limit 1")).rows[0];
+ assert.deepEqual([row.version,row.nm,row.id,row.by],[2,'주일 2부 (수정)','sun2',true]);
+ // 새 예배(복제)는 base 0으로 v1. 이미 있는 예배에 base 0이면 충돌
+ assert.equal(await saveT('admin','sfri',0,JSON.stringify({...cur,name:'금요예배',start:'20:00'})),1);
+ await assert.rejects(saveT('admin','sun2',0),/version conflict/);
+ let r=(await as('pd',"select r.* from report.pd_run_save('sfri','2026-12-06','{}') r")).rows[0];
+ assert.equal(r.template_version,1);
+ // 뼈대가 없는 내용·잘못된 키
+ await assert.rejects(saveT('admin','sun2',2,JSON.stringify({name:'x'})),/bad template/);
+ await assert.rejects(saveT('admin','sun2',2,JSON.stringify({...cur,start:'25:00'})),/bad template/);
+ await assert.rejects(saveT('admin','Bad-Key',0),/bad service/);
+ await assert.rejects(as('admin',"insert into report.pd_templates(service_key,version,content) values('sun2',9,'{}')"),/permission denied/);
+ // 기존 회차는 만든 버전을 유지, 전체 초기화하면 최신 버전으로
+ await save(as,'pd','2026-11-08',{pd:'가'});
+ r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{}') r")).rows[0];assert.equal(r.template_version,2);
+ assert.equal(await saveT('admin','sun2',2,JSON.stringify({...cur,name:'v3'})),3);
+ r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{\"pd\":\"나\"}') r")).rows[0];assert.equal(r.template_version,2);
+ r=(await as('pd',"select r.* from report.pd_run_reset('sun2','2026-11-08','all') r")).rows[0];assert.equal(r.template_version,3);
+ }finally{await db.close();}
+});
+
+test('템플릿 검사: 지금 템플릿은 통과하고 빈 문구·겹친 ID·없는 조건은 막는다',()=>{
+ const {templates}=JSON.parse(readFileSync('docs/pd-checklist/templates-2026-11-06.json','utf8'));
+ for(const t of templates){const r=parseTemplate(t);assert.ok(r.ok,t.id+' '+JSON.stringify(r.errors));}
+ const t=structuredClone(templates[1]);
+ const r1=parseTemplate({...t,name:' '});assert.ok(!r1.ok&&r1.errors[0].startsWith('예배 이름'),JSON.stringify(r1));
+ const dup=structuredClone(t);dup.page2.after.items[0].id=dup.page2.during.items[0].id;
+ const r2=parseTemplate(dup);assert.ok(!r2.ok&&/겹칩니다/.test(r2.errors[0]));
+ const nc=structuredClone(t);nc.page2.after.items[0].condition='nope';
+ assert.ok(!parseTemplate(nc).ok);
+ const empty=structuredClone(t);empty.page1.rows[0][0].items[0].text='';
+ const r3=parseTemplate(empty);assert.ok(!r3.ok&&/^1페이지 › 1줄 1번째 블록 › 항목 1번째 › 문구: 비어 있습니다$/.test(r3.errors[0]),JSON.stringify(r3));
+ // 모르는 키는 지운다
+ const extra=parseTemplate({...t,hack:1});assert.ok(extra.ok&&!('hack' in extra.data));
 });

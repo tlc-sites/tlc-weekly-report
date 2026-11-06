@@ -1,5 +1,6 @@
 "use client";
 import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSProperties,type ReactNode} from "react";
+import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
 import {clockAt,defaultConditions,flowSub,isOn,progress,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
@@ -18,9 +19,10 @@ const POLL_MS=15000;
 const fmtDate=(d:string)=>{const [,m,day]=d.split("-").map(Number);return `${m}/${day} (${"일월화수목금토"[new Date(d+"T00:00:00Z").getUTCDay()]})`;};
 const timeOf=(iso:string)=>new Date(iso).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour:"numeric",minute:"2-digit"});
 
-export function PdChecklist({services,service,date,defaultDate,template:t,version,latestVersion,initialRun}:{
+// preview: 편집 화면의 미리보기. 아무것도 저장하지 않고 화면에서만 눌러 본다.
+export function PdChecklist({services,service,date,defaultDate,template:t,version,latestVersion,initialRun,canEdit=false,preview=false}:{
  services:{key:string;name:string;start:string}[];service:string;date:string;defaultDate:string;
- template:PdTemplate;version:number;latestVersion:number;initialRun:PdRun|null;
+ template:PdTemplate;version:number;latestVersion:number;initialRun:PdRun|null;canEdit?:boolean;preview?:boolean;
 }){
  const router=useRouter();
  const [supabase]=useState(createClient);
@@ -43,6 +45,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  },[baseConds]);
 
  const save=useCallback(async(patch:Patch)=>{
+  if(preview)return;
   pending.current++;setStatus({kind:"saving"});
   const {data,error}=await supabase.rpc("pd_run_save",{p_service:service,p_date:date,p_patch:patch});
   pending.current--;
@@ -51,7 +54,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   setStatus({kind:"saved",at:row.updated_at});
   // 다른 기기가 먼저 새 템플릿 버전으로 회차를 만들었으면 그 버전으로 다시 그린다.
   if(row.template_version!==version)router.refresh();
- },[supabase,service,date,version,router]);
+ },[supabase,service,date,version,router,preview]);
 
  // 글자는 멈춘 뒤 잠깐 있다가, 칸을 떠날 때는 바로 저장한다.
  const flush=useCallback((key?:string)=>{
@@ -60,11 +63,12 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const typeText=(key:string,patch:Patch)=>{
   const old=timers.current.get(key);if(old)clearTimeout(old.timer);
   timers.current.set(key,{patch,timer:setTimeout(()=>flush(key),700)});
-  setStatus({kind:"saving"});
+  if(!preview)setStatus({kind:"saving"});
  };
 
  // 같은 회차를 다른 기기에서 고친 내용을 주기적으로 가져온다. 저장 중이거나 글을 쓰는 중이면 건너뛴다.
  useEffect(()=>{
+  if(preview)return;
   const pull=async()=>{
    if(document.hidden||pending.current||timers.current.size)return;
    const a=document.activeElement;if(a&&root.current?.contains(a)&&(a.tagName==="TEXTAREA"||(a as HTMLInputElement).type==="text"))return;
@@ -77,7 +81,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   const vis=()=>{if(document.hidden)flush();else void pull();};
   document.addEventListener("visibilitychange",vis);
   return ()=>{clearInterval(id);document.removeEventListener("visibilitychange",vis);};
- },[supabase,service,date,version,router,apply,flush]);
+ },[supabase,service,date,version,router,apply,flush,preview]);
  useEffect(()=>()=>flush(),[flush]);
 
  const toggle=(id:string,on:boolean)=>{setChecks(c=>({...c,[id]:on}));void save({checks:{[id]:on}});};
@@ -90,6 +94,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const reset=async(scope:"checks"|"all")=>{
   for(const v of timers.current.values())clearTimeout(v.timer);timers.current.clear();
   if(scope==="checks")setChecks({});else{setChecks({});setRoster({});setReport({});setPd("");setConds(baseConds());}
+  if(preview)return;
   pending.current++;setStatus({kind:"saving"});
   const {data,error}=await supabase.rpc("pd_run_reset",{p_service:service,p_date:date,p_scope:scope});
   pending.current--;
@@ -158,10 +163,10 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  return <div ref={root} className={"pdc"+(blank?" is-blank":"")}>
   <div className="bar" data-print-hide>
    <div className="bar-in">
-    <div className="brand"><b>TLC 예배 PD</b>
+    {preview?<div className="brand"><b>미리보기</b></div>:<><div className="brand"><b>TLC 예배 PD</b>
      <select aria-label="예배 선택" value={service} onChange={e=>go({service:e.target.value})}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {s.start}</option>)}</select></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go({date:e.target.value})}/></label>
-    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}
+    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}</>}
     <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
     <div className="toggles" role="group" aria-label="이번 주 예배 조건">
      {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}</label>)}
@@ -175,9 +180,10 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
      </div>
      <button type="button" className="btn primary" onClick={()=>{flush();window.print();}}>인쇄 · PDF</button>
      <Armed label="체크 초기화" onConfirm={()=>void reset("checks")}/>
-     <Armed label="전체 초기화" onConfirm={()=>void reset("all")}/>
+     {preview?null:<Armed label="전체 초기화" onConfirm={()=>void reset("all")}/>}
+     {canEdit&&!preview?<Link className="btn" href={`/pd-checklist/edit?service=${service}`} onClick={()=>flush()}>편집</Link>:null}
     </div>
-    <p className={"save-status"+(status.kind==="error"?" is-error":"")} role={status.kind==="error"?"alert":"status"}>{statusText}{version<latestVersion?` · 이 회차는 이전 체크리스트(v${version})로 기록되었습니다`:""}</p>
+    {preview?null:<p className={"save-status"+(status.kind==="error"?" is-error":"")} role={status.kind==="error"?"alert":"status"}>{statusText}{version<latestVersion?` · 이 회차는 이전 체크리스트(v${version})로 기록되었습니다`:""}</p>}
    </div>
   </div>
 
