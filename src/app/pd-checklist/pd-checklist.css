@@ -20,6 +20,16 @@
     --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d;
   }
 }
+/* 예배별 색: 화면 루트나 큐시트 장에 --svc를 주면 강조색(시각·T 표시·큐 블록·FLOW·스위치)이 그 색이 된다. 인쇄에도 그대로. */
+.pdc.svc, .pdc .svc { --accent: var(--svc); --accent-soft: color-mix(in srgb, var(--svc) 11%, var(--paper)); }
+@media screen {
+  :root[data-theme="dark"] .pdc.svc, :root[data-theme="dark"] .pdc .svc { --accent: color-mix(in srgb, var(--svc) 60%, white); --accent-soft: color-mix(in srgb, var(--svc) 26%, var(--paper)); }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pdc.svc, :root:not([data-theme="light"]) .pdc .svc { --accent: color-mix(in srgb, var(--svc) 60%, white); --accent-soft: color-mix(in srgb, var(--svc) 26%, var(--paper)); }
+}
+.pdc.svc .sheet-head, .pdc .svc .sheet-head { border-bottom: 3px solid var(--accent); padding-bottom: 8px; }
+.pdc.svc .lockup b, .pdc .svc .lockup b, .pdc.svc .lockup small, .pdc .svc .lockup small { color: var(--accent); }
 /* 이 화면은 큐시트라 넓게 쓴다. 휴대폰·태블릿의 본문 폭 제한(max-w-2xl)도 푼다. */
 main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc-editor { width: 100%; min-width: 0; max-width: 72rem; margin-inline: auto; }
@@ -200,7 +210,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 @media screen and (max-width: 900px) { .pdc .cols3 { grid-template-columns: minmax(0, 1fr); } }
 .pdc .cols3 .blk-h .tm { font-size: 17px; font-weight: 600; letter-spacing: 0; }
 .pdc .cols3 .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.pdc .songs { display: flex; flex-direction: column; }
+.pdc .pd-songs { display: flex; flex-direction: column; }
 .pdc .song-row { display: grid; grid-template-columns: 2.8em minmax(0, 1fr); align-items: center; gap: 6px; border-bottom: 1px solid var(--line); padding: 4px 0; }
 .pdc .song-row:last-child { border-bottom: 0; }
 .pdc .song-row .k { font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; }
@@ -235,6 +245,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .sheet { page: pdc; margin: 0; break-after: page; }
   .pdc .sheet:last-child { break-after: auto; }
   .pdc .sheet-head { margin-bottom: 2.6mm; flex-wrap: nowrap; padding-bottom: 2mm; border-bottom: 1px solid var(--line2); }
+  .pdc.svc .sheet-head, .pdc .svc .sheet-head { border-bottom: .8mm solid var(--accent); }
   .pdc .sheet-head .eyebrow { font-size: 7pt; }
   .pdc .sheet-head h2 { font-size: 15pt; }
   .pdc .sheet-head .meta { font-size: 8.5pt; }

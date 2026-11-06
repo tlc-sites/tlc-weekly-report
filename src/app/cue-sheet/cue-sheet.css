@@ -1,5 +1,5 @@
 /* 주일예배 큐시트. PD 체크리스트(.pdc)의 색·바·카드를 그대로 쓰고, 인쇄될 모양 그대로 칸에 바로 적는다.
-   인쇄: 예배마다 한글·영어 한 장씩 A4 가로(@page pdc). 화면용 시트(.cue-screen)와 인쇄용 시트(.cue-print)를 따로 그린다. */
+   인쇄: A4 가로(@page pdc) 한 쪽에 예배 두 개씩(.cue-pair), 한글판 다음 영어판. 화면용 시트(.cue-screen)와 인쇄용 시트(.cue-print)를 따로 그린다. */
 .cue { max-width: 86rem; margin-inline: auto; padding-bottom: 5rem; }
 .cue .cue-print { display: none; }
 .cue .sheet.cue-sheet { margin-top: 28px; }
@@ -13,6 +13,7 @@
 .cue .cue-t col.c-time { width: 8.2em; }
 .cue .cue-t col.c-what { width: 10em; }
 .cue .cue-t col.c-role { width: 11.5em; }
+.cue .cue-t col.c-num { width: 5em; }
 .cue .cue-t thead th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 10px 12px 6px; border-bottom: 1px solid var(--line2); }
 .cue .cue-t tbody th, .cue .cue-t td { border-bottom: 1px solid var(--line); padding: 0 12px; height: 42px; text-align: left; vertical-align: middle; }
 .cue .cue-t tbody tr:last-child > * { border-bottom: 0; }
@@ -54,4 +55,24 @@
   .cue .cue-t tbody th, .cue .cue-t td { height: 8.9mm; padding: 0 3mm; border-color: var(--line2); }
   .cue .cue-t td.time { font-size: 10.5pt; }
   .cue .pv { display: block; font-size: 11.5pt; line-height: 1.25; }
+
+  /* 한 쪽에 두 예배 */
+  .cue .cue-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6mm; align-items: start; }
+  .cue .compact { min-width: 0; font-size: 9pt; }
+  .cue .compact .sheet-head { margin-bottom: 2.4mm; padding-bottom: 1.6mm; }
+  .cue .compact .sheet-head .eyebrow { font-size: 6.5pt; }
+  .cue .compact .sheet-head h2 { font-size: 12.5pt; }
+  .cue .compact .lockup small { font-size: 7.5pt; }
+  .cue .compact .lockup b { font-size: 15pt; }
+  .cue .compact .blk { border-radius: 2mm; }
+  .cue .compact .cue-body { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 2.4mm; margin-top: 2.4mm; align-items: start; }
+  .cue .compact table.cue-t { font-size: 8.8pt; }
+  .cue .compact .cue-t col.c-time { width: 21mm; }
+  .cue .compact .cue-t col.c-what { width: 25mm; }
+  .cue .compact .cue-t col.c-role { width: 23mm; }
+  .cue .compact .cue-t col.c-num { width: 10mm; }
+  .cue .compact .cue-t thead th { font-size: 6.4pt; padding: 1.2mm 1.8mm 1mm; }
+  .cue .compact .cue-t tbody th, .cue .compact .cue-t td { height: 6.8mm; padding: 0 1.8mm; }
+  .cue .compact .cue-t td.time { font-size: 8.2pt; white-space: normal; }
+  .cue .compact .pv { font-size: 9pt; line-height: 1.2; }
 }

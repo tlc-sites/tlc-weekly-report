@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState,useTransition,type ReactNode} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {clockAt,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
+import {clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
 import {allCheckIds,parseTemplate} from "@/lib/pd-template-schema";
 import {savePdTemplate} from "./actions";
 import {PdChecklist} from "./checklist";
@@ -94,6 +94,11 @@ export function PdTemplateEditor({services,service,version,template,history,sund
     <L label="2페이지 제목"><input className={inp+" w-full"} value={draft.page2.title} maxLength={40} onChange={e=>up(d=>{d.page2.title=e.target.value;})}/></L>
     <L label="2페이지 안내 문구"><input className={inp+" w-full"} value={draft.page2.banner} maxLength={80} onChange={e=>up(d=>{d.page2.banner=e.target.value;})}/></L>
     <L label="인수인계 대상"><input className={inp+" w-full"} value={draft.handoverTo??""} maxLength={40} onChange={e=>up(d=>{d.handoverTo=e.target.value;})}/></L>
+   </div>
+   <div className="flex flex-wrap items-center gap-2 text-sm"><span className="text-muted">예배 색</span>
+    {SERVICE_COLORS.map(c=>{const on=serviceColor({id:service,color:draft.color})===c.hex;return <button key={c.hex} type="button" aria-pressed={on} aria-label={c.label} title={c.label}
+     className={"size-9 rounded-full border-2 "+(on?"border-foreground":"border-transparent")} style={{background:c.hex}} onClick={()=>up(d=>{d.color=c.hex;})}/>;})}
+    <span className="text-muted">체크리스트·큐시트의 강조색입니다.</span>
    </div>
   </Section>
 

@@ -4,7 +4,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
-import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys} from '../src/lib/pd-checklist.ts';
+import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
@@ -192,4 +192,12 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  let r=(await as('other',"select r.* from report.pd_run_save('sun1','2026-11-08',$1) r",[JSON.stringify({pd:'박PD',roster:{r1:'김인도',r1_en:'Kim',song1:'주 은혜임을'}})])).rows[0];
  assert.equal(r.template_version,await latestV(as,'sun1'));assert.equal(r.pd_name,'박PD');assert.deepEqual(r.roster,{r1:'김인도',r1_en:'Kim',song1:'주 은혜임을'});
  }finally{await db.close();}
+});
+
+test('예배별 색: 템플릿 색이 있으면 그 색, 없으면 예배 키별 기본색, 잘못된 값은 막는다',()=>{
+ assert.equal(serviceColor({id:'sun1'}),'#2b62c4');assert.equal(serviceColor({id:'life'}),'#c03a6b');
+ assert.equal(serviceColor({id:'sxyz'}),'#2b62c4');assert.equal(serviceColor({id:'sun2',color:'#2f7d32'}),'#2f7d32');
+ assert.equal(serviceColor({id:'sun2',color:'red'}),'#0e7c86');
+ const {templates}=JSON.parse(readFileSync('docs/pd-checklist/templates-2026-11-06.json','utf8'));
+ assert.ok(parseTemplate({...templates[1],color:'#6a4bc2'}).ok);assert.ok(!parseTemplate({...templates[1],color:'url(x)'}).ok);
 });

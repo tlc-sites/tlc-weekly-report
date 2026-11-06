@@ -32,7 +32,7 @@ export type CueRow = { id: string; ko: string; en: string; from: number; to: num
 export type Cue = { label: string; rows: CueRow[]; staff: { key: string; ko: string; en: string }[]; songs: number };
 
 export type PdTemplate = {
-  id: string; name: string; start: string; flowType: string; handoverTo?: string; cue?: Cue;
+  id: string; name: string; start: string; flowType: string; handoverTo?: string; cue?: Cue; color?: string;
   conditions: Condition[]; teams: string[];
   page1: { title: string; rows: Block[][] };
   page2: {
@@ -107,3 +107,12 @@ export function cueTitle(date: string, label: string, start: string) {
 
 /** 큐시트 송리스트 키: song1…songN, 헌금 song_off */
 export const cueSongKeys = (cue: Cue) => [...Array.from({ length: cue.songs }, (_, i) => "song" + (i + 1)), "song_off"];
+
+/** 예배별 색(체크리스트·큐시트의 강조색). 템플릿에 color가 없으면 예배 키로 정한다. */
+export const SERVICE_COLORS = [
+  { hex: "#2b62c4", label: "파랑" }, { hex: "#0e7c86", label: "청록" }, { hex: "#6a4bc2", label: "보라" },
+  { hex: "#c03a6b", label: "장미" }, { hex: "#b5651d", label: "주황" }, { hex: "#2f7d32", label: "초록" },
+];
+const DEFAULT_COLOR: Record<string, string> = { sun1: "#2b62c4", sun2: "#0e7c86", sun3: "#6a4bc2", life: "#c03a6b" };
+export const serviceColor = (t: Pick<PdTemplate, "id" | "color">) =>
+  t.color && /^#[0-9a-f]{6}$/i.test(t.color) ? t.color : DEFAULT_COLOR[t.id] ?? "#2b62c4";

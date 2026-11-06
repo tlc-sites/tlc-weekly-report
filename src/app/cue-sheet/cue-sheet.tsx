@@ -1,11 +1,11 @@
 "use client";
-import {useCallback,useEffect,useRef,useState,useSyncExternalStore} from "react";
+import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSProperties} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
 import {cueSongKeys,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
-export type CueService={key:string;name:string;start:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
+export type CueService={key:string;name:string;start:string;color:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
 type Lang="ko"|"en";
 type Patch={pd?:string;roster?:Record<string,string>;conditions?:Conditions};
@@ -79,6 +79,7 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
 
  const go=(d:string)=>{flush();router.push(`/cue-sheet?date=${d}`);};
  const statusText={idle:"",saving:"저장 중…",saved:"저장됨",error:"저장하지 못했습니다. 연결을 확인하고 다시 입력해 주세요."}[status];
+ const pairs=services.reduce<CueService[][]>((acc,s,i)=>{if(i%2===0)acc.push([s]);else acc[acc.length-1].push(s);return acc;},[]);
  const printLangs:Lang[]=printWhich==="ko"?["ko"]:printWhich==="en"?["en"]:["ko","en"];
 
  return <div ref={root} className="pdc cue">
@@ -106,12 +107,16 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
   </div>
 
   <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
-  <div className="cue-print">{services.flatMap(s=>printLangs.map(l=><Sheet key={s.key+l} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
+  {/* 인쇄: 한글판 전부, 그다음 영어판 전부. 한 쪽(A4 가로)에 예배 두 개씩(1·2부 / 3부·라이프라인). */}
+  <div className="cue-print">{printLangs.flatMap(l=>pairs.map((pair,i)=><div key={l+i} className="sheet cue-pair">
+   {pair.map(s=><Sheet key={s.key} s={s} date={date} lang={l} compact v={vals[s.key]??{}} conds={conds[s.key]??{}}/>)}
+  </div>))}</div>
  </div>;
 }
 
-// 한 장(A4 가로). onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
-function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;
+// 예배 한 개의 큐시트. onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
+// 화면은 예배마다 한 장(.sheet). 인쇄는 compact로 두 예배를 A4 가로 한 쪽에 나란히 놓는다.
+function Sheet({s,date,lang,v,conds,compact=false,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;compact?:boolean;
  onChange?:(key:string,value:string)=>void;onBlur?:(key:string)=>void;onLeave?:()=>void}){
  const en=lang==="en";
  const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
@@ -124,7 +129,23 @@ function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:
  // 시간이 같은 연속 행은 시간 칸을 합친다.
  const timeSpan=(i:number)=>{const r=rows[i],p=rows[i-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=i;j<rows.length&&rows[j].from===r.from&&rows[j].to===r.to;j++)n+=rows[j].lines.length;return n;};
  const songs=cueSongKeys(s.cue);
- return <section className="sheet cue-sheet" lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
+ const contents=<div className="blk"><table className="cue-t">
+  <colgroup><col className="c-time"/><col className="c-what"/><col/></colgroup>
+  <thead><tr><th scope="col">Time</th><th scope="col" colSpan={2}>Contents</th></tr></thead>
+  <tbody>{rows.flatMap((r,i)=>r.lines.map((l,li)=><tr key={r.id+li} className={r.condition?"opt":undefined}>
+   {li===0&&timeSpan(i)?<td className="time num" rowSpan={timeSpan(i)}>{cueTime(s.start,r)}</td>:null}
+   {li===0?<th scope="row" rowSpan={r.lines.length}>{en?r.en:r.ko}</th>:null}
+   <td className="in">{cell(l.key,`${r.ko} ${l.hint??""}`.trim(),l.hint)}</td>
+  </tr>))}</tbody></table></div>;
+ const songList=<div className="blk"><table className="cue-t songs">
+  <colgroup><col className="c-num"/><col/></colgroup>
+  <thead><tr><th scope="col" colSpan={2}>Song List</th></tr></thead>
+  <tbody>{songs.map((k,i)=><tr key={k}><th scope="row">{i<s.cue.songs?i+1:en?"Offering":"헌금"}</th><td className="in">{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</td></tr>)}</tbody></table></div>;
+ const staff=<div className="blk"><table className="cue-t">
+  <colgroup><col className="c-role"/><col/></colgroup>
+  <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
+  <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>;
+ return <section className={"cue-sheet svc"+(compact?" compact":" sheet")} style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
   <div className="sheet-head">
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
@@ -132,23 +153,8 @@ function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:
     <div className="lockup"><small>{s.name}</small><b className="num">{s.start}</b></div>
    </div>
   </div>
-  <div className="cue-body">
-   <div className="cue-col"><div className="blk"><table className="cue-t">
-    <colgroup><col className="c-time"/><col className="c-what"/><col/></colgroup>
-    <thead><tr><th scope="col">Time</th><th scope="col" colSpan={2}>Contents</th></tr></thead>
-    <tbody>{rows.flatMap((r,i)=>r.lines.map((l,li)=><tr key={r.id+li} className={r.condition?"opt":undefined}>
-     {li===0&&timeSpan(i)?<td className="time num" rowSpan={timeSpan(i)}>{cueTime(s.start,r)}</td>:null}
-     {li===0?<th scope="row" rowSpan={r.lines.length}>{en?r.en:r.ko}</th>:null}
-     <td className="in">{cell(l.key,`${r.ko} ${l.hint??""}`.trim(),l.hint)}</td>
-    </tr>))}</tbody></table></div>
-   <div className="blk"><table className="cue-t songs">
-    <colgroup><col className="c-time"/><col/></colgroup>
-    <thead><tr><th scope="col" colSpan={2}>Song List</th></tr></thead>
-    <tbody>{songs.map((k,i)=><tr key={k}><th scope="row">{i<s.cue.songs?i+1:en?"Offering":"헌금"}</th><td className="in">{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</td></tr>)}</tbody></table></div></div>
-   <div className="blk"><table className="cue-t">
-    <colgroup><col className="c-role"/><col/></colgroup>
-    <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
-    <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>
-  </div>
+  {compact
+   ?<>{contents}<div className="cue-body">{songList}{staff}</div></>
+   :<div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>}
  </section>;
 }

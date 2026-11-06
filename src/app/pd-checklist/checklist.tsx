@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {clockAt,defaultConditions,flowSub,isOn,progress,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {clockAt,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -162,7 +162,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
 
  const statusText=status.kind==="saving"?"저장 중…":status.kind==="error"?"저장하지 못했습니다. 연결을 확인하고 다시 눌러 주세요.":status.kind==="saved"&&status.at?`저장됨 ${timeOf(status.at)}`:"아직 기록 없음";
 
- return <div ref={root} className={"pdc"+(blank?" is-blank":"")}>
+ return <div ref={root} className={"pdc svc"+(blank?" is-blank":"")} style={{"--svc":serviceColor({id:service,color:t.color})} as CSSProperties}>
   <div className="bar" data-print-hide>
    <div className="bar-in">
     {preview?<div className="brand"><b>미리보기</b></div>:<><div className="brand"><b>TLC 예배 PD</b>
@@ -214,7 +214,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
      {simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items))}
      {simple(t.page2.after.title,"",items(t.page2.after.items))}
     </div>
-    {songs?simple(songs.group,"큐시트와 같은 값",<div className="songs">{songs.fields.map(f=><div key={f.id} className="song-row">
+    {songs?simple(songs.group,"큐시트와 같은 값",<div className="pd-songs">{songs.fields.map(f=><div key={f.id} className="song-row">
      <label htmlFor={"pd-r-"+f.id} className="k">{f.label}</label>
      <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} onChange={e=>setRosterField(f.id,e.target.value)} onBlur={()=>flush("roster:"+f.id)}/>
      <div className="pv">{roster[f.id]??""}</div>

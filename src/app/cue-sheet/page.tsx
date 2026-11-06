@@ -2,7 +2,7 @@ import {Suspense} from "react";
 import {requireActive} from "@/lib/auth";
 import {addDays,isIsoDate,todayKST,weekdayOf} from "@/lib/week";
 import {upcomingSunday} from "@/lib/sunday-notice";
-import {defaultConditions,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {defaultConditions,serviceColor,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 import {Card,Loading,PageTitle} from "@/components/ui";
 import {CueSheet,type CueService} from "./cue-sheet";
 import "../pd-checklist/pd-checklist.css";
@@ -24,7 +24,7 @@ async function Content({searchParams}:PageProps<"/cue-sheet">){
  const latest=new Map<string,PdTemplate>();
  for(const r of rows??[])if(!latest.has(r.service_key))latest.set(r.service_key,r.content as PdTemplate);
  const byService=new Map(((runs??[]) as PdRun[]).map(r=>[r.service_key,r]));
- const services:CueService[]=[...latest.entries()].filter(([,t])=>t.cue).map(([key,t])=>{const run=byService.get(key);return {key,name:t.name,start:t.start,cue:t.cue!,roster:run?.roster??{},pd:run?.pd_name??"",
+ const services:CueService[]=[...latest.entries()].filter(([,t])=>t.cue).map(([key,t])=>{const run=byService.get(key);return {key,name:t.name,start:t.start,color:serviceColor({id:key,color:t.color}),cue:t.cue!,roster:run?.roster??{},pd:run?.pd_name??"",
   conditions:{...defaultConditions(t,date),...run?.conditions},hasCommunion:t.conditions.some(c=>c.id==="communion")};})
   .sort((a,b)=>a.start.localeCompare(b.start));
  if(error||!services.length)return <><PageTitle>주일예배 큐시트</PageTitle><Card><p>큐시트를 불러오지 못했습니다.</p><p className="mt-1 text-sm text-muted">{error?"연결 오류입니다. 잠시 뒤 다시 열어 주세요.":"큐시트 양식이 있는 예배가 없습니다. 관리자에게 알려 주세요."}</p></Card></>;

@@ -38,6 +38,7 @@ export const pdTemplateSchema=z.object({
  start:z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/),
  flowType:z.string().max(20),
  handoverTo:opt(40).optional(),
+ color:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
  cue:z.object({
   label:text(20),
   rows:z.array(z.object({id,ko:text(20),en:text(30),from:offset,to:offset.nullable(),condition:cond,lines:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),hint:opt(30).optional()})).min(1).max(3)})).min(1).max(20),
