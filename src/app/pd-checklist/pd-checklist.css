@@ -186,10 +186,15 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .slot input:focus { border-bottom-color: var(--accent); outline: none; }
 .pdc .pv { display: none; min-height: 1.3em; }
 .pdc .span2 { grid-column: span 2; } .pdc .span3 { grid-column: span 3; } .pdc .span6 { grid-column: span 6; }
+/* 칸이 7개 이상인 구분(라이프라인 송리스트 등)은 한 줄에 모두 넣는다. */
+.pdc .slots-n { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); column-gap: inherit; min-width: 0; }
+.pdc .roster:has(> .slots-n:last-child) > :nth-last-child(n+3) { border-bottom: 1px solid var(--line); }
+.pdc .roster > .slots-n:last-child .slot { border-bottom: 0; }
 @media screen and (max-width: 760px) {
   .pdc .roster { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .pdc .roster .rl { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 8px; align-items: baseline; padding-top: 14px; border-bottom: 0; }
   .pdc .span2, .pdc .span3, .pdc .span6 { grid-column: 1 / -1; }
+  .pdc .slots-n { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 .pdc .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
@@ -267,12 +272,12 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .fc { padding: 0; }
   .pdc .fc .ck .box { width: 4.4mm; height: 4.4mm; }
   .pdc .roster { margin-top: 2.4mm; padding: .6mm 3mm; border-radius: 2.6mm; grid-template-columns: 15mm repeat(6, minmax(0, 1fr)); column-gap: 2.6mm; break-inside: avoid; }
-  .pdc .roster .rl { font-size: 8.8pt; padding: 1mm 0; }
+  .pdc .roster .rl { font-size: 8.8pt; padding: .6mm 0; }
   .pdc .roster .rl small { font-size: 6.6pt; }
-  .pdc .slot { padding: 1mm 0 .6mm; min-height: 9mm; }
+  .pdc .slot { padding: .6mm 0 .3mm; min-height: 7.2mm; }
   .pdc .slot label { font-size: 7.2pt; }
   .pdc .slot input { display: none; }
-  .pdc .slot .pv { display: block; font-size: 9.5pt; }
+  .pdc .slot .pv { display: block; font-size: 9.3pt; line-height: 1.2; }
   .pdc .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2.4mm; }
   .pdc .cols3 .blk-h .tm { font-size: 11.5pt; }
   .pdc .cols3 .ck { padding: .3mm .6mm; }

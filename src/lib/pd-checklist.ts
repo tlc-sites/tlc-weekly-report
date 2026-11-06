@@ -27,8 +27,12 @@ export type FlowStep = {
 export type RosterGroup = { group: string; sub: string; fields: { id: string; label: string; span: number; multiple: boolean }[] };
 export type ReportField = { id: string; label: string; type: "text" | "choice"; options?: string[]; placeholder?: string };
 
+/** 주일예배 큐시트 양식. lines·staff의 key는 회차 roster의 키(PD 담당자 칸과 같은 키면 같은 값). 'pd'는 회차의 PD 이름. */
+export type CueRow = { id: string; ko: string; en: string; from: number; to: number | null; lines: { key: string; hint?: string }[] };
+export type Cue = { label: string; rows: CueRow[]; staff: { key: string; ko: string; en: string }[]; songs: number };
+
 export type PdTemplate = {
-  id: string; name: string; start: string; flowType: string; handoverTo?: string;
+  id: string; name: string; start: string; flowType: string; handoverTo?: string; cue?: Cue;
   conditions: Condition[]; teams: string[];
   page1: { title: string; rows: Block[][] };
   page2: {
@@ -91,3 +95,15 @@ export function flowSub(step: FlowStep, conds: Conditions, start: string) {
   const hit = Object.entries(step.subWhen ?? {}).find(([c]) => conds[c]);
   return hit ? hit[1] : step.sub ?? "";
 }
+
+/** 큐시트 시간 칸: '08:20 - 08:40', 끝이 없으면 '19:05 -' */
+export const cueTime = (start: string, r: CueRow) => `${clockAt(start, r.from)} -${r.to === null ? "" : " " + clockAt(start, r.to)}`;
+
+/** 큐시트 제목: '2026.11.8 1st. (08:20 AM)' */
+export function cueTitle(date: string, label: string, start: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  return `${y}.${m}.${d} ${label} (${start} ${Number(start.slice(0, 2)) < 12 ? "AM" : "PM"})`;
+}
+
+/** 큐시트 송리스트 키: song1…songN, 헌금 song_off */
+export const cueSongKeys = (cue: Cue) => [...Array.from({ length: cue.songs }, (_, i) => "song" + (i + 1)), "song_off"];

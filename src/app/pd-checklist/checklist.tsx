@@ -217,13 +217,16 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
 }
 
 function RosterGroupView({g,roster,onChange,onBlur}:{g:PdTemplate["page2"]["roster"][number];roster:Record<string,string>;onChange:(id:string,v:string)=>void;onBlur:(id:string)=>void}){
- return <>
-  <div className="rl">{g.group}{g.sub?<small>{g.sub}</small>:null}</div>
-  {g.fields.map(f=><div key={f.id} className={"slot"+(f.span>1?" span"+f.span:"")}>
+ const slots=g.fields.map(f=><div key={f.id} className={"slot"+(f.span>1?" span"+f.span:"")}>
    <label htmlFor={"pd-r-"+f.id}>{f.label}</label>
    <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} placeholder={f.multiple?"여러 명은 쉼표로 구분":""} onChange={e=>onChange(f.id,e.target.value)} onBlur={()=>onBlur(f.id)}/>
    <div className="pv">{roster[f.id]??""}</div>
-  </div>)}
+  </div>);
+ // 너비 1칸짜리가 6개를 넘으면(라이프라인 송리스트) 줄을 넘기지 않고 한 줄에 나눠 넣는다.
+ const wide=g.fields.length>6&&g.fields.every(f=>f.span===1);
+ return <>
+  <div className="rl">{g.group}{g.sub?<small>{g.sub}</small>:null}</div>
+  {wide?<div className="slots-n" style={{"--n":g.fields.length} as CSSProperties}>{slots}</div>:slots}
  </>;
 }
 

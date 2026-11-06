@@ -38,6 +38,12 @@ export const pdTemplateSchema=z.object({
  start:z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/),
  flowType:z.string().max(20),
  handoverTo:opt(40).optional(),
+ cue:z.object({
+  label:text(20),
+  rows:z.array(z.object({id,ko:text(20),en:text(30),from:offset,to:offset.nullable(),lines:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),hint:opt(30).optional()})).min(1).max(3)})).min(1).max(20),
+  staff:z.array(z.object({key:z.string().regex(/^[A-Za-z0-9_]{1,37}$/),ko:text(20),en:text(30)})).max(20),
+  songs:z.number().int().min(0).max(10),
+ }).optional(),
  conditions:z.array(z.object({id:z.string().regex(/^[a-z0-9_]{1,20}$/),label:text(30),tag:text(20),default:z.boolean(),autoRule:opt(100).optional()})).max(6),
  teams:z.array(text(20)).max(12),
  page1:z.object({title:text(40),rows:z.array(z.array(block).min(1).max(6)).min(1).max(3)}),

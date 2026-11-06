@@ -4,7 +4,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
-import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions} from '../src/lib/pd-checklist.ts';
+import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
@@ -27,7 +27,7 @@ test('PD 회차는 승인된 사용자 누구나 칸별로 저장하고 모두�
  assert.equal(tpl.length,1);assert.equal(tpl[0].content.name,'주일 1부');assert.equal(tpl[0].content.conditions.length,3);
  // 첫 저장에서 회차가 생기고, 1~7일 주일이면 성찬주간이 켜진다
  let r=await save(as,'pd','2026-12-06',{pd:'홍길동'});
- assert.equal(r.template_version,2);assert.equal(r.pd_name,'홍길동');
+ assert.equal(r.template_version,3);assert.equal(r.pd_name,'홍길동');
  assert.deepEqual(r.conditions,{communion:true,news:true,changes:false});
  r=await save(as,'pd','2026-11-08',{checks:{a1:true}});
  assert.deepEqual(r.conditions,{communion:false,news:true,changes:false});
@@ -86,7 +86,7 @@ test('2·3부·라이프라인 템플릿이 있고 1부는 v2에서 T-5가 빠�
  const rows=(await as('pd',"select distinct on (service_key) service_key,version,content from report.pd_templates order by service_key,version desc")).rows;
  const by=Object.fromEntries(rows.map(r=>[r.service_key,r]));
  assert.deepEqual(Object.fromEntries(rows.map(r=>[r.service_key,[r.version,r.content.name,r.content.start]])),
-  {life:[1,'라이프라인','18:00'],sun1:[2,'주일 1부','08:20'],sun2:[1,'주일 2부','10:40'],sun3:[1,'주일 3부','13:00']});
+  {life:[2,'라이프라인','18:00'],sun1:[3,'주일 1부','08:20'],sun2:[2,'주일 2부','10:40'],sun3:[2,'주일 3부','13:00']});
  const labels=t=>t.page1.rows.flat().map(b=>b.label);
  assert.ok(!labels(by.sun1.content).includes('T-5'));
  assert.deepEqual(labels(by.sun2.content),['T-60','T-30','T-20','T-10','T-2','T-1','START']);
@@ -96,9 +96,9 @@ test('2·3부·라이프라인 템플릿이 있고 1부는 v2에서 T-5가 빠�
  assert.deepEqual(arr(by.sun3.content).map(s=>s.slice(0,5)),['12:10','12:30','12:40','12:50']);
  assert.ok(by.sun3.content.page2.after.items.some(i=>i.text==='라이프라인 PD에게 인수인계'));
  // 새 회차는 최신 버전으로 만든다. 라이프라인은 변경사항 조건만 있다
- let r=await save(as,'pd','2026-11-08',{pd:'가'});assert.equal(r.template_version,2);
+ let r=await save(as,'pd','2026-11-08',{pd:'가'});assert.equal(r.template_version,3);
  r=(await as('pd',"select r.* from report.pd_run_save('life','2026-12-06','{}') r")).rows[0];
- assert.deepEqual([r.template_version,r.conditions],[1,{changes:false}]);
+ assert.deepEqual([r.template_version,r.conditions],[2,{changes:false}]);
  r=(await as('pd',"select r.* from report.pd_run_save('sun3','2026-12-06','{}') r")).rows[0];
  assert.deepEqual(r.conditions,{communion:true,news:true,changes:false});
  // 진행률 계산이 새 템플릿에서도 고유 ID로 동작
@@ -113,27 +113,27 @@ test('관리자만 템플릿을 새 버전으로 저장하고, 동시에 고치�
  const saveT=(n,svc,base,c=tpl)=>as(n,'select report.pd_template_save($1,$2,$3) v',[svc,base,c]).then(x=>x.rows[0].v);
  await assert.rejects(saveT('pd','sun2',1),/admin required/);
  await assert.rejects(saveT('waiting','sun2',1),/admin required/);
- assert.equal(await saveT('admin','sun2',1),2);
- // 같은 v1을 보고 고친 두 번째 저장은 충돌
- await assert.rejects(saveT('admin','sun2',1),/version conflict/);
+ assert.equal(await saveT('admin','sun2',2),3);
+ // 같은 버전을 보고 고친 두 번째 저장은 충돌
+ await assert.rejects(saveT('admin','sun2',2),/version conflict/);
  const row=(await as('pd',"select version,content->>'name' nm,content->>'id' id,created_by is not null by from report.pd_templates where service_key='sun2' order by version desc limit 1")).rows[0];
- assert.deepEqual([row.version,row.nm,row.id,row.by],[2,'주일 2부 (수정)','sun2',true]);
+ assert.deepEqual([row.version,row.nm,row.id,row.by],[3,'주일 2부 (수정)','sun2',true]);
  // 새 예배(복제)는 base 0으로 v1. 이미 있는 예배에 base 0이면 충돌
  assert.equal(await saveT('admin','sfri',0,JSON.stringify({...cur,name:'금요예배',start:'20:00'})),1);
  await assert.rejects(saveT('admin','sun2',0),/version conflict/);
  let r=(await as('pd',"select r.* from report.pd_run_save('sfri','2026-12-06','{}') r")).rows[0];
  assert.equal(r.template_version,1);
  // 뼈대가 없는 내용·잘못된 키
- await assert.rejects(saveT('admin','sun2',2,JSON.stringify({name:'x'})),/bad template/);
- await assert.rejects(saveT('admin','sun2',2,JSON.stringify({...cur,start:'25:00'})),/bad template/);
+ await assert.rejects(saveT('admin','sun2',3,JSON.stringify({name:'x'})),/bad template/);
+ await assert.rejects(saveT('admin','sun2',3,JSON.stringify({...cur,start:'25:00'})),/bad template/);
  await assert.rejects(saveT('admin','Bad-Key',0),/bad service/);
  await assert.rejects(as('admin',"insert into report.pd_templates(service_key,version,content) values('sun2',9,'{}')"),/permission denied/);
  // 기존 회차는 만든 버전을 유지, 전체 초기화하면 최신 버전으로
  await save(as,'pd','2026-11-08',{pd:'가'});
- r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{}') r")).rows[0];assert.equal(r.template_version,2);
- assert.equal(await saveT('admin','sun2',2,JSON.stringify({...cur,name:'v3'})),3);
- r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{\"pd\":\"나\"}') r")).rows[0];assert.equal(r.template_version,2);
- r=(await as('pd',"select r.* from report.pd_run_reset('sun2','2026-11-08','all') r")).rows[0];assert.equal(r.template_version,3);
+ r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{}') r")).rows[0];assert.equal(r.template_version,3);
+ assert.equal(await saveT('admin','sun2',3,JSON.stringify({...cur,name:'v4'})),4);
+ r=(await as('pd',"select r.* from report.pd_run_save('sun2','2026-11-08','{\"pd\":\"나\"}') r")).rows[0];assert.equal(r.template_version,3);
+ r=(await as('pd',"select r.* from report.pd_run_reset('sun2','2026-11-08','all') r")).rows[0];assert.equal(r.template_version,4);
  }finally{await db.close();}
 });
 
@@ -150,4 +150,30 @@ test('템플릿 검사: 지금 템플릿은 통과하고 빈 문구·겹친 ID·
  const r3=parseTemplate(empty);assert.ok(!r3.ok&&/^1페이지 › 1줄 1번째 블록 › 항목 1번째 › 문구: 비어 있습니다$/.test(r3.errors[0]),JSON.stringify(r3));
  // 모르는 키는 지운다
  const extra=parseTemplate({...t,hack:1});assert.ok(extra.ok&&!('hack' in extra.data));
+});
+
+test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값과 PD 담당자 칸·송리스트가 같은 키를 쓴다',async()=>{
+ const {db,as}=await setup();try{
+ const rows=(await as('pd',"select distinct on (service_key) service_key,version,content from report.pd_templates order by service_key,version desc")).rows;
+ const by=Object.fromEntries(rows.map(r=>[r.service_key,r.content]));
+ assert.deepEqual(rows.map(r=>[r.service_key,r.version]),[['life',2],['sun1',3],['sun2',2],['sun3',2]]);
+ for(const t of Object.values(by))assert.ok(parseTemplate(t).ok,t.id);
+ const s1=by.sun1,life=by.life;
+ // 시간표: 1부 08:20 시작, 라이프라인 설교는 끝 시각 없음
+ assert.deepEqual(s1.cue.rows.map(r=>cueTime(s1.start,r)),['08:20 - 08:40','08:40 - 08:55','08:40 - 08:55','08:40 - 08:55','08:40 - 08:55','08:55 - 09:00','09:00 - 10:20']);
+ assert.equal(cueTime(by.sun2.start,by.sun2.cue.rows[6]),'11:20 - 12:40');
+ assert.equal(cueTime(life.start,life.cue.rows.at(-1)),'19:05 -');
+ assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20 AM)');
+ assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (13:00 PM)');
+ assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);assert.equal(by.sun2.cue.staff[4].en,'Live Streaming');
+ assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
+ // PD 담당자 칸: 예배팀은 악기·싱어로 나뉘고 송리스트가 붙는다. 큐시트의 담당 키는 모두 PD 칸이거나 큐시트 전용 키
+ const fields=t=>t.page2.roster.flatMap(g=>g.fields.map(f=>f.id));
+ assert.deepEqual(s1.page2.roster.find(g=>g.group==='예배팀').fields.map(f=>[f.id,f.label]),[['r18','악기'],['r9','싱어']]);
+ assert.ok(cueSongKeys(s1.cue).every(k=>fields(s1).includes(k)));
+ for(const k of ['r1','r10','r11','r13','r14','r8','r2','r3','r4','r7'])assert.ok(fields(s1).includes(k),k);
+ // 큐시트에서 쓴 값(PD 이름·영어 값 포함)이 같은 회차에 들어가 PD 체크리스트에서도 보인다
+ let r=(await as('other',"select r.* from report.pd_run_save('sun1','2026-11-08',$1) r",[JSON.stringify({pd:'박PD',roster:{r1:'김인도',r1_en:'Kim',song1:'주 은혜임을'}})])).rows[0];
+ assert.equal(r.template_version,3);assert.equal(r.pd_name,'박PD');assert.deepEqual(r.roster,{r1:'김인도',r1_en:'Kim',song1:'주 은혜임을'});
+ }finally{await db.close();}
 });
