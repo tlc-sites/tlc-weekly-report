@@ -822,3 +822,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 메뉴: PC 사이드바 '예배 PD 체크리스트', 휴대폰 홈 '예배위원' 아래 카드.
 - 확인: test:db 153/153(새 `tests/pd-checklist.test.mjs`), tsc, eslint, next build --webpack 통과. 임시 미리보기(가짜 DB)로 1440/820/390px 가로 스크롤 없음, 다크 모드, 작성본·빈 양식 PDF 모두 정확히 2페이지 확인. 실제 DB 저장·다른 기기 동기화·로그인 상태 화면은 운영 DB 적용 전이라 미확인.
 - 남은 일: 운영 DB에 DB 41 적용(승인 필요), 2단계 편집 모드·예배 복제·2페이지 초과 경고, 2·3부·라이프라인 템플릿(설계서 8장, 담당 PD 확인 필요), 지난 회차 목록.
+- 2026-11-06 운영 반영: 사용자가 SQL 편집기에서 DB41 직접 적용. 조회로 sun1 v1(주일 1부, 조건 3), 두 테이블 RLS 켜짐, anon의 pd_run_save 실행 권한 없음 확인. 8b38d77을 origin/master에 일반 push(624f0b5→8b38d77), GitHub 상태 Vercel success(BNQtvdQqAQzaHsBjaKzSsRqfJyJd). 운영 /pd-checklist 비로그인 → /login 307, /login 200. 로그인 화면·저장·기기 간 동기화는 미확인.
