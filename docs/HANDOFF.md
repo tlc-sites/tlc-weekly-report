@@ -845,6 +845,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 검증: tsc·eslint·next build 성공. 실제 로그인 화면 확인은 못 함.
 - 2026-11-07 큐시트 인쇄를 다시 한 쪽(A4 가로)에 예배 하나로: 한글판 1부·2부·3부·라이프라인, 다음 영어판 같은 순서(한·영이면 8쪽, 양면이면 언어마다 2장). compact·.cue-pair 제거. cc0a713을 origin/master에 일반 push(0e7f1c3→cc0a713), Vercel success.
 - 2026-11-07 성찬 곡 칸: 성찬주간(conditions.communion)이 켜지면 송리스트 헌금 다음에 성찬 곡(roster 키 song_comm, `COMM_SONG`)이 큐시트·PD 체크리스트 송리스트 박스에 같이 보인다(같은 값). 템플릿 변경 없이 코드 규칙(cueSongKeys(cue, conds)), 라이프라인은 성찬 조건이 없어 안 보임. DB 변경 없음. 큐시트 인쇄 번호 칸 27mm.
+- 2026-11-07 DB 50 `20261210000000_cue_offering_staff.sql`(로컬, 운영 미적용. 처음엔 DB47로 만들었으나 다른 작업의 DB47~49와 번호가 겹쳐 50으로): 큐시트 순서에서 헌금송(offsong)·헌금(offering) 줄 제거, 헌금위원 r7을 Staffs로(안내 다음·PD 앞, en 'Offering Team'). 라이프라인은 헌금인도가 18:50-19:05로 이어짐. 모든 예배 최신 템플릿 다음 버전 + pd_runs_follow_latest. 다시 돌려도 건너뜀.
 
 ### 2026-11-07 알림함에서 두 번째 알림이 안 열리던 문제 (로컬)
 - 증상: 알림 A를 열고 종 버튼으로 알림 화면에 돌아와 B를 누르면 열리지 않고, A에 '화면을 여는 중…'이 남아 있음.
