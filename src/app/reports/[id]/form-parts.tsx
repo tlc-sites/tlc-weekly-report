@@ -160,7 +160,7 @@ export function RequestsEditor({ value, onChange }: { value: Request[]; onChange
           <select
             value={r.category}
             onChange={(e) => update(i, { category: e.target.value as Request["category"] })}
-            className={`${selectClass} w-24 shrink-0`}
+            className={`${selectClass} w-24! shrink-0`}
           >
             {REQUEST_CATEGORIES.map((c) => (
               <option key={c}>{c}</option>

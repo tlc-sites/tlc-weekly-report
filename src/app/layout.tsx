@@ -6,6 +6,7 @@ import { MenuIcon } from "@/components/menu-heading";
 import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
 import {BottomNavigation} from "@/components/bottom-navigation";
 import {DesktopSidebar} from "@/components/desktop-sidebar";
+import {NotificationSeen} from "@/components/notification-seen";
 import {THEME_SCRIPT} from "@/components/theme-switch";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body className="min-h-full"><TranslationLanguage>
         <Suspense fallback={null}><DesktopSidebar/></Suspense>
+        <Suspense fallback={null}><NotificationSeen/></Suspense>
         <header data-print-hide className="app-header border-b border-border/70 bg-background">
           <div className="mx-auto flex min-h-16 w-full max-w-2xl items-center gap-2 px-4 sm:px-5">
             <Link href="/" className="app-brand inline-flex min-w-0 flex-1 items-center gap-2 text-sm sm:text-base text-accent">

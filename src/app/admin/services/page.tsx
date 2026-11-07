@@ -62,7 +62,7 @@ async function AdminServicesContent({ searchParams }: Pick<PageProps<"/admin/ser
                 <input name="name" required maxLength={50} defaultValue={s.name} className={inputClass} />
               </div>
               <div className="flex items-center gap-2">
-                <select name="weekday" defaultValue={s.weekday ?? ""} className={`${selectClass} w-24`}>
+                <select name="weekday" defaultValue={s.weekday ?? ""} className={`${selectClass} w-24!`}>
                   <option value="">요일 없음</option>
                   {WEEKDAY_LABEL.map((label, d) => (
                     <option key={label} value={d}>

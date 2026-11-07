@@ -850,3 +850,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 원인 추정: cacheComponents의 Activity가 `/notifications`를 숨긴 채 보존해, 돌아왔을 때 A 링크의 `useLinkStatus` 대기 상태가 그대로 되살아남(재현은 로그인 필요라 못 함).
 - 수정(`notification-list.tsx`): 새로 들어올 때마다 `useRouter().bfcacheId`를 key로 목록을 새로 만듦(뒤로 가기는 상태 유지). 알림은 `next/link` 대신 `<a>`+`router.push`로 열고 그 줄에만 '여는 중…' 표시, 숨겨질 때 `useLayoutEffect` 정리로 지움. 4초 지나도 화면이 그대로면 `location.assign`으로 직접 엶.
 - 검증: tsc·eslint·next build 성공. 실제 휴대폰 재현·확인 못 함.
+
+### 2026-11-07 요청사항 내용 칸이 안 보이던 문제·알림 읽음 누락 (로컬)
+- 요청사항: `selectClass`의 `w-full`이 CSS 순서상 `w-24`보다 뒤라 드롭다운이 한 줄을 다 차지하고(shrink-0) 내용 입력(min-w-0)이 폭 0이 됨. `w-24!`로 고정. 같은 조합의 그룹 관리·예배 목록 요일 선택도 함께 수정.
+- 알림 '새 알림'이 남던 문제: 읽음은 서버에 사람별로 저장돼 기기 차이는 원인이 아님. 알림함을 거치지 않고(푸시·홈) 보고서를 열거나, 같은 보고서에 알림이 여러 개면 하나만 읽힘. `NotificationSeen`(layout)이 보고서·이슈·공지·메시지 상세를 열면 `/api/notifications/read`에 `{path}`를 보내 그 주소(#·? 뒤 포함)를 가리키는 내 안 읽은 알림을 `read_notification`으로 모두 읽음 처리. DB 변경 없음.
+- 알림 목록은 보일 때마다 `loadNotifications`로 읽음 상태를 다시 받음(뒤로 가기·다른 기기 반영). 새로고침 버튼도 같은 방식.
+- 검증: tsc·eslint·next build 성공. PostgREST `or`(url.like "…#*") 필터의 운영 동작, 실제 화면은 미확인.

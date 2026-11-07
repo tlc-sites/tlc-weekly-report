@@ -182,7 +182,7 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
             <form action={addMeetingType} className="flex gap-2">
               <input type="hidden" name="groupId" value={group.id} />
               <input name="name" required maxLength={50} placeholder="모임 이름" className={inputClass} />
-              <select name="weekday" defaultValue="" className={`${selectClass} w-24 shrink-0`}>
+              <select name="weekday" defaultValue="" className={`${selectClass} w-24! shrink-0`}>
                 <option value="">요일</option>
                 {WEEKDAY_LABEL.map((label, i) => (
                   <option key={label} value={i}>
