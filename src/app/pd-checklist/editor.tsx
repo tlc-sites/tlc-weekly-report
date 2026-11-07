@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState,useTransition,type ReactNode} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
+import {ampm,clock12,clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
 import {allCheckIds,parseTemplate} from "@/lib/pd-template-schema";
 import {savePdTemplate} from "./actions";
 import {PdChecklist} from "./checklist";
@@ -70,7 +70,7 @@ export function PdTemplateEditor({services,service,version,template,history,sund
   <div className="sticky top-[var(--topbar-h,0px)] z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
    <div className="flex flex-wrap items-center gap-2">
     <b className="mr-1 text-lg">체크리스트 편집</b>
-    <select className={sel} aria-label="예배 선택" value={service} onChange={e=>switchTo(e.target.value)}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {s.start}</option>)}</select>
+    <select className={sel} aria-label="예배 선택" value={service} onChange={e=>switchTo(e.target.value)}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {clock12(s.start)} {ampm(s.start)}</option>)}</select>
     <span className="text-sm text-muted">v{version}{dirty?" · 수정 중":""}</span>
     <div className="ml-auto flex flex-wrap gap-2">
      <div className="inline-flex rounded-lg border border-border p-0.5" role="group" aria-label="보기">
@@ -226,12 +226,12 @@ function BlockEditor({b,start,rows,ri,bi,n,edit,onMove,onRow,onDel,items}:{b:Blo
  return <details className="group rounded-xl border border-border bg-background/50">
   <summary className="flex cursor-pointer list-none items-center gap-2 p-3 text-sm">
    <span className="text-muted transition group-open:rotate-90" aria-hidden>▶</span>
-   <b className="tabular-nums">{clockAt(start,b.offsetMin)}</b><span className="rounded bg-accent/10 px-1.5 text-accent">{b.label}</span><span className="min-w-0 flex-1 truncate">{b.title}</span>
+   <b className="tabular-nums">{clock12(clockAt(start,b.offsetMin))}</b><span className="rounded bg-accent/10 px-1.5 text-accent">{b.label}</span><span className="min-w-0 flex-1 truncate">{b.title}</span>
    <span className="text-muted">항목 {count}개</span>
   </summary>
   <div className="space-y-2 border-t border-border/60 p-3">
   <div className="flex flex-wrap items-end gap-2">
-   <L label={`분 → ${clockAt(start,b.offsetMin)}`} className="w-28"><input className={inp+" w-full"} type="number" min={-600} max={600} value={b.offsetMin} onChange={e=>{const o=Math.trunc(Number(e.target.value));if(Number.isFinite(o))edit(x=>{if(x.label===autoLabel(x.offsetMin))x.label=autoLabel(o);x.offsetMin=o;});}}/></L>
+   <L label={`분 → ${clock12(clockAt(start,b.offsetMin))}`} className="w-28"><input className={inp+" w-full"} type="number" min={-600} max={600} value={b.offsetMin} onChange={e=>{const o=Math.trunc(Number(e.target.value));if(Number.isFinite(o))edit(x=>{if(x.label===autoLabel(x.offsetMin))x.label=autoLabel(o);x.offsetMin=o;});}}/></L>
    <L label="표시" className="w-28"><input className={inp+" w-full"} value={b.label} maxLength={20} onChange={e=>edit(x=>{x.label=e.target.value;})}/></L>
    <L label="제목" className="min-w-32 flex-1"><input className={inp+" w-full"} value={b.title} maxLength={40} onChange={e=>edit(x=>{x.title=e.target.value;})}/></L>
    <L label="모양"><select className={sel} value={b.style} onChange={e=>edit(x=>{x.style=e.target.value as Block["style"];})}><option value="default">기본</option><option value="accent">강조(파랑)</option><option value="cue">큐(테두리)</option><option value="go">시작(진한 색)</option></select></L>
@@ -243,7 +243,7 @@ function BlockEditor({b,start,rows,ri,bi,n,edit,onMove,onRow,onDel,items}:{b:Blo
   </div>
   <div className="space-y-1.5">
    {(b.arrivals??[]).map((a,i)=><div key={i} className="flex flex-wrap items-center gap-2">
-    <span className="w-14 text-sm text-muted">도착 {clockAt(start,a.offsetMin)}</span>
+    <span className="w-14 text-sm text-muted">도착 {clock12(clockAt(start,a.offsetMin))}</span>
     <input className={inp+" w-20"} type="number" aria-label="분" value={a.offsetMin} onChange={e=>{const o=Math.trunc(Number(e.target.value));if(Number.isFinite(o))edit(x=>{x.arrivals![i].offsetMin=o;});}}/>
     <input className={inp+" min-w-40 flex-1"} aria-label="도착 안내" value={a.text} maxLength={80} onChange={e=>edit(x=>{x.arrivals![i].text=e.target.value;})}/>
     <input className={inp+" w-40"} aria-label="장소" placeholder="장소(선택)" value={a.place??""} maxLength={80} onChange={e=>edit(x=>{x.arrivals![i].place=e.target.value||undefined;})}/>
@@ -269,7 +269,7 @@ function FlowEditor({s,i,n,start,conds,condSelect,edit,onMove,onDel}:{s:FlowStep
   </div>
   <div className="flex flex-wrap items-center gap-2 pl-8">
    <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={typeof s.offsetMin==="number"} onChange={e=>edit(x=>{if(e.target.checked)x.offsetMin=0;else delete x.offsetMin;})}/>시각 표시</label>
-   {typeof s.offsetMin==="number"?<span className="inline-flex items-center gap-1 text-sm"><input className={inp+" w-20"} type="number" aria-label="분" value={s.offsetMin} onChange={e=>{const o=Math.trunc(Number(e.target.value));if(Number.isFinite(o))edit(x=>{x.offsetMin=o;});}}/>분 → {clockAt(start,s.offsetMin)}</span>
+   {typeof s.offsetMin==="number"?<span className="inline-flex items-center gap-1 text-sm"><input className={inp+" w-20"} type="number" aria-label="분" value={s.offsetMin} onChange={e=>{const o=Math.trunc(Number(e.target.value));if(Number.isFinite(o))edit(x=>{x.offsetMin=o;});}}/>분 → {clock12(clockAt(start,s.offsetMin))}</span>
     :<input className={inp+" w-32"} aria-label="보조 문구" placeholder="보조 문구(예: 20분)" value={s.sub??""} maxLength={30} onChange={e=>edit(x=>{x.sub=e.target.value||undefined;})}/>}
    <input className={inp+" w-28"} aria-label="작은 표시" placeholder="표시(예: 공조 OFF)" value={s.flag??""} maxLength={20} onChange={e=>edit(x=>{x.flag=e.target.value||null;})}/>
    {condSelect(s.condition,v=>edit(x=>{x.condition=v;}))}

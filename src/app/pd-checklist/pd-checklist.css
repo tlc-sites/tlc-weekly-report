@@ -90,6 +90,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .lockup { text-align: right; line-height: 1.05; }
 .pdc .lockup small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
 .pdc .lockup b { font-size: 32px; font-weight: 600; letter-spacing: -.01em; }
+.pdc .lockup .ampm { font-size: .45em; font-weight: 700; margin-left: .25em; letter-spacing: .02em; }
 
 .pdc .row { display: grid; gap: 14px; align-items: start; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
 .pdc .row + .row { margin-top: 14px; }
@@ -297,7 +298,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .slot { padding: .5mm 0 .2mm; min-height: 6.8mm; }
   .pdc .slot label { font-size: 7.2pt; }
   .pdc .slot input { display: none; }
-  .pdc .slot .pv { display: block; font-size: 9.3pt; line-height: 1.2; }
+  .pdc .slot .pv { display: block; font-size: 9.3pt; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
   .pdc .cols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4mm; margin-top: 2mm; }
   .pdc .cols3 .blk-h .tm { font-size: 11.5pt; }
   .pdc .cols3 .stack { gap: 2.4mm; }

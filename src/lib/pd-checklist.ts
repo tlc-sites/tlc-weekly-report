@@ -91,15 +91,20 @@ export function progress(tpl: PdTemplate, conds: Conditions, checks: Record<stri
 
 /** FLOW 칸의 보조 문구: 시각이 있으면 실제 시각, 조건별 문구(찬양 15분 등)가 켜져 있으면 그것 */
 export function flowSub(step: FlowStep, conds: Conditions, start: string) {
-  if (typeof step.offsetMin === "number") return clockAt(start, step.offsetMin);
+  if (typeof step.offsetMin === "number") return clock12(clockAt(start, step.offsetMin));
   const hit = Object.entries(step.subWhen ?? {}).find(([c]) => conds[c]);
   return hit ? hit[1] : step.sub ?? "";
 }
 
-/** 큐시트 시간 칸(12시간제): '08:20 - 08:40', '01:00 - 01:20', 끝이 없으면 '07:05 -' */
-/** 12시간제 'hh:mm'(13:00 → 01:00, 00:10 → 12:10). 오전·오후는 큐시트 제목에 적는다. */
+/** 12시간제 'hh:mm'(13:00 → 01:00, 00:10 → 12:10). 화면의 시각은 모두 12시간제, 오전·오후는 제목·시작 시각에 붙인다. */
 export const clock12 = (hhmm: string) => String(Number(hhmm.slice(0, 2)) % 12 || 12).padStart(2, "0") + hhmm.slice(2);
 export const ampm = (hhmm: string) => (Number(hhmm.slice(0, 2)) < 12 ? "AM" : "PM");
+/** 인쇄용 명단: '김OO (일렉 기타)'처럼 이름과 괄호 속 악기·파트는 한 덩어리로 둔다(괄호 앞과 괄호 안의 띄어쓰기를 줄바꿈 없는 공백으로).
+ *  줄은 쉼표·다른 띄어쓰기에서만 바뀐다. 저장된 값은 바꾸지 않고 보여 줄 때만 쓴다. */
+export const keepNames = (text: string) =>
+  text.replace(/[ \t]+\(/g, "\u00a0(").replace(/\([^)\n]*\)/g, p => p.replace(/[ \t]/g, "\u00a0"));
+
+/** 큐시트 시간 칸(12시간제): '08:20 - 08:40', '01:00 - 01:20', 끝이 없으면 '07:05 -' */
 export const cueTime = (start: string, r: CueRow) => `${clock12(clockAt(start, r.from))} -${r.to === null ? "" : " " + clock12(clockAt(start, r.to))}`;
 
 /** 큐시트 제목: '2026.11.8 1st. (08:20 AM)', '2026.11.8 3rd. (01:00 PM)'(12시간제) */

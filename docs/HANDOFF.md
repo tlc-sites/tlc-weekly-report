@@ -898,3 +898,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 a002818을 origin/master에 일반 push(9c97eb7→a002818), Vercel success. DB51 운영 적용 확인(사용자 적용): 최신 sun1 v8·sun2 v7·sun3 v7·life v6, offsong 복귀, r20 없음, 11/8 회차 모두 최신. 이어서 큐시트 순서 표 시간도 12시간제(cueTime, clock12).
 - 2026-11-07 b7ac3e8을 origin/master에 일반 push(a002818→b7ac3e8), Vercel success.
 - 2026-11-07 큐시트 오른쪽 위 시작 시각도 12시간제 + 작은 AM/PM(clock12·ampm, .lockup .ampm). PD 체크리스트는 24시간제 그대로.
+- 2026-11-07 PD 체크리스트 시각도 12시간제(블록 시각·도착·FLOW·오른쪽 위 시작+AM/PM·예배 선택, 편집 화면 미리보기). DB 52 `20261212000000_cue_drop_recording.sql`(로컬, 운영 미적용): 1부 큐시트 담당에서 녹음팀 r19 제거. 인쇄 명단 keepNames: '이름 (악기)'는 한 덩어리(괄호 앞·안 공백을 nbsp), word-break keep-all — 큐시트·PD 담당자 칸 인쇄. PD 2쪽 긴 악기 명단 시 735/741px.

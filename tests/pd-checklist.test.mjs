@@ -4,7 +4,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
-import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor} from '../src/lib/pd-checklist.ts';
+import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,keepNames} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
@@ -77,7 +77,9 @@ test('진행률은 켜진 조건의 항목만 세고 PD REPORT는 뺀다',()=>{
  assert.equal(clockAt('08:20',-60),'07:20');assert.equal(clockAt('00:10',-20),'23:50');
  const worship=tpl.page2.flow.find(s=>s.id==='s4');
  assert.equal(flowSub(worship,off,'08:20'),'20분');assert.equal(flowSub(worship,on,'08:20'),'15분');
- assert.equal(flowSub(tpl.page2.flow[0],off,'08:20'),'08:18');
+ assert.equal(flowSub(tpl.page2.flow[0],off,'08:20'),'08:18');assert.equal(flowSub(tpl.page2.flow[0],off,'13:00'),'12:58');
+ // 인쇄 명단: 이름과 (악기)는 한 덩어리, 줄은 쉼표 뒤에서만
+ assert.equal(keepNames("김OO (일렉 기타), 이OO (드럼)"),"김OO\u00a0(일렉\u00a0기타), 이OO\u00a0(드럼)");assert.equal(keepNames("소프라노 김OO\n알토 박OO"),"소프라노 김OO\n알토 박OO");
  assert.deepEqual(visibleFlow(tpl,off).map(s=>s.id).filter(id=>['s5','s8'].includes(id)),[]);
  assert.deepEqual(defaultConditions(tpl,'2026-11-01'),{communion:true,news:true,changes:false});
  assert.deepEqual(defaultConditions(tpl,'2026-11-08'),{communion:false,news:true,changes:false});
@@ -186,7 +188,9 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20 AM)');
  assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (01:00 PM)');
  assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (06:00 PM)');assert.equal(cueTitle('2026-11-08','x','12:30'),'2026.11.8 x (12:30 PM)');assert.equal(cueTitle('2026-11-08','x','00:10'),'2026.11.8 x (12:10 AM)');
- assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);assert.equal(by.sun2.cue.staff[4].en,'Video');
+ assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r11']);
+ // DB52: 1부 담당에서 녹음팀(r19)을 뺐다
+ for(const t of Object.values(by))assert.ok(!t.cue.staff.some(x=>x.key==='r19'),t.id);assert.equal(by.sun2.cue.staff[4].en,'Video');
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));
