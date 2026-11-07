@@ -843,7 +843,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - `/worship-staff`의 "예배위원 보고서 · 이슈 작성" 링크가 예배위원 파트를 볼 수 없는 사람(파트 미배정 교역자·일반 사용자, 보고서가 아직 없을 때)에게도 보여 `/groups/[id]`의 `getGroupAccess`가 notFound(404)를 냈음. `can_view_group`이 거짓이면 링크를 숨기고, `can_create_report`가 거짓이면 "예배위원 보고서 보기"로만 연결.
 - `loadNotifications`가 알림의 `report_id`(없으면 `/reports/<id>` 주소)로 보고서를 RLS로 조회해 `context`("1부 예배 · 11/2(일) · 영상팀")를 붙임. 알림 화면·PC 알림 칸에 표시. DB 변경 없음, 지난 알림에도 적용. 볼 수 없는 보고서는 표시 안 함.
 - 검증: tsc·eslint·next build 성공. 실제 로그인 화면 확인은 못 함.
-- 2026-11-07 큐시트 인쇄를 다시 한 쪽(A4 가로)에 예배 하나로: 한글판 1부·2부·3부·라이프라인, 다음 영어판 같은 순서(한·영이면 8쪽, 양면이면 언어마다 2장). compact·.cue-pair 제거.
+- 2026-11-07 큐시트 인쇄를 다시 한 쪽(A4 가로)에 예배 하나로: 한글판 1부·2부·3부·라이프라인, 다음 영어판 같은 순서(한·영이면 8쪽, 양면이면 언어마다 2장). compact·.cue-pair 제거. cc0a713을 origin/master에 일반 push(0e7f1c3→cc0a713), Vercel success.
 
 ### 2026-11-07 알림함에서 두 번째 알림이 안 열리던 문제 (로컬)
 - 증상: 알림 A를 열고 종 버튼으로 알림 화면에 돌아와 B를 누르면 열리지 않고, A에 '화면을 여는 중…'이 남아 있음.
