@@ -902,3 +902,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 사용자 요청으로 시간 표기를 모두 24시간제로 되돌리고 AM/PM 제거(큐시트 제목 '(13:00)', 순서 표·오른쪽 위·PD 체크리스트·편집 화면; clock12·ampm 삭제). keepNames를 '쉼표 사이 한 덩어리'로: 쉼표·줄바꿈 사이 띄어쓰기를 nbsp로, 쉼표 뒤 띄어쓰기가 없으면 zero-width space를 넣어 쉼표 뒤에서만 줄바꿈.
 - 2026-11-07 d3ab449·f1e368c를 origin/master에 일반 push(338a4c0→f1e368c), Vercel success. DB52 운영 적용 확인(사용자 적용): sun1 v9 담당에 r19 없음, 11/8 sun1 회차 v9.
 - 2026-11-07 인쇄 줄바꿈 다시: keepNames(담당 칸만)는 구분자(, / · ;) 뒤·닫는 괄호 뒤 띄어쓰기·줄바꿈에서만 줄을 바꾼다('김소은 (건반) / 안경용 (베이스) 송재혁 (일렉)'). 순서·송리스트 칸은 keepPhrase: 띄어쓰기에서 바꾸되 '낱말 (괄호 묶음)'과 숫자 붙임표(9:1-8, U+2011)는 쪼개지 않음. PD 송리스트 박스도 keepPhrase.
+- 2026-11-07 8423127을 origin/master에 일반 push(f1e368c→8423127), Vercel success.
