@@ -837,6 +837,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-06 예배별 색·큐시트 2예배 인쇄(로컬, DB 변경 없음): 템플릿 `color`(선택, 없으면 sun1 파랑·sun2 청록·sun3 보라·life 장미, `serviceColor`). 체크리스트 루트와 큐시트 장에 `--svc`를 주면 `.svc`가 --accent/--accent-soft를 바꾼다(다크·인쇄 포함, 제목 아래 색 줄). 편집 화면 기본 칸에 색 고르기. 큐시트 인쇄는 한 쪽(A4 가로)에 예배 두 개(.cue-pair, compact: 순서 표 위, 송리스트·담당 아래 나란히), 한글판 전부 다음 영어판 전부(한·영이면 4쪽). PD 송리스트 박스 클래스 `.songs`가 큐시트 송리스트 표(`.cue-t.songs`)를 flex로 만들던 문제를 `.pd-songs`로 고침(직전 배포에 있던 문제).
 - 2026-11-06 e8d1d08을 origin/master에 일반 push(6394759→e8d1d08). Vercel success.
 - 2026-11-07 큐시트 송리스트 번호 칸을 넓히고 줄바꿈을 막음(Offering이 두 줄로 깨지던 문제). 34d6d1d를 origin/master에 일반 push(e8d1d08→34d6d1d), Vercel success.
+- 2026-11-07 큐시트 작성 칸(input)에 얇은 테두리(--line2, 포커스 시 예배 색), 송리스트 번호 칸 7.5em. 9e3f6d8 위로 rebase 후 0e7f1c3을 origin/master에 일반 push(9e3f6d8→0e7f1c3), Vercel success.
 
 ### 2026-11-07 예배위원 404 수정·알림에 예배·모임 표시 (로컬)
 - `/worship-staff`의 "예배위원 보고서 · 이슈 작성" 링크가 예배위원 파트를 볼 수 없는 사람(파트 미배정 교역자·일반 사용자, 보고서가 아직 없을 때)에게도 보여 `/groups/[id]`의 `getGroupAccess`가 notFound(404)를 냈음. `can_view_group`이 거짓이면 링크를 숨기고, `can_create_report`가 거짓이면 "예배위원 보고서 보기"로만 연결.
