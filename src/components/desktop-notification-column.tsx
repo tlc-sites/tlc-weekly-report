@@ -67,6 +67,7 @@ export function DesktopNotificationColumn({initialItems = null}: {initialItems?:
       <span className="app-notif-dot" aria-hidden="true"/>
       <span className="min-w-0 flex-1">
        <span className="app-notif-title">{item.title}{item.read_at ? null : <span className="sr-only"> (새 알림)</span>}</span>
+       {item.context ? <span className="app-notif-context">{item.context}</span> : null}
        {item.body ? <span className="app-notif-body">{item.body}</span> : null}
        <span className="app-listcol-meta">{when(item.created_at)}</span>
       </span>
