@@ -79,7 +79,6 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
 
  const go=(d:string)=>{flush();router.push(`/cue-sheet?date=${d}`);};
  const statusText={idle:"",saving:"저장 중…",saved:"저장됨",error:"저장하지 못했습니다. 연결을 확인하고 다시 입력해 주세요."}[status];
- const pairs=services.reduce<CueService[][]>((acc,s,i)=>{if(i%2===0)acc.push([s]);else acc[acc.length-1].push(s);return acc;},[]);
  const printLangs:Lang[]=printWhich==="ko"?["ko"]:printWhich==="en"?["en"]:["ko","en"];
 
  return <div ref={root} className="pdc cue">
@@ -107,16 +106,14 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
   </div>
 
   <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
-  {/* 인쇄: 한글판 전부, 그다음 영어판 전부. 한 쪽(A4 가로)에 예배 두 개씩(1·2부 / 3부·라이프라인). */}
-  <div className="cue-print">{printLangs.flatMap(l=>pairs.map((pair,i)=><div key={l+i} className="sheet cue-pair">
-   {pair.map(s=><Sheet key={s.key} s={s} date={date} lang={l} compact v={vals[s.key]??{}} conds={conds[s.key]??{}}/>)}
-  </div>))}</div>
+  {/* 인쇄: 한 쪽(A4 가로)에 예배 하나. 한글판 1부·2부·3부·라이프라인, 그다음 영어판 같은 순서(양면이면 언어마다 2장). */}
+  <div className="cue-print">{printLangs.flatMap(l=>services.map(s=><Sheet key={l+s.key} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
  </div>;
 }
 
 // 예배 한 개의 큐시트. onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
-// 화면은 예배마다 한 장(.sheet). 인쇄는 compact로 두 예배를 A4 가로 한 쪽에 나란히 놓는다.
-function Sheet({s,date,lang,v,conds,compact=false,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;compact?:boolean;
+// 화면·인쇄 모두 예배마다 한 장(.sheet, 인쇄는 A4 가로 한 쪽).
+function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;
  onChange?:(key:string,value:string)=>void;onBlur?:(key:string)=>void;onLeave?:()=>void}){
  const en=lang==="en";
  const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
@@ -145,7 +142,7 @@ function Sheet({s,date,lang,v,conds,compact=false,onChange,onBlur,onLeave}:{s:Cu
   <colgroup><col className="c-role"/><col/></colgroup>
   <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
   <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>;
- return <section className={"cue-sheet svc"+(compact?" compact":" sheet")} style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
+ return <section className="sheet cue-sheet svc" style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
   <div className="sheet-head">
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
@@ -153,8 +150,6 @@ function Sheet({s,date,lang,v,conds,compact=false,onChange,onBlur,onLeave}:{s:Cu
     <div className="lockup"><small>{s.name}</small><b className="num">{s.start}</b></div>
    </div>
   </div>
-  {compact
-   ?<>{contents}<div className="cue-body">{songList}{staff}</div></>
-   :<div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>}
+  <div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>
  </section>;
 }
