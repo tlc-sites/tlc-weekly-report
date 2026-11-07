@@ -1,4 +1,5 @@
 import {Suspense} from "react";
+import {canSeePdChecklist} from "@/lib/pd-access";
 import {redirect} from "next/navigation";
 import {requireActive,canManage} from "@/lib/auth";
 import type {PdTemplate} from "@/lib/pd-checklist";
@@ -13,6 +14,7 @@ export default function Page(props:PageProps<"/pd-checklist/edit">){return <Susp
 // 관리자 편집 모드: 예배별 최신 템플릿을 고쳐 새 버전으로 저장한다. 최근 버전을 불러와 되돌릴 수도 있다.
 async function Content({searchParams}:PageProps<"/pd-checklist/edit">){
  const {supabase,profile}=await requireActive();
+ if(!(await canSeePdChecklist(supabase,profile)))redirect("/");
  if(!canManage(profile))redirect("/pd-checklist");
  const q=await searchParams;
  const {data:rows,error}=await supabase.from("pd_templates").select("service_key,version,content->name,content->start").order("version",{ascending:false});

@@ -21,7 +21,7 @@ const printLang={
 // 'pd'는 회차의 PD 이름, 나머지는 roster 키. 영어 값은 '키_en'(비우면 한글 값을 쓴다).
 const valuesOf=(s:{roster:Record<string,string>;pd:string})=>({...s.roster,pd:s.pd});
 
-export function CueSheet({date,defaultDate,services,readOnly=false}:{date:string;defaultDate:string;services:CueService[];readOnly?:boolean}){
+export function CueSheet({date,defaultDate,services,readOnly=false,showPd=true}:{date:string;defaultDate:string;services:CueService[];readOnly?:boolean;showPd?:boolean}){
  const router=useRouter();
  const [supabase]=useState(createClient);
  const [vals,setVals]=useState<Values>(()=>Object.fromEntries(services.map(s=>[s.key,valuesOf(s)])));
@@ -106,7 +106,7 @@ export function CueSheet({date,defaultDate,services,readOnly=false}:{date:string
    </div>
   </div>
 
-  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} readOnly={readOnly} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
+  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} readOnly={readOnly} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={showPd?()=>flush():undefined}/>)}</div>
   {/* 인쇄: 한 쪽(A4 가로)에 예배 하나. 한글판 1부·2부·3부·라이프라인, 그다음 영어판 같은 순서(양면이면 언어마다 2장). */}
   <div className="cue-print">{printLangs.flatMap(l=>services.map(s=><Sheet key={l+s.key} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
  </div>;

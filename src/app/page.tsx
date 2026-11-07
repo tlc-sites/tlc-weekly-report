@@ -1,4 +1,5 @@
 import {groupDisplayName} from "@/lib/group-display";
+import { canSeePdChecklist } from "@/lib/pd-access";
 import { SundayNoticePopup } from "@/components/sunday-notice-popup";
 import { upcomingSunday } from "@/lib/sunday-notice";
 import { GroupPicker } from "@/components/group-picker";
@@ -24,6 +25,7 @@ export default function HomePage(props: PageProps<"/">) {
 
 async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
+  const canSeePd = await canSeePdChecklist(supabase, profile);
   const params = await searchParams;
   const week = reportWeek(params.week, todayKST());
   // 서로 독립적인 홈 조회는 관리자 제출현황까지 함께 시작한다.
@@ -91,7 +93,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         </Card>
       ) : null}
       <Link href="/worship-staff" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="people" small/>예배위원</span><span aria-hidden className="text-muted">›</span></Link>
-      <Link href="/pd-checklist" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="checklist" small/>예배 PD 체크리스트</span><span aria-hidden className="text-muted">›</span></Link>
+      {canSeePd?<Link href="/pd-checklist" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="checklist" small/>예배 PD 체크리스트</span><span aria-hidden className="text-muted">›</span></Link>:null}
       <Link href="/cue-sheet" className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex items-center gap-3"><MenuIcon name="calendar" small/>주일예배 큐시트</span><span aria-hidden className="text-muted">›</span></Link>
       {isClergy(profile)?<Link href={`/meeting?week=${week}`} className="mb-4 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 font-semibold"><span className="flex min-w-0 items-center gap-3"><MenuIcon name="meeting" small/>교역자 회의 자료</span><span aria-hidden className="text-muted">›</span></Link>:null}
 

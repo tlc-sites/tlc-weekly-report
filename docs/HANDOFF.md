@@ -885,3 +885,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 사용자 결정: 교역자가 아닌 분은 본인이 제출한 것만. 리더(팀 reviewer)는 맡은 팀 보고 유지, 교역자 태그·함께 보는 부서·개별 공유로 받은 보고는 유지.
 - DB49 `20261209000000_writer_own_reports.sql`: `same_content_layer`에 `is_clergy()` 조건 추가 → 비교역자의 '같은 직급(층) 보고·이슈 일반 내용 열람'이 사라짐(보고 can_view_report·reports 정책·can_view_group·이슈 읽기 모두 이 함수 사용). 교역자·담임 결과는 그대로. 앱 코드 변경 없음.
 - 이전 결정(동급 일반 내용 열람, ministry-round2 테스트)을 사용자 지시로 바꿈: 테스트 2개를 새 규칙으로 수정, `tests/writer-own-reports.test.mjs` 추가(DB49 없으면 실패 확인). test:db 161/161.
+
+### 2026-11-07 PD 체크리스트는 교역자만 (로컬)
+- 사용자 결정: 교역자가 아니면 PD 체크리스트를 보지 않아도 됨. 관리자와 'PD 체크리스트 작성' 지정자(DB48)는 예외로 열어 둠(지정자가 교역자가 아닐 수 있음).
+- `src/lib/pd-access.ts` `canSeePdChecklist`. 홈·PC 사이드바 메뉴 숨김, `/pd-checklist`·`/pd-checklist/edit`는 홈으로 보냄, 큐시트의 'PD 체크리스트 ›' 버튼 숨김. 큐시트는 그대로 모두에게 보임.
+- 화면만 가림: pd_runs는 큐시트가 같이 쓰므로 DB 읽기 권한은 그대로(체크·리포트 값도 API로는 읽힘). DB 변경 없음.

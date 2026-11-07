@@ -1,4 +1,6 @@
 import {Suspense} from "react";
+import {canSeePdChecklist} from "@/lib/pd-access";
+import {redirect} from "next/navigation";
 import {requireActive,canManage} from "@/lib/auth";
 import {addDays,isIsoDate,todayKST,weekdayOf} from "@/lib/week";
 import {upcomingSunday} from "@/lib/sunday-notice";
@@ -12,6 +14,7 @@ export default function Page(props:PageProps<"/pd-checklist">){return <Suspense 
 // 예배 PD 체크리스트: 템플릿(예배별 최신 버전)과 날짜 × 예배 회차를 읽어 화면에 넘긴다. 회차가 있으면 그 회차를 만든 버전의 템플릿으로 그린다.
 async function Content({searchParams}:PageProps<"/pd-checklist">){
  const {supabase,profile}=await requireActive();
+ if(!(await canSeePdChecklist(supabase,profile)))redirect("/");
  const q=await searchParams;
  const {data:rows,error}=await supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false});
  const latest=new Map<string,{version:number;content:PdTemplate}>();
