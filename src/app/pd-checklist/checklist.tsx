@@ -20,9 +20,9 @@ const fmtDate=(d:string)=>{const [,m,day]=d.split("-").map(Number);return `${m}/
 const timeOf=(iso:string)=>new Date(iso).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour:"numeric",minute:"2-digit"});
 
 // preview: 편집 화면의 미리보기. 아무것도 저장하지 않고 화면에서만 눌러 본다.
-export function PdChecklist({services,service,date,defaultDate,template:t,version,latestVersion,initialRun,canEdit=false,preview=false}:{
+export function PdChecklist({services,service,date,defaultDate,template:t,version,latestVersion,initialRun,canEdit=false,preview=false,readOnly=false}:{
  services:{key:string;name:string;start:string}[];service:string;date:string;defaultDate:string;
- template:PdTemplate;version:number;latestVersion:number;initialRun:PdRun|null;canEdit?:boolean;preview?:boolean;
+ template:PdTemplate;version:number;latestVersion:number;initialRun:PdRun|null;canEdit?:boolean;preview?:boolean;readOnly?:boolean;
 }){
  const router=useRouter();
  const [supabase]=useState(createClient);
@@ -45,7 +45,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  },[baseConds]);
 
  const save=useCallback(async(patch:Patch)=>{
-  if(preview)return;
+  if(preview||readOnly)return;
   pending.current++;setStatus({kind:"saving"});
   const {data,error}=await supabase.rpc("pd_run_save",{p_service:service,p_date:date,p_patch:patch});
   pending.current--;
@@ -54,7 +54,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   setStatus({kind:"saved",at:row.updated_at});
   // 다른 기기가 먼저 새 템플릿 버전으로 회차를 만들었으면 그 버전으로 다시 그린다.
   if(row.template_version!==version)router.refresh();
- },[supabase,service,date,version,router,preview]);
+ },[supabase,service,date,version,router,preview,readOnly]);
 
  // 글자는 멈춘 뒤 잠깐 있다가, 칸을 떠날 때는 바로 저장한다.
  const flush=useCallback((key?:string)=>{
@@ -169,9 +169,9 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
      <select aria-label="예배 선택" value={service} onChange={e=>go({service:e.target.value})}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {s.start}</option>)}</select></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go({date:e.target.value})}/></label>
     {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}</>}
-    <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
+    <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" readOnly={readOnly} onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
     <div className="toggles" role="group" aria-label="이번 주 예배 조건">
-     {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}</label>)}
+     {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} disabled={readOnly} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}</label>)}
     </div>
     <div className="progress" aria-live="polite"><span className="meter"><i style={{width:`${p.total?Math.round(p.done/p.total*100):0}%`}}/></span><span><b className="num">{p.done}</b> / <span className="num">{p.total}</span></span></div>
     <div className="actions">
@@ -181,14 +181,16 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
       <button type="button" aria-pressed={blank} onClick={()=>setPrintMode(true)}>빈 양식</button>
      </div>
      <button type="button" className="btn primary" onClick={()=>{flush();window.print();}}>인쇄 · PDF</button>
-     <Armed label="체크 초기화" onConfirm={()=>void reset("checks")}/>
-     {preview?null:<Armed label="전체 초기화" onConfirm={()=>void reset("all")}/>}
+     {readOnly?null:<Armed label="체크 초기화" onConfirm={()=>void reset("checks")}/>}
+     {preview||readOnly?null:<Armed label="전체 초기화" onConfirm={()=>void reset("all")}/>}
      {canEdit&&!preview?<Link className="btn" href={`/pd-checklist/edit?service=${service}`} onClick={()=>flush()}>편집</Link>:null}
     </div>
-    {preview?null:<p className={"save-status"+(status.kind==="error"?" is-error":"")} role={status.kind==="error"?"alert":"status"}>{statusText}{version<latestVersion?` · 이 회차는 이전 체크리스트(v${version})로 기록되었습니다`:""}</p>}
+    {preview?null:<p className={"save-status"+(status.kind==="error"?" is-error":"")} role={status.kind==="error"?"alert":"status"}>{readOnly?"보기 전용입니다. PD 체크리스트는 관리자가 지정한 작성자만 고칠 수 있습니다. · ":""}{statusText}{version<latestVersion?` · 이 회차는 이전 체크리스트(v${version})로 기록되었습니다`:""}</p>}
    </div>
   </div>
 
+  {/* 작성 권한이 없으면(DB48) 체크·리포트·담당자 칸을 모두 잠근다. 화면 이동·인쇄는 그대로. */}
+  <fieldset disabled={readOnly} className="contents">
   <section className="sheet" aria-label={t.page1.title}>
    {head(t.page1.title)}
    {t.page1.rows.map((row,i)=><div key={i} className={"row row"+(i+1)} style={{"--cols":row.length} as CSSProperties}>{row.map(block)}</div>)}
@@ -222,6 +224,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {simple(r.title??"PD REPORT","종료 후 보고",reportBody)}
    </div>
   </section>
+  </fieldset>
  </div>;
 }
 

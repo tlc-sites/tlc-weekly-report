@@ -4,7 +4,7 @@ import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, buttonClass, pick
 import { requireAdmin, isSenior } from "@/lib/auth";
 import { ROLE_LABEL, listGroupsOrdered } from "@/lib/groups";
 import { MembershipPositionSelect } from "@/components/membership-position-select";
-import { saveMemberships, setRecipientRole, setMinister, setUserAdmin, setUserStatus } from "../actions";
+import { saveMemberships, setRecipientRole, setMinister, setUserAdmin, setUserStatus, setWorshipDocRole } from "../actions";
 
 const MESSAGES: Record<string, string> = {
   invalid: "입력값이 올바르지 않습니다.",
@@ -49,6 +49,9 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
     listGroupsOrdered(supabase),
   ]);
   if (!user) notFound();
+  const { data: docRoles } = await supabase.from("worship_doc_roles").select("user_id, role");
+  const docHas = (role: string) => (docRoles ?? []).some((r) => r.user_id === user.id && r.role === role);
+  const docCount = (role: string) => (docRoles ?? []).filter((r) => r.role === role).length;
 
   const roleByGroup = new Map(user.memberships.map((m) => [m.group_id, m.position ? `position:${m.position}` : m.role]));
   const message = pickMessage(MESSAGES, error);
@@ -81,6 +84,14 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
         <input type="hidden" name="userId" value={user.id}/><label className="text-sm font-semibold">최상단 역할<select name="role" defaultValue={user.recipient_role ?? ""} className="mt-1 w-full rounded-xl border border-border bg-surface p-2"><option value="">해당 없음</option><option value="pastor">담임 목사님</option><option value="pastor_wife">담임 사모님</option></select></label>
         <p className="text-xs text-muted">모든 비공개 내용과 관리 기능에 접근합니다. 같은 역할의 기존 지정은 해제됩니다.</p><button className={secondaryButtonClass}>최상단 역할 저장</button>
       </form></Card> : null}
+      {user.status === "active" ? <Card className="mb-4"><div id="worship-docs" className="scroll-mt-20 flex flex-col gap-3">
+        <div><p className="font-semibold">주일예배 문서 작성</p><p className="text-xs text-muted">지정된 분과 관리자만 고칠 수 있고, 다른 분은 보기만 합니다. 한 명도 지정하지 않은 동안에는 승인된 누구나 고칠 수 있습니다. 담당자·송리스트·PD 이름처럼 두 문서에 같이 나오는 칸은 둘 중 하나만 있어도 고칠 수 있습니다.</p></div>
+        {([["cue", "큐시트 작성", "주일예배 큐시트"], ["pd", "PD 체크리스트 작성", "체크·리포트 포함 PD 체크리스트 전체"]] as const).map(([role, label, desc]) => <form key={role} action={setWorshipDocRole} className="flex items-center justify-between gap-3">
+          <input type="hidden" name="userId" value={user.id}/><input type="hidden" name="role" value={role}/><input type="hidden" name="enabled" value={String(!docHas(role))}/>
+          <div className="min-w-0"><p className="text-sm font-medium">{label}{docHas(role) ? <span className="ml-2"><Badge tone="accent">지정됨</Badge></span> : null}</p><p className="text-xs text-muted">{desc} · 지금 지정 {docCount(role)}명{docCount(role) ? "" : " (누구나 작성)"}</p></div>
+          <button className={secondaryButtonClass}>{docHas(role) ? "해제" : "지정"}</button>
+        </form>)}
+      </div></Card> : null}
       <h2 className="mb-2 text-sm font-semibold">소속과 역할</h2>
       {ownAssignmentsLocked ? <div role="note" className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm">
         <p className="font-semibold">본인의 소속·역할은 여기서 변경할 수 없습니다.</p>

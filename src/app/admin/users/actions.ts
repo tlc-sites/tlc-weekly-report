@@ -102,3 +102,16 @@ export async function setRecipientRole(formData: FormData) {
   const {error}=await supabase.rpc("set_recipient_role",{p_user:parsed.data.userId,p_role:parsed.data.role || null});
   redirect(`/admin/users/${parsed.data.userId}?${error ? "error=save" : "saved=1"}`);
 }
+
+// 주일예배 큐시트·PD 체크리스트 작성자 지정(DB48). 지정·해제는 관리자만(RLS).
+export async function setWorshipDocRole(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const parsed = z.object({ userId: z.uuid(), role: z.enum(["cue", "pd"]), enabled: z.enum(["true", "false"]) })
+    .safeParse({ userId: formData.get("userId"), role: formData.get("role"), enabled: formData.get("enabled") });
+  if (!parsed.success) redirect("/admin/users?error=invalid");
+  const { userId, role, enabled } = parsed.data;
+  const { error } = enabled === "true"
+    ? await supabase.from("worship_doc_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role", ignoreDuplicates: true })
+    : await supabase.from("worship_doc_roles").delete().eq("user_id", userId).eq("role", role);
+  redirect(`/admin/users/${userId}?${error ? "error=save" : "saved=1"}#worship-docs`);
+}

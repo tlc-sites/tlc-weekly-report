@@ -21,7 +21,7 @@ const printLang={
 // 'pd'는 회차의 PD 이름, 나머지는 roster 키. 영어 값은 '키_en'(비우면 한글 값을 쓴다).
 const valuesOf=(s:{roster:Record<string,string>;pd:string})=>({...s.roster,pd:s.pd});
 
-export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:string;services:CueService[]}){
+export function CueSheet({date,defaultDate,services,readOnly=false}:{date:string;defaultDate:string;services:CueService[];readOnly?:boolean}){
  const router=useRouter();
  const [supabase]=useState(createClient);
  const [vals,setVals]=useState<Values>(()=>Object.fromEntries(services.map(s=>[s.key,valuesOf(s)])));
@@ -48,6 +48,7 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
   }
  },[send]);
  const set=(service:string,key:string,value:string)=>{
+  if(readOnly)return;
   setVals(v=>({...v,[service]:{...v[service],[key]:value}}));
   const id=service+":"+key;const old=timers.current.get(id);if(old)clearTimeout(old);
   latest.current.set(id,{service,key,value});timers.current.set(id,setTimeout(()=>flush(id),700));setStatus("saving");
@@ -87,7 +88,7 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
     <div className="brand"><b>주일예배 큐시트</b></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go(e.target.value)}/></label>
     {date!==defaultDate?<button type="button" className="btn" onClick={()=>go(defaultDate)}>돌아오는 주일</button>:null}
-    {services.some(s=>s.hasCommunion)?<div className="toggles"><label className="tg"><input type="checkbox" checked={communionOn} onChange={e=>setCommunion(e.target.checked)}/><span className="sw"/>성찬주간 (1주차)</label></div>:null}
+    {services.some(s=>s.hasCommunion)?<div className="toggles"><label className="tg"><input type="checkbox" checked={communionOn} disabled={readOnly} onChange={e=>setCommunion(e.target.checked)}/><span className="sw"/>성찬주간 (1주차)</label></div>:null}
     <div className="seg" role="group" aria-label="작성 언어">
      <button type="button" aria-pressed={lang==="ko"} onClick={()=>setLang("ko")}>한글</button>
      <button type="button" aria-pressed={lang==="en"} onClick={()=>setLang("en")}>English</button>
@@ -100,12 +101,12 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
      <button type="button" className="btn primary" onClick={()=>{flush();window.print();}}>인쇄 · PDF</button>
     </div>
     <p className={"save-status"+(status==="error"?" is-error":"")} role={status==="error"?"alert":"status"}>
-     {statusText||(lang==="en"?"English 칸을 비우면 한글 값이 그대로 인쇄됩니다.":"칸을 눌러 바로 적으면 자동 저장됩니다. 예배인도·담당 팀·PD·송리스트는 PD 체크리스트와 같은 값입니다.")}
+     {statusText||(readOnly?"보기 전용입니다. 큐시트는 관리자가 지정한 작성자만 고칠 수 있습니다.":lang==="en"?"English 칸을 비우면 한글 값이 그대로 인쇄됩니다.":"칸을 눌러 바로 적으면 자동 저장됩니다. 예배인도·담당 팀·PD·송리스트는 PD 체크리스트와 같은 값입니다.")}
     </p>
    </div>
   </div>
 
-  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
+  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} readOnly={readOnly} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={()=>flush()}/>)}</div>
   {/* 인쇄: 한 쪽(A4 가로)에 예배 하나. 한글판 1부·2부·3부·라이프라인, 그다음 영어판 같은 순서(양면이면 언어마다 2장). */}
   <div className="cue-print">{printLangs.flatMap(l=>services.map(s=><Sheet key={l+s.key} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
  </div>;
@@ -113,14 +114,14 @@ export function CueSheet({date,defaultDate,services}:{date:string;defaultDate:st
 
 // 예배 한 개의 큐시트. onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
 // 화면·인쇄 모두 예배마다 한 장(.sheet, 인쇄는 A4 가로 한 쪽).
-function Sheet({s,date,lang,v,conds,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;
+function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;readOnly?:boolean;
  onChange?:(key:string,value:string)=>void;onBlur?:(key:string)=>void;onLeave?:()=>void}){
  const en=lang==="en";
  const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
  const shown=(k:string)=>en?(v[k+"_en"]||v[k]||""):(v[k]||"");
  const cell=(k:string,label:string,hint?:string)=>{
   const key=en?k+"_en":k;
-  return <>{onChange?<input type="text" aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"}
+  return <>{onChange?<input type="text" aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"} readOnly={readOnly}
    placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{shown(k)}</span></>;
  };
  // 시간이 같은 연속 행은 시간 칸을 합친다.

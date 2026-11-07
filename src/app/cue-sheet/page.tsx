@@ -17,10 +17,14 @@ async function Content({searchParams}:PageProps<"/cue-sheet">){
  const q=await searchParams;
  const picked=typeof q.date==="string"&&isIsoDate(q.date)?q.date:todayKST();
  const date=weekdayOf(picked)===0?picked:addDays(picked,(7-weekdayOf(picked))%7);
- const [{data:rows,error},{data:runs}]=await Promise.all([
+ const [{data:rows,error},{data:runs},cueOk,pdOk]=await Promise.all([
   supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false}),
   supabase.from("pd_runs").select("service_key,run_date,template_version,pd_name,conditions,checks,roster,report,updated_at").eq("run_date",date),
+  // 작성자 지정(DB48): 큐시트 칸은 큐시트 또는 PD 체크리스트 작성자가 고친다. 아니면 보기 전용.
+  supabase.rpc("can_write_worship_doc",{kind:"cue"}),
+  supabase.rpc("can_write_worship_doc",{kind:"pd"}),
  ]);
+ const canWrite=Boolean(cueOk.data||pdOk.data);
  const latest=new Map<string,PdTemplate>();
  for(const r of rows??[])if(!latest.has(r.service_key))latest.set(r.service_key,r.content as PdTemplate);
  const byService=new Map(((runs??[]) as PdRun[]).map(r=>[r.service_key,r]));
@@ -28,5 +32,5 @@ async function Content({searchParams}:PageProps<"/cue-sheet">){
   conditions:{...defaultConditions(t,date),...run?.conditions},hasCommunion:t.conditions.some(c=>c.id==="communion")};})
   .sort((a,b)=>a.start.localeCompare(b.start));
  if(error||!services.length)return <><PageTitle>주일예배 큐시트</PageTitle><Card><p>큐시트를 불러오지 못했습니다.</p><p className="mt-1 text-sm text-muted">{error?"연결 오류입니다. 잠시 뒤 다시 열어 주세요.":"큐시트 양식이 있는 예배가 없습니다. 관리자에게 알려 주세요."}</p></Card></>;
- return <><span className="page-wide" hidden/><CueSheet key={date} date={date} defaultDate={upcomingSunday(todayKST())} services={services}/></>;
+ return <><span className="page-wide" hidden/><CueSheet key={date} date={date} defaultDate={upcomingSunday(todayKST())} services={services} readOnly={!canWrite}/></>;
 }

@@ -24,6 +24,8 @@ async function Content({searchParams}:PageProps<"/pd-checklist">){
  // 모든 예배는 주일 날짜로 저장한다. 다른 요일을 고르면 그 주의 주일로 맞춘다.
  const picked=typeof q.date==="string"&&isIsoDate(q.date)?q.date:todayKST();
  const date=weekdayOf(picked)===0?picked:addDays(picked,(7-weekdayOf(picked))%7);
+ // 작성자 지정(DB48): PD 체크리스트 작성자가 아니면 보기 전용(담당자·송리스트는 큐시트 작성자도 큐시트에서 고친다).
+ const {data:pdOk}=await supabase.rpc("can_write_worship_doc",{kind:"pd"});
  const {data:run}=await supabase.from("pd_runs").select("service_key,run_date,template_version,pd_name,conditions,checks,roster,report,updated_at").eq("service_key",service).eq("run_date",date).maybeSingle<PdRun>();
  const cur=latest.get(service)!;
  let template=cur.content;
@@ -31,5 +33,5 @@ async function Content({searchParams}:PageProps<"/pd-checklist">){
   const {data:old}=await supabase.from("pd_templates").select("content").eq("service_key",service).eq("version",run.template_version).maybeSingle();
   if(old)template=old.content as PdTemplate;
  }
- return <><span className="page-wide" hidden/><PdChecklist key={service+date} services={services} service={service} date={date} defaultDate={upcomingSunday(todayKST())} template={template} version={run?.template_version??cur.version} latestVersion={cur.version} initialRun={run??null} canEdit={canManage(profile)}/></>;
+ return <><span className="page-wide" hidden/><PdChecklist key={service+date} services={services} service={service} date={date} defaultDate={upcomingSunday(todayKST())} template={template} version={run?.template_version??cur.version} latestVersion={cur.version} initialRun={run??null} canEdit={canManage(profile)} readOnly={!pdOk}/></>;
 }

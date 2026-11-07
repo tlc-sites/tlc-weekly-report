@@ -868,3 +868,10 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 앱: 로그인 화면 「처음 오셨나요? 가입하기」(`/login?mode=signup`) → `signUp` 서버 액션이 admin 클라이언트로 `request_signup` 후 같은 OTP 발송. 로그인 뒤 기존 onboarding(이름·파트) → 관리자 승인.
 - 테스트 `tests/self-signup.test.mjs`(stub에 운영 gate 함수 추가, 트리거는 이 테스트만 붙임): 셀케어 명단 통과·모르는/비활성 이메일 차단·신청 후 통과·중복 1줄·anon/authenticated 실행·조회 차단·거절 이메일 차단·잘못된 이메일·시간당 제한·셀케어 명단 미추가. 전체 test:db 159/159, tsc·eslint·build 성공. 로그인 화면 실제 렌더는 로컬 env가 없어 못 봄.
 - 적용 순서: DB47 SQL → 앱 배포. 거절(rejected) 처리 화면은 아직 없음(필요하면 SQL로 status 변경).
+
+### 2026-11-07 큐시트·PD 체크리스트 작성자 지정 DB48 (로컬, 운영 미적용)
+- 사용자 결정: 둘 다 지정자만 작성(관리자는 항상), 지정자가 0명인 역할은 지금처럼 누구나 작성.
+- DB48 `20261208000000_worship_doc_roles.sql`: `report.worship_doc_roles(user_id, role cue|pd)` 읽기=승인 사용자, 지정·해제=`is_admin()`(담임 포함), 승인된 사용자만 지정. `report.can_write_worship_doc(kind)`(관리자 또는 활성 지정자 0명 또는 본인 지정). `pd_runs`에 BEFORE INSERT/UPDATE 트리거 `pd_runs_guard`: checks·report 변경은 pd, 회차 생성·roster·conditions·pd_name 변경은 cue 또는 pd. auth.uid() 없는 작업(서버·SQL Editor)은 통과. 저장 함수(pd_run_save/reset)는 손대지 않음. 사용 중지된 지정자는 0명으로 침.
+- 앱: 관리자 사용자 화면에 '주일예배 문서 작성' 카드(큐시트 작성·PD 체크리스트 작성 지정/해제, 지정 인원 표시). 큐시트는 cue 또는 pd 권한 없으면 입력 readOnly·성찬 스위치 잠금·안내 문구. PD 체크리스트는 pd 권한 없으면 시트를 `<fieldset disabled>`로 잠그고 PD 이름·조건·초기화 숨김/잠금, 저장 안 함. 화면 이동·인쇄는 그대로.
+- 테스트 `tests/worship-doc-roles.test.mjs`. 전체 test:db 160/160, tsc·eslint·build 성공. 실제 화면은 로컬 env가 없어 못 봄.
+- 적용 순서: DB48 SQL → 앱 배포(앱만 먼저 가면 can_write_worship_doc 호출이 실패해 모두 보기 전용으로 보임).
