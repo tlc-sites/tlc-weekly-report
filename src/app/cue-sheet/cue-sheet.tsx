@@ -1,9 +1,10 @@
 "use client";
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,useSyncExternalStore,type CSSProperties,type TextareaHTMLAttributes} from "react";
 import Link from "next/link";
+import {NameList} from "@/components/name-list";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,cueSongKeys,keepNames,keepPhrase,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
+import {COMM_SONG,cueSongKeys,keepPhrase,serviceNameEn,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
 export type CueService={key:string;name:string;start:string;color:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
@@ -122,7 +123,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  const cell=(k:string,label:string,hint?:string,names=false)=>{
   const key=en?k+"_en":k;
   return <>{onChange?<GrowText aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"} readOnly={readOnly}
-   placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{(names?keepNames:keepPhrase)(shown(k))}</span></>;
+   placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{names?<NameList text={shown(k)}/>:keepPhrase(shown(k))}</span></>;
  };
  // 시간이 같은 연속 행은 시간 칸을 합친다.
  const timeSpan=(i:number)=>{const r=rows[i],p=rows[i-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=i;j<rows.length&&rows[j].from===r.from&&rows[j].to===r.to;j++)n+=rows[j].lines.length;return n;};
@@ -149,7 +150,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
     {onLeave?<Link className="btn" href={`/pd-checklist?service=${s.key}&date=${date}`} onClick={onLeave} data-print-hide>PD 체크리스트 ›</Link>:null}
-    <div className="lockup"><small>{s.name}</small><b className="num">{s.start}</b></div>
+    <div className="lockup"><small>{en?serviceNameEn(s.cue.label):s.name}</small><b className="num">{s.start}</b></div>
    </div>
   </div>
   <div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>

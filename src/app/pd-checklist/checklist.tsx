@@ -3,7 +3,8 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,clockAt,keepNames,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {NameList} from "@/components/name-list";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -234,7 +235,7 @@ function RosterGroupView({g,roster,onChange,onBlur}:{g:PdTemplate["page2"]["rost
  const slots=g.fields.map(f=><div key={f.id} className={"slot"+(f.span>1?" span"+f.span:"")}>
    <label htmlFor={"pd-r-"+f.id}>{f.label}</label>
    <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} placeholder={f.multiple?"여러 명은 쉼표로 구분":""} onChange={e=>onChange(f.id,e.target.value)} onBlur={()=>onBlur(f.id)}/>
-   <div className="pv">{keepNames(roster[f.id]??"")}</div>
+   <div className="pv"><NameList text={roster[f.id]??""}/></div>
   </div>);
  // 너비 1칸짜리가 6개를 넘으면(라이프라인 송리스트) 줄을 넘기지 않고 한 줄에 나눠 넣는다.
  const wide=g.fields.length>6&&g.fields.every(f=>f.span===1);

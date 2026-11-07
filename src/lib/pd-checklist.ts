@@ -96,12 +96,34 @@ export function flowSub(step: FlowStep, conds: Conditions, start: string) {
   return hit ? hit[1] : step.sub ?? "";
 }
 
-/** 인쇄용 명단(담당 칸): 사람 한 명 단위('김OO (일렉 기타)', '건반 김OO')는 중간에 줄을 바꾸지 않는다.
- *  줄은 구분자(, / · ;) 뒤, 닫는 괄호 뒤 띄어쓰기, 적어 둔 줄바꿈에서만 바뀐다. 덩어리 안 띄어쓰기는 줄바꿈 없는 공백으로,
- *  구분자 뒤에 띄어쓰기가 없으면 보이지 않는 줄바꿈 자리를 넣는다. 저장된 값은 바꾸지 않고 보여 줄 때만 쓴다. */
-export const keepNames = (text: string) =>
-  text.split(/(\s*[,/·;]\s*|(?<=\))[ \t]+|\n)/).map((part, i) =>
-    i % 2 ? (/\s$/.test(part) ? part : part + "\u200b") : part.replace(/[ \t]/g, "\u00a0")).join("");
+/** 인쇄용 명단(담당 칸)을 줄·사람 단위로 나눈다. 사람 한 명('김OO (일렉 기타)', '건반 김OO')은 중간에 줄을 바꾸지 않는다.
+ *  나누는 곳: 적어 둔 줄바꿈, 쉼표·세미콜론(앞 사람 끝에 붙임), / · (다음 사람 앞에 sep로, 줄 첫머리에선 숨김), 닫는 괄호 뒤 띄어쓰기.
+ *  저장된 값은 바꾸지 않고 보여 줄 때만 쓴다(NameList). */
+export type NameItem = { sep: string; text: string };
+export function splitNames(text: string): NameItem[][] {
+  return text.split(/\r?\n/).map(line => {
+    const items: NameItem[] = [];
+    let sep = "";
+    line.split(/(\s*[,;/·]\s*|(?<=\))[ \t]+)/).forEach((part, i) => {
+      if (i % 2) {
+        const c = part.trim();
+        if (c === "," || c === ";") { if (items.length) items[items.length - 1].text += c; sep = ""; } else sep = c;
+        return;
+      }
+      const t = part.trim();
+      if (t) items.push({ sep, text: t.replace(/[ \t]+/g, "\u00a0") });
+      sep = "";
+    });
+    return items;
+  });
+}
+
+/** 영어 큐시트의 예배 이름: '1st.' → '1st Service', 'LIFELINE' → 'Lifeline' */
+export function serviceNameEn(label: string) {
+  const m = label.match(/^(\d+(?:st|nd|rd|th))\.?$/i);
+  if (m) return `${m[1].toLowerCase()} Service`;
+  return label.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+}
 
 /** 인쇄용 문장(순서·송리스트 칸): 띄어쓰기에서 줄을 바꾸되, 괄호 묶음('(마태복음 9:1-8)')은 앞 낱말과 함께 한 덩어리로,
  *  숫자 사이 붙임표(9:1-8)는 줄바꿈 없는 붙임표로 둔다. */

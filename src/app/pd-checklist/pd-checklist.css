@@ -194,6 +194,11 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .slot input { border: 0; border-bottom: 1px solid var(--line2); background: transparent; padding: 3px 0; font-size: 14px; width: 100%; min-width: 0; border-radius: 0; }
 .pdc .slot input:focus { border-bottom-color: var(--accent); outline: none; }
 .pdc .pv { display: none; min-height: 1.3em; }
+/* 인쇄용 명단(NameList): 사람 단위 덩어리, 줄 첫머리의 '/'는 왼쪽 밖으로 밀어 숨긴다 */
+.pdc .names { display: block; overflow: hidden; }
+.pdc .names-l { display: block; margin-left: -.75em; }
+.pdc .names-i { display: inline-block; max-width: calc(100% + .75em); overflow-wrap: anywhere; }
+.pdc .names-i::before { content: attr(data-sep); display: inline-block; width: .75em; text-align: center; }
 .pdc .span2 { grid-column: span 2; } .pdc .span3 { grid-column: span 3; } .pdc .span6 { grid-column: span 6; }
 /* 칸이 7개 이상인 구분(라이프라인 송리스트 등)은 한 줄에 모두 넣는다. */
 .pdc .slots-n { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); column-gap: inherit; min-width: 0; }

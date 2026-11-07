@@ -4,7 +4,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
-import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,keepNames,keepPhrase} from '../src/lib/pd-checklist.ts';
+import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,splitNames,serviceNameEn,keepPhrase} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
@@ -79,7 +79,8 @@ test('진행률은 켜진 조건의 항목만 세고 PD REPORT는 뺀다',()=>{
  assert.equal(flowSub(worship,off,'08:20'),'20분');assert.equal(flowSub(worship,on,'08:20'),'15분');
  assert.equal(flowSub(tpl.page2.flow[0],off,'08:20'),'08:18');assert.equal(flowSub(tpl.page2.flow[0],off,'13:00'),'12:58');
  // 인쇄 명단: 이름과 (악기)는 한 덩어리, 줄은 쉼표 뒤에서만
- assert.equal(keepNames("김OO (일렉 기타), 이OO 드럼"),"김OO\u00a0(일렉\u00a0기타), 이OO\u00a0드럼");assert.equal(keepNames("건반 김OO,드럼 박OO"),"건반\u00a0김OO,\u200b드럼\u00a0박OO");assert.equal(keepNames("김소은 (건반) / 안경용 (베이스) 송재혁 (일렉)"),"김소은\u00a0(건반) / 안경용\u00a0(베이스) 송재혁\u00a0(일렉)");assert.equal(keepNames("소프라노 김OO\n알토 박OO"),"소프라노\u00a0김OO\n알토\u00a0박OO");assert.equal(keepPhrase("고치시고 용서하신 예수님 (마태복음 9:1-8)"),"고치시고 용서하신 예수님\u00a0(마태복음\u00a09:1\u20118)");
+ const nm=x=>splitNames(x).map(l=>l.map(it=>it.sep+'|'+it.text.replace(/\u00a0/g,'_'))); assert.deepEqual(nm("김소은 (건반) / 안경용 (베이스) 송재혁 (일렉)"),[["|김소은_(건반)","/|안경용_(베이스)","|송재혁_(일렉)"]]); assert.deepEqual(nm("건반 김OO,드럼 박OO; 베이스 이OO"),[["|건반_김OO,","|드럼_박OO;","|베이스_이OO"]]); assert.deepEqual(nm("소프라노 김OO\n알토 박OO · 테너 최OO"),[["|소프라노_김OO"],["|알토_박OO","·|테너_최OO"]]); assert.deepEqual(["1st.","2nd.","3rd.","LIFELINE"].map(serviceNameEn),["1st Service","2nd Service","3rd Service","Lifeline"]);
+ assert.equal(keepPhrase("고치시고 용서하신 예수님 (마태복음 9:1-8)"),"고치시고 용서하신 예수님\u00a0(마태복음\u00a09:1\u20118)");
  assert.deepEqual(visibleFlow(tpl,off).map(s=>s.id).filter(id=>['s5','s8'].includes(id)),[]);
  assert.deepEqual(defaultConditions(tpl,'2026-11-01'),{communion:true,news:true,changes:false});
  assert.deepEqual(defaultConditions(tpl,'2026-11-08'),{communion:false,news:true,changes:false});
