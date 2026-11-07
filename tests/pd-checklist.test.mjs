@@ -195,11 +195,12 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));
  assert.ok(!cueSongKeys(life.cue,defaultConditions(life,'2026-12-06')).includes('song_comm'));
- // PD 담당자 칸: 예배팀은 악기·싱어로 나뉘고 송리스트가 붙는다. 큐시트의 담당 키는 모두 PD 칸이거나 큐시트 전용 키
+ // PD 담당자 칸: 송리스트가 붙는다. 큐시트의 담당 키는 PD 칸이거나 큐시트 전용 키(악기 r18·싱어 r9는 DB53부터 큐시트에서만)
  const fields=t=>t.page2.roster.flatMap(g=>g.fields.map(f=>f.id));
  // PD 담당자 칸에서 담당 교역자(r5)·성찬 담당(r6)은 뺐다(성찬 담당은 큐시트에서만)
  for(const t of Object.values(by))assert.ok(!fields(t).some(k=>k==='r5'||k==='r6'),t.id);
- assert.deepEqual(s1.page2.roster.find(g=>g.group==='예배팀').fields.map(f=>[f.id,f.label]),[['r18','악기'],['r9','싱어']]);
+ for(const t of Object.values(by)){assert.ok(!t.page2.roster.some(g=>g.group==='예배팀'),t.id);assert.ok(!fields(t).some(k=>k==='r18'||k==='r9'),t.id);assert.ok(fields(t).includes('r1'),t.id);}
+ assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(1,3),['r18','r9']);
  assert.ok(cueSongKeys(s1.cue).every(k=>fields(s1).includes(k)));
  for(const k of ['r1','r10','r11','r13','r14','r8','r2','r3','r4','r7'])assert.ok(fields(s1).includes(k),k);
  // 큐시트에서 쓴 값(PD 이름·영어 값 포함)이 같은 회차에 들어가 PD 체크리스트에서도 보인다

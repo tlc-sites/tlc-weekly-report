@@ -903,3 +903,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 d3ab449·f1e368c를 origin/master에 일반 push(338a4c0→f1e368c), Vercel success. DB52 운영 적용 확인(사용자 적용): sun1 v9 담당에 r19 없음, 11/8 sun1 회차 v9.
 - 2026-11-07 인쇄 줄바꿈 다시: keepNames(담당 칸만)는 구분자(, / · ;) 뒤·닫는 괄호 뒤 띄어쓰기·줄바꿈에서만 줄을 바꾼다('김소은 (건반) / 안경용 (베이스) 송재혁 (일렉)'). 순서·송리스트 칸은 keepPhrase: 띄어쓰기에서 바꾸되 '낱말 (괄호 묶음)'과 숫자 붙임표(9:1-8, U+2011)는 쪼개지 않음. PD 송리스트 박스도 keepPhrase.
 - 2026-11-07 8423127을 origin/master에 일반 push(f1e368c→8423127), Vercel success.
+- 2026-11-07 DB 53 `20261213000000_pd_drop_worship_team.sql`(로컬, 운영 미적용): PD 체크리스트 담당자 칸에서 '예배팀'(악기 r18·싱어 r9) 구분 제거(운영 2쪽이 3페이지로 넘침). 예배 인도자 r1은 '순서'에 그대로, 악기·싱어는 큐시트 Staffs에서만. 실제 11/8 값으로 2쪽 높이 1부 716·2/3부 683·라이프라인 681 / 741px.
