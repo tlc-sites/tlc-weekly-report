@@ -900,3 +900,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 큐시트 오른쪽 위 시작 시각도 12시간제 + 작은 AM/PM(clock12·ampm, .lockup .ampm). PD 체크리스트는 24시간제 그대로.
 - 2026-11-07 PD 체크리스트 시각도 12시간제(블록 시각·도착·FLOW·오른쪽 위 시작+AM/PM·예배 선택, 편집 화면 미리보기). DB 52 `20261212000000_cue_drop_recording.sql`(로컬, 운영 미적용): 1부 큐시트 담당에서 녹음팀 r19 제거. 인쇄 명단 keepNames: '이름 (악기)'는 한 덩어리(괄호 앞·안 공백을 nbsp), word-break keep-all — 큐시트·PD 담당자 칸 인쇄. PD 2쪽 긴 악기 명단 시 735/741px.
 - 2026-11-07 사용자 요청으로 시간 표기를 모두 24시간제로 되돌리고 AM/PM 제거(큐시트 제목 '(13:00)', 순서 표·오른쪽 위·PD 체크리스트·편집 화면; clock12·ampm 삭제). keepNames를 '쉼표 사이 한 덩어리'로: 쉼표·줄바꿈 사이 띄어쓰기를 nbsp로, 쉼표 뒤 띄어쓰기가 없으면 zero-width space를 넣어 쉼표 뒤에서만 줄바꿈.
+- 2026-11-07 d3ab449·f1e368c를 origin/master에 일반 push(338a4c0→f1e368c), Vercel success. DB52 운영 적용 확인(사용자 적용): sun1 v9 담당에 r19 없음, 11/8 sun1 회차 v9.
