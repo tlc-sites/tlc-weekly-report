@@ -233,7 +233,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
 /* PC 가운데 보고 목록: 1280px 이상에서 파트·보고 화면일 때만. 본문은 그 오른쪽에 그대로 나온다. */
 .app-listcol { display: none; }
 @media (min-width: 1280px) {
-  :root:has(.app-listcol) { --listcol-w: 330px; }
+  :root:has(.app-listcol) { --listcol-w: clamp(360px, 27vw, 460px); }
   body:has(.app-listcol) { padding-left: calc(var(--sidebar-w) + var(--listcol-w)); }
   .app-listcol {
     position: fixed; top: 0; bottom: 0; left: var(--sidebar-w); z-index: 20; width: var(--listcol-w);
