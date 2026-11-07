@@ -861,3 +861,10 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 보고서 알림은 위에 예배·모임 줄(예배 · 날짜 · 팀)이 있으므로, 알림 글에서 ` · `로 나뉜 조각 중 팀 이름·날짜·예배/모임 이름·'예배·모임'과 같은 것은 표시할 때 뺌(DB 글은 그대로). 예: "예배팀 · 2026-11-01 · 예배·모임 · 허준석 간사 작성" → "허준석 간사 작성".
 - PC 가운데 목록 칸(알림·보고 목록 공통) 너비 330px → clamp(360px, 27vw, 460px).
 - 채플 '확인' 버튼 없음은 사용자에게 상황 확인 중. 확인 버튼은 `can_review_report`(담임 또는 그 파트·상위 파트에 교역자/담당교역자로 배정된 교역자)일 때만 보임.
+
+### 2026-11-07 보고 앱 자체 가입 DB47 (로컬, 운영 미적용)
+- 사용자 결정: 앞으로 들어올 분 중 셀케어가 필요 없는 분이 많아, 셀케어 명단 없이 보고 앱에서 직접 가입. DB는 같이 쓴다.
+- DB47 `20261207000000_self_signup.sql`: `report.signup_requests`(email, pending/rejected, RLS·권한 없음), `report.request_signup(text)`(service_role만 실행, 1시간 전체 30건 제한, 같은 이메일은 한 줄). 셀케어의 `private.gate_new_auth_user()`를 운영 본문(2026-11-07 사용자 조회) 그대로 두고 "보고 앱 가입 신청 대기 중인 이메일" 조건만 OR로 더함. **셀케어 영역(auth 트리거 함수) 변경이므로 사용자 승인 후 적용.** `public.profiles`에는 넣지 않음 → 셀케어에서는 '아직 등록되지 않은 계정'.
+- 앱: 로그인 화면 「처음 오셨나요? 가입하기」(`/login?mode=signup`) → `signUp` 서버 액션이 admin 클라이언트로 `request_signup` 후 같은 OTP 발송. 로그인 뒤 기존 onboarding(이름·파트) → 관리자 승인.
+- 테스트 `tests/self-signup.test.mjs`(stub에 운영 gate 함수 추가, 트리거는 이 테스트만 붙임): 셀케어 명단 통과·모르는/비활성 이메일 차단·신청 후 통과·중복 1줄·anon/authenticated 실행·조회 차단·거절 이메일 차단·잘못된 이메일·시간당 제한·셀케어 명단 미추가. 전체 test:db 159/159, tsc·eslint·build 성공. 로그인 화면 실제 렌더는 로컬 env가 없어 못 봄.
+- 적용 순서: DB47 SQL → 앱 배포. 거절(rejected) 처리 화면은 아직 없음(필요하면 SQL로 status 변경).

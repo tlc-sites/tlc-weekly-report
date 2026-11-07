@@ -15,6 +15,17 @@ export const SUPABASE_STUB = `
   alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
   create table public.profiles (id uuid primary key default gen_random_uuid(), name text not null,
     email text, auth_user_id uuid, active boolean not null default true);
+  -- 셀케어의 가입 차단 함수(운영 본문). 트리거는 붙이지 않는다(필요한 테스트가 직접 붙인다).
+  create schema private;
+  create function private.gate_new_auth_user() returns trigger language plpgsql security definer
+    set search_path to 'public', 'private', 'pg_temp' as $f$
+  begin
+    if new.email is null or not exists (
+         select 1 from public.profiles where lower(email) = lower(new.email) and active) then
+      raise exception 'CELLCARE_NOT_APPROVED' using errcode = 'P0403';
+    end if;
+    return new;
+  end $f$;
   -- Supabase Storage: 버킷과 파일 메타데이터 표 (파일 내용은 다루지 않는다)
   create schema storage;
   create table storage.buckets (id text primary key, name text not null, public boolean not null default false,
