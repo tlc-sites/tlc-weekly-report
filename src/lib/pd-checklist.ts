@@ -99,10 +99,11 @@ export function flowSub(step: FlowStep, conds: Conditions, start: string) {
 /** 큐시트 시간 칸: '08:20 - 08:40', 끝이 없으면 '19:05 -' */
 export const cueTime = (start: string, r: CueRow) => `${clockAt(start, r.from)} -${r.to === null ? "" : " " + clockAt(start, r.to)}`;
 
-/** 큐시트 제목: '2026.11.8 1st. (08:20 AM)' */
+/** 큐시트 제목: '2026.11.8 1st. (08:20 AM)', '2026.11.8 3rd. (01:00 PM)'(12시간제) */
 export function cueTitle(date: string, label: string, start: string) {
   const [y, m, d] = date.split("-").map(Number);
-  return `${y}.${m}.${d} ${label} (${start} ${Number(start.slice(0, 2)) < 12 ? "AM" : "PM"})`;
+  const h = Number(start.slice(0, 2));
+  return `${y}.${m}.${d} ${label} (${String(h % 12 || 12).padStart(2, "0")}${start.slice(2)} ${h < 12 ? "AM" : "PM"})`;
 }
 
 /** 성찬 곡 칸(헌금 다음). 성찬주간(conditions.communion)이 켜졌을 때만 큐시트·PD 체크리스트 송리스트에 보인다. */

@@ -171,18 +171,20 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  for(const t of Object.values(by))assert.ok(parseTemplate(t).ok,t.id);
  const s1=by.sun1,life=by.life;
  // 시간표: 1부 08:20 시작, 라이프라인 설교는 끝 시각 없음
- assert.deepEqual(s1.cue.rows.map(r=>cueTime(s1.start,r)),['08:20 - 08:40','08:40 - 08:55','08:40 - 08:55','08:40 - 08:55','08:55 - 09:00','09:00 - 10:20']);
+ assert.deepEqual(s1.cue.rows.map(r=>cueTime(s1.start,r)),['08:20 - 08:40','08:40 - 08:55','08:40 - 08:55','08:40 - 08:55','08:40 - 08:55','08:55 - 09:00','09:00 - 10:20']);
  // 성찬은 헌금 다음, 같은 시간대, 성찬주간 조건일 때만(담당은 PD 체크리스트 '성찬 담당' r6). 라이프라인에는 없다
- assert.deepEqual(s1.cue.rows.map(r=>r.id).slice(2,4),['offlead','communion']);assert.deepEqual([s1.cue.rows[3].condition,s1.cue.rows[3].lines[0].key],['communion','r6']);
- // DB50: 순서에서 헌금송·헌금 줄을 빼고 헌금위원(r7)은 담당으로(안내 다음, PD 앞). 라이프라인은 헌금인도가 설교 전까지 이어진다
- for(const t of Object.values(by)){assert.ok(!t.cue.rows.some(r=>r.id==='offsong'||r.id==='offering'),t.id);assert.deepEqual(t.cue.staff.map(x=>x.key).slice(-3),['r8','r7','pd'],t.id);}
- assert.equal(cueTime(life.start,life.cue.rows.find(r=>r.id==='offlead')),'18:50 - 19:05');
+ assert.deepEqual(s1.cue.rows.map(r=>r.id).slice(2,5),['offlead','offsong','communion']);assert.deepEqual([s1.cue.rows[4].condition,s1.cue.rows[4].lines[0].key],['communion','r6']);
+ // DB50: 순서에서 헌금 줄을 빼고 헌금위원(r7)은 담당으로(안내 다음, PD 앞). DB51: 헌금송은 순서에 다시(헌금인도 다음), 중계 믹싱(r20)은 담당에서 뺀다
+ for(const t of Object.values(by)){assert.ok(!t.cue.rows.some(r=>r.id==='offering'),t.id);assert.deepEqual(t.cue.staff.map(x=>x.key).slice(-3),['r8','r7','pd'],t.id);}
+ assert.deepEqual(['offlead','offsong'].map(id=>cueTime(life.start,life.cue.rows.find(r=>r.id===id))),['18:50 - 18:55','18:55 - 19:05']);
+ for(const t of Object.values(by)){assert.ok(!t.cue.staff.some(x=>x.key==='r20'),t.id);assert.deepEqual(t.cue.rows.find(r=>r.id==='offsong').lines,[{key:'c_offsong'}],t.id);}
  assert.ok(!life.cue.rows.some(r=>r.id==='communion'));
  assert.equal(cueTime(by.sun2.start,by.sun2.cue.rows.at(-1)),'11:20 - 12:40');
  assert.equal(cueTime(life.start,life.cue.rows.at(-1)),'19:05 -');
  assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20 AM)');
- assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (13:00 PM)');
- assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);assert.equal(by.sun2.cue.staff[4].en,'Live Streaming');
+ assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (01:00 PM)');
+ assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (06:00 PM)');assert.equal(cueTitle('2026-11-08','x','12:30'),'2026.11.8 x (12:30 PM)');assert.equal(cueTitle('2026-11-08','x','00:10'),'2026.11.8 x (12:10 AM)');
+ assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);assert.equal(by.sun2.cue.staff[4].en,'Video');
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));

@@ -1,5 +1,5 @@
 "use client";
-import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSProperties} from "react";
+import {useCallback,useEffect,useLayoutEffect,useRef,useState,useSyncExternalStore,type CSSProperties,type TextareaHTMLAttributes} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
@@ -64,7 +64,7 @@ export function CueSheet({date,defaultDate,services,readOnly=false,showPd=true}:
  useEffect(()=>{
   const pull=async()=>{
    if(document.hidden||pending.current||timers.current.size)return;
-   if(root.current?.contains(document.activeElement)&&document.activeElement?.tagName==="INPUT"&&(document.activeElement as HTMLInputElement).type==="text")return;
+   if(root.current?.contains(document.activeElement)&&document.activeElement?.tagName==="TEXTAREA")return;
    const {data}=await supabase.from("pd_runs").select("service_key,roster,pd_name,conditions").eq("run_date",date);
    if(!data||pending.current||timers.current.size)return;
    const got=new Map((data as Pick<PdRun,"service_key"|"roster"|"pd_name"|"conditions">[]).map(r=>[r.service_key,r]));
@@ -121,7 +121,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  const shown=(k:string)=>en?(v[k+"_en"]||v[k]||""):(v[k]||"");
  const cell=(k:string,label:string,hint?:string)=>{
   const key=en?k+"_en":k;
-  return <>{onChange?<input type="text" aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"} readOnly={readOnly}
+  return <>{onChange?<GrowText aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"} readOnly={readOnly}
    placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{shown(k)}</span></>;
  };
  // 시간이 같은 연속 행은 시간 칸을 합친다.
@@ -154,4 +154,17 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
   </div>
   <div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>
  </section>;
+}
+
+// 작성 칸. 여러 줄(카톡·시트에서 복사한 명단)도 줄바꿈 그대로 붙여 넣고, 내용이 길면 칸이 아래로 늘어난다.
+// field-sizing을 아는 브라우저는 CSS가 높이를 맞추고, 모르는 브라우저(사파리 등)는 여기서 맞춘다.
+const cssGrows=typeof CSS!=="undefined"&&CSS.supports?.("field-sizing","content");
+function GrowText({value,...rest}:TextareaHTMLAttributes<HTMLTextAreaElement>&{value:string}){
+ const ref=useRef<HTMLTextAreaElement>(null);
+ useLayoutEffect(()=>{
+  const el=ref.current;if(!el||cssGrows)return;
+  const fit=()=>{el.style.height="auto";el.style.height=el.scrollHeight+(el.offsetHeight-el.clientHeight)+"px";};
+  fit();window.addEventListener("resize",fit);return ()=>window.removeEventListener("resize",fit);
+ },[value]);
+ return <textarea ref={ref} rows={1} value={value} {...rest}/>;
 }
