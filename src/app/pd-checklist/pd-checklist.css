@@ -214,6 +214,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .song-row { display: grid; grid-template-columns: 2.8em minmax(0, 1fr); align-items: center; gap: 6px; border-bottom: 1px solid var(--line); padding: 4px 0; }
 .pdc .song-row:last-child { border-bottom: 0; }
 .pdc .song-row .k { font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; }
+.pdc .song-row.opt .k { color: var(--accent); }
 .pdc .song-row input { border: 0; background: transparent; padding: 6px 4px; font-size: 14px; width: 100%; min-width: 0; border-radius: 6px; }
 .pdc .song-row input:hover { background: var(--soft); }
 .pdc .song-row input:focus { background: var(--accent-soft); outline: none; }

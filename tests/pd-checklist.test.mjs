@@ -181,6 +181,9 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (13:00 PM)');
  assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);assert.equal(by.sun2.cue.staff[4].en,'Live Streaming');
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
+ // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
+ assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));
+ assert.ok(!cueSongKeys(life.cue,defaultConditions(life,'2026-12-06')).includes('song_comm'));
  // PD 담당자 칸: 예배팀은 악기·싱어로 나뉘고 송리스트가 붙는다. 큐시트의 담당 키는 모두 PD 칸이거나 큐시트 전용 키
  const fields=t=>t.page2.roster.flatMap(g=>g.fields.map(f=>f.id));
  // PD 담당자 칸에서 담당 교역자(r5)·성찬 담당(r6)은 뺐다(성찬 담당은 큐시트에서만)

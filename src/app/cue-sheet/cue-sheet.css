@@ -50,7 +50,7 @@
   .cue .cue-t col.c-time { width: 30mm; }
   .cue .cue-t col.c-what { width: 39mm; }
   .cue .cue-t col.c-role { width: 45mm; }
-  .cue .cue-t col.c-num { width: 22mm; }
+  .cue .cue-t col.c-num { width: 27mm; }
   .cue .cue-t thead th { font-size: 7.5pt; padding: 2mm 3mm 1.4mm; }
   .cue .cue-col { gap: 3.4mm; }
   .cue .cue-t tbody th, .cue .cue-t td { height: 8.9mm; padding: 0 3mm; border-color: var(--line2); }

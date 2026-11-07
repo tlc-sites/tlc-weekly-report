@@ -105,8 +105,12 @@ export function cueTitle(date: string, label: string, start: string) {
   return `${y}.${m}.${d} ${label} (${start} ${Number(start.slice(0, 2)) < 12 ? "AM" : "PM"})`;
 }
 
-/** 큐시트 송리스트 키: song1…songN, 헌금 song_off */
-export const cueSongKeys = (cue: Cue) => [...Array.from({ length: cue.songs }, (_, i) => "song" + (i + 1)), "song_off"];
+/** 성찬 곡 칸(헌금 다음). 성찬주간(conditions.communion)이 켜졌을 때만 큐시트·PD 체크리스트 송리스트에 보인다. */
+export const COMM_SONG = { id: "song_comm", ko: "성찬", en: "Communion" };
+
+/** 큐시트 송리스트 키: song1…songN, 헌금 song_off, 성찬주간이면 성찬 song_comm */
+export const cueSongKeys = (cue: Cue, conds: Conditions = {}) =>
+  [...Array.from({ length: cue.songs }, (_, i) => "song" + (i + 1)), "song_off", ...(conds.communion ? [COMM_SONG.id] : [])];
 
 /** 예배별 색(체크리스트·큐시트의 강조색). 템플릿에 color가 없으면 예배 키로 정한다. */
 export const SERVICE_COLORS = [

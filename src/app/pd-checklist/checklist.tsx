@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {clockAt,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,clockAt,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -148,6 +148,8 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const r=t.page2.report;
  // 송리스트(칸 ID가 모두 song…인 구분)는 담당자 칸 대신 2쪽 아래 가운데 박스로 보인다.
  const songs=t.page2.roster.find(g=>g.fields.length>0&&g.fields.every(f=>f.id.startsWith("song")));
+ // 성찬주간이면 헌금 다음에 성찬 곡 칸(큐시트와 같은 값).
+ const songFields=songs?[...songs.fields,...(conds.communion&&!songs.fields.some(f=>f.id===COMM_SONG.id)?[{id:COMM_SONG.id,label:COMM_SONG.ko}]:[])]:[];
  const reportBody=<>
   <div className="shd">문제 분류</div>
   <div className="grid rp-cats" style={{gridTemplateColumns:"repeat(2,minmax(0,1fr))"}}>{r.categories.map(c=>ck(c.id,c.text))}</div>
@@ -216,7 +218,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
      {simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items))}
      {simple(t.page2.after.title,"",items(t.page2.after.items))}
     </div>
-    {songs?simple(songs.group,"큐시트와 같은 값",<div className="pd-songs">{songs.fields.map(f=><div key={f.id} className="song-row">
+    {songs?simple(songs.group,"큐시트와 같은 값",<div className="pd-songs">{songFields.map(f=><div key={f.id} className={"song-row"+(f.id===COMM_SONG.id?" opt":"")}>
      <label htmlFor={"pd-r-"+f.id} className="k">{f.label}</label>
      <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} onChange={e=>setRosterField(f.id,e.target.value)} onBlur={()=>flush("roster:"+f.id)}/>
      <div className="pv">{roster[f.id]??""}</div>

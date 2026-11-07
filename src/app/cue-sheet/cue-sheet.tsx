@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {cueSongKeys,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
+import {COMM_SONG,cueSongKeys,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
 export type CueService={key:string;name:string;start:string;color:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
@@ -126,7 +126,8 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  };
  // 시간이 같은 연속 행은 시간 칸을 합친다.
  const timeSpan=(i:number)=>{const r=rows[i],p=rows[i-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=i;j<rows.length&&rows[j].from===r.from&&rows[j].to===r.to;j++)n+=rows[j].lines.length;return n;};
- const songs=cueSongKeys(s.cue);
+ const songs=cueSongKeys(s.cue,conds);
+ const songLabel=(k:string,i:number)=>i<s.cue.songs?{th:String(i+1),aria:`${i+1}번 곡`}:k===COMM_SONG.id?{th:en?COMM_SONG.en:COMM_SONG.ko,aria:"성찬 곡"}:{th:en?"Offering":"헌금",aria:"헌금 곡"};
  const contents=<div className="blk"><table className="cue-t">
   <colgroup><col className="c-time"/><col className="c-what"/><col/></colgroup>
   <thead><tr><th scope="col">Time</th><th scope="col" colSpan={2}>Contents</th></tr></thead>
@@ -138,7 +139,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  const songList=<div className="blk"><table className="cue-t songs">
   <colgroup><col className="c-num"/><col/></colgroup>
   <thead><tr><th scope="col" colSpan={2}>Song List</th></tr></thead>
-  <tbody>{songs.map((k,i)=><tr key={k}><th scope="row">{i<s.cue.songs?i+1:en?"Offering":"헌금"}</th><td className="in">{cell(k,i<s.cue.songs?`${i+1}번 곡`:"헌금 곡")}</td></tr>)}</tbody></table></div>;
+  <tbody>{songs.map((k,i)=>{const l=songLabel(k,i);return <tr key={k} className={k===COMM_SONG.id?"opt":undefined}><th scope="row">{l.th}</th><td className="in">{cell(k,l.aria)}</td></tr>;})}</tbody></table></div>;
  const staff=<div className="blk"><table className="cue-t">
   <colgroup><col className="c-role"/><col/></colgroup>
   <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
