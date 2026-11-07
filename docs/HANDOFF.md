@@ -892,3 +892,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 사용자 결정: 교역자가 아니면 PD 체크리스트를 보지 않아도 됨. 관리자와 'PD 체크리스트 작성' 지정자(DB48)는 예외로 열어 둠(지정자가 교역자가 아닐 수 있음).
 - `src/lib/pd-access.ts` `canSeePdChecklist`. 홈·PC 사이드바 메뉴 숨김, `/pd-checklist`·`/pd-checklist/edit`는 홈으로 보냄, 큐시트의 'PD 체크리스트 ›' 버튼 숨김. 큐시트는 그대로 모두에게 보임.
 - 화면만 가림: pd_runs는 큐시트가 같이 쓰므로 DB 읽기 권한은 그대로(체크·리포트 값도 API로는 읽힘). DB 변경 없음.
+- 2026-11-07 c5a70f4·6078bf3을 883d147(다른 작업 DB47~49 포함) 위로 rebase(414e6ff·9c97eb7), 9c97eb7을 origin/master에 일반 push(883d147→9c97eb7), Vercel success. DB50 운영 미적용.
