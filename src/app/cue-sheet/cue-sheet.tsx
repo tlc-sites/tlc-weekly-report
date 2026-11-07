@@ -3,7 +3,7 @@ import {useCallback,useEffect,useLayoutEffect,useRef,useState,useSyncExternalSto
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,ampm,clock12,cueSongKeys,keepNames,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
+import {COMM_SONG,cueSongKeys,keepNames,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
 export type CueService={key:string;name:string;start:string;color:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
@@ -149,7 +149,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
     {onLeave?<Link className="btn" href={`/pd-checklist?service=${s.key}&date=${date}`} onClick={onLeave} data-print-hide>PD 체크리스트 ›</Link>:null}
-    <div className="lockup"><small>{s.name}</small><b className="num">{clock12(s.start)}<span className="ampm">{ampm(s.start)}</span></b></div>
+    <div className="lockup"><small>{s.name}</small><b className="num">{s.start}</b></div>
    </div>
   </div>
   <div className="cue-body"><div className="cue-col">{contents}{songList}</div>{staff}</div>

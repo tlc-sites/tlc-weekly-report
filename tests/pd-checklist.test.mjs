@@ -79,7 +79,7 @@ test('진행률은 켜진 조건의 항목만 세고 PD REPORT는 뺀다',()=>{
  assert.equal(flowSub(worship,off,'08:20'),'20분');assert.equal(flowSub(worship,on,'08:20'),'15분');
  assert.equal(flowSub(tpl.page2.flow[0],off,'08:20'),'08:18');assert.equal(flowSub(tpl.page2.flow[0],off,'13:00'),'12:58');
  // 인쇄 명단: 이름과 (악기)는 한 덩어리, 줄은 쉼표 뒤에서만
- assert.equal(keepNames("김OO (일렉 기타), 이OO (드럼)"),"김OO\u00a0(일렉\u00a0기타), 이OO\u00a0(드럼)");assert.equal(keepNames("소프라노 김OO\n알토 박OO"),"소프라노 김OO\n알토 박OO");
+ assert.equal(keepNames("김OO (일렉 기타), 이OO 드럼"),"김OO\u00a0(일렉\u00a0기타), 이OO\u00a0드럼");assert.equal(keepNames("건반 김OO,드럼 박OO"),"건반\u00a0김OO,\u200b드럼\u00a0박OO");assert.equal(keepNames("소프라노 김OO\n알토 박OO"),"소프라노\u00a0김OO\n알토\u00a0박OO");
  assert.deepEqual(visibleFlow(tpl,off).map(s=>s.id).filter(id=>['s5','s8'].includes(id)),[]);
  assert.deepEqual(defaultConditions(tpl,'2026-11-01'),{communion:true,news:true,changes:false});
  assert.deepEqual(defaultConditions(tpl,'2026-11-08'),{communion:false,news:true,changes:false});
@@ -178,16 +178,16 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.deepEqual(s1.cue.rows.map(r=>r.id).slice(2,5),['offlead','offsong','communion']);assert.deepEqual([s1.cue.rows[4].condition,s1.cue.rows[4].lines[0].key],['communion','r6']);
  // DB50: 순서에서 헌금 줄을 빼고 헌금위원(r7)은 담당으로(안내 다음, PD 앞). DB51: 헌금송은 순서에 다시(헌금인도 다음), 중계 믹싱(r20)은 담당에서 뺀다
  for(const t of Object.values(by)){assert.ok(!t.cue.rows.some(r=>r.id==='offering'),t.id);assert.deepEqual(t.cue.staff.map(x=>x.key).slice(-3),['r8','r7','pd'],t.id);}
- assert.deepEqual(['offlead','offsong'].map(id=>cueTime(life.start,life.cue.rows.find(r=>r.id===id))),['06:50 - 06:55','06:55 - 07:05']);
+ assert.deepEqual(['offlead','offsong'].map(id=>cueTime(life.start,life.cue.rows.find(r=>r.id===id))),['18:50 - 18:55','18:55 - 19:05']);
  for(const t of Object.values(by)){assert.ok(!t.cue.staff.some(x=>x.key==='r20'),t.id);assert.deepEqual(t.cue.rows.find(r=>r.id==='offsong').lines,[{key:'c_offsong'}],t.id);}
  assert.ok(!life.cue.rows.some(r=>r.id==='communion'));
  assert.equal(cueTime(by.sun2.start,by.sun2.cue.rows.at(-1)),'11:20 - 12:40');
- assert.equal(cueTime(life.start,life.cue.rows.at(-1)),'07:05 -');
- // 순서 표 시간도 12시간제(정오를 넘으면 12:xx, 오후는 01:xx…)
- assert.deepEqual(by.sun3.cue.rows.map(r=>cueTime(by.sun3.start,r)).slice(0,2),['01:00 - 01:20','01:20 - 01:35']);
- assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20 AM)');
- assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (01:00 PM)');
- assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (06:00 PM)');assert.equal(cueTitle('2026-11-08','x','12:30'),'2026.11.8 x (12:30 PM)');assert.equal(cueTitle('2026-11-08','x','00:10'),'2026.11.8 x (12:10 AM)');
+ assert.equal(cueTime(life.start,life.cue.rows.at(-1)),'19:05 -');
+ // 순서 표 시간은 24시간제
+ assert.deepEqual(by.sun3.cue.rows.map(r=>cueTime(by.sun3.start,r)).slice(0,2),['13:00 - 13:20','13:20 - 13:35']);
+ assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20)');
+ assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (13:00)');
+ assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (18:00)');
  assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r11']);
  // DB52: 1부 담당에서 녹음팀(r19)을 뺐다
  for(const t of Object.values(by))assert.ok(!t.cue.staff.some(x=>x.key==='r19'),t.id);assert.equal(by.sun2.cue.staff[4].en,'Video');

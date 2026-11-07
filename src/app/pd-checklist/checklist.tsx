@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,ampm,clock12,clockAt,keepNames,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,clockAt,keepNames,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -130,9 +130,9 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  });
 
  const block=(b:Block)=><div key={b.id} className={"blk"+(b.style==="default"?"":" "+b.style)}>
-  <div className="blk-h"><span className="tm num">{clock12(clockAt(t.start,b.offsetMin))}</span><span className="tt">{b.label}</span>{b.title?<span className="ti">{b.title}</span>:null}</div>
+  <div className="blk-h"><span className="tm num">{clockAt(t.start,b.offsetMin)}</span><span className="tt">{b.label}</span>{b.title?<span className="ti">{b.title}</span>:null}</div>
   <div className="blk-b">
-   {b.arrivals?.length?<div className="arr">{b.arrivals.map((a,i)=><div key={i}><b className="num">{clock12(clockAt(t.start,a.offsetMin))}</b><span>{a.text}{a.place?<span className="at"> @{a.place}</span>:null}</span></div>)}</div>:null}
+   {b.arrivals?.length?<div className="arr">{b.arrivals.map((a,i)=><div key={i}><b className="num">{clockAt(t.start,a.offsetMin)}</b><span>{a.text}{a.place?<span className="at"> @{a.place}</span>:null}</span></div>)}</div>:null}
    {items(b.items)}
   </div>
  </div>;
@@ -140,7 +140,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const head=(title:string)=><div className="sheet-head">
   <div><div className="eyebrow">TLC 예배 PD Checklist</div><h2>{title}</h2></div>
   <div className="right"><div className="meta"><div>날짜<span>{fmtDate(date)}</span></div><div>PD<span>{pd}</span></div></div>
-   <div className="lockup"><small>{t.name}</small><b className="num">{clock12(t.start)}<span className="ampm">{ampm(t.start)}</span></b></div></div>
+   <div className="lockup"><small>{t.name}</small><b className="num">{t.start}</b></div></div>
  </div>;
 
  const simple=(title:string,tag:string,body:ReactNode)=><div className="blk"><div className="blk-h"><span className="tm">{title}</span>{tag?<span className="tt">{tag}</span>:null}</div><div className="blk-b">{body}</div></div>;
@@ -168,7 +168,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   <div className="bar" data-print-hide>
    <div className="bar-in">
     {preview?<div className="brand"><b>미리보기</b></div>:<><div className="brand"><b>TLC 예배 PD</b>
-     <select aria-label="예배 선택" value={service} onChange={e=>go({service:e.target.value})}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {clock12(s.start)} {ampm(s.start)}</option>)}</select></div>
+     <select aria-label="예배 선택" value={service} onChange={e=>go({service:e.target.value})}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {s.start}</option>)}</select></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go({date:e.target.value})}/></label>
     {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}</>}
     <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" readOnly={readOnly} onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
