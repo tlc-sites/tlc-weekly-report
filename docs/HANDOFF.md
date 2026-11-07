@@ -844,3 +844,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - `loadNotifications`가 알림의 `report_id`(없으면 `/reports/<id>` 주소)로 보고서를 RLS로 조회해 `context`("1부 예배 · 11/2(일) · 영상팀")를 붙임. 알림 화면·PC 알림 칸에 표시. DB 변경 없음, 지난 알림에도 적용. 볼 수 없는 보고서는 표시 안 함.
 - 검증: tsc·eslint·next build 성공. 실제 로그인 화면 확인은 못 함.
 - 2026-11-07 큐시트 인쇄를 다시 한 쪽(A4 가로)에 예배 하나로: 한글판 1부·2부·3부·라이프라인, 다음 영어판 같은 순서(한·영이면 8쪽, 양면이면 언어마다 2장). compact·.cue-pair 제거.
+
+### 2026-11-07 알림함에서 두 번째 알림이 안 열리던 문제 (로컬)
+- 증상: 알림 A를 열고 종 버튼으로 알림 화면에 돌아와 B를 누르면 열리지 않고, A에 '화면을 여는 중…'이 남아 있음.
+- 원인 추정: cacheComponents의 Activity가 `/notifications`를 숨긴 채 보존해, 돌아왔을 때 A 링크의 `useLinkStatus` 대기 상태가 그대로 되살아남(재현은 로그인 필요라 못 함).
+- 수정(`notification-list.tsx`): 새로 들어올 때마다 `useRouter().bfcacheId`를 key로 목록을 새로 만듦(뒤로 가기는 상태 유지). 알림은 `next/link` 대신 `<a>`+`router.push`로 열고 그 줄에만 '여는 중…' 표시, 숨겨질 때 `useLayoutEffect` 정리로 지움. 4초 지나도 화면이 그대로면 `location.assign`으로 직접 엶.
+- 검증: tsc·eslint·next build 성공. 실제 휴대폰 재현·확인 못 함.
