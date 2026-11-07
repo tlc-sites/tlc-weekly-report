@@ -906,3 +906,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 DB 53 `20261213000000_pd_drop_worship_team.sql`(로컬, 운영 미적용): PD 체크리스트 담당자 칸에서 '예배팀'(악기 r18·싱어 r9) 구분 제거(운영 2쪽이 3페이지로 넘침). 예배 인도자 r1은 '순서'에 그대로, 악기·싱어는 큐시트 Staffs에서만. 실제 11/8 값으로 2쪽 높이 1부 716·2/3부 683·라이프라인 681 / 741px.
 - 2026-11-07 DB53 운영 적용 확인(사용자 적용): 최신 sun1 v10·sun2 v8·sun3 v8·life v7, PD 담당자 구분 = 순서·예배위원·기술팀·송리스트, 11/8 회차 모두 최신.
 - 2026-11-07 인쇄 명단을 NameList 컴포넌트로(splitNames): 사람 단위 inline-block, '/'·'·'는 다음 사람 앞 ::before(.75em)로 두고 줄을 .75em 왼쪽으로 당겨 overflow:hidden으로 줄 첫머리의 '/'를 숨김. 쉼표·세미콜론은 앞 사람 끝에 붙음. keepNames 삭제. 영어 큐시트 오른쪽 위 예배 이름 serviceNameEn(cue.label): '1st Service'…'Lifeline'.
+- 2026-11-07 e5b4384를 origin/master에 일반 push(8423127→e5b4384), Vercel success.
