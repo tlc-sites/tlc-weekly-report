@@ -96,10 +96,17 @@ export function flowSub(step: FlowStep, conds: Conditions, start: string) {
   return hit ? hit[1] : step.sub ?? "";
 }
 
-/** 인쇄용 명단: 쉼표로 나눈 한 덩어리(예: '김OO (일렉 기타)') 안에서는 줄을 바꾸지 않는다(덩어리 안 띄어쓰기를 줄바꿈 없는 공백으로).
- *  줄은 쉼표 뒤와 줄바꿈에서만 바뀐다. 저장된 값은 바꾸지 않고 보여 줄 때만 쓴다. */
+/** 인쇄용 명단(담당 칸): 사람 한 명 단위('김OO (일렉 기타)', '건반 김OO')는 중간에 줄을 바꾸지 않는다.
+ *  줄은 구분자(, / · ;) 뒤, 닫는 괄호 뒤 띄어쓰기, 적어 둔 줄바꿈에서만 바뀐다. 덩어리 안 띄어쓰기는 줄바꿈 없는 공백으로,
+ *  구분자 뒤에 띄어쓰기가 없으면 보이지 않는 줄바꿈 자리를 넣는다. 저장된 값은 바꾸지 않고 보여 줄 때만 쓴다. */
 export const keepNames = (text: string) =>
-  text.split(/(,\s*|\n)/).map((part, i) => (i % 2 ? (part === "," ? ",\u200b" : part) : part.replace(/[ \t]/g, "\u00a0"))).join("");
+  text.split(/(\s*[,/·;]\s*|(?<=\))[ \t]+|\n)/).map((part, i) =>
+    i % 2 ? (/\s$/.test(part) ? part : part + "\u200b") : part.replace(/[ \t]/g, "\u00a0")).join("");
+
+/** 인쇄용 문장(순서·송리스트 칸): 띄어쓰기에서 줄을 바꾸되, 괄호 묶음('(마태복음 9:1-8)')은 앞 낱말과 함께 한 덩어리로,
+ *  숫자 사이 붙임표(9:1-8)는 줄바꿈 없는 붙임표로 둔다. */
+export const keepPhrase = (text: string) =>
+  text.replace(/[ \t]+\(/g, "\u00a0(").replace(/\([^)\n]*\)/g, p => p.replace(/[ \t]/g, "\u00a0")).replace(/(\d)-(?=\d)/g, "$1\u2011");
 
 /** 큐시트 시간 칸: '08:20 - 08:40', 끝이 없으면 '19:05 -' */
 export const cueTime = (start: string, r: CueRow) => `${clockAt(start, r.from)} -${r.to === null ? "" : " " + clockAt(start, r.to)}`;

@@ -3,7 +3,7 @@ import {useCallback,useEffect,useLayoutEffect,useRef,useState,useSyncExternalSto
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,cueSongKeys,keepNames,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
+import {COMM_SONG,cueSongKeys,keepNames,keepPhrase,cueTime,cueTitle,isOn,type Conditions,type Cue,type PdRun} from "@/lib/pd-checklist";
 
 export type CueService={key:string;name:string;start:string;color:string;cue:Cue;roster:Record<string,string>;pd:string;conditions:Conditions;hasCommunion:boolean};
 type Values=Record<string,Record<string,string>>;
@@ -119,10 +119,10 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  const en=lang==="en";
  const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
  const shown=(k:string)=>en?(v[k+"_en"]||v[k]||""):(v[k]||"");
- const cell=(k:string,label:string,hint?:string)=>{
+ const cell=(k:string,label:string,hint?:string,names=false)=>{
   const key=en?k+"_en":k;
   return <>{onChange?<GrowText aria-label={`${s.name} ${label}${en?" (English)":""}`} value={v[key]??""} maxLength={k==="pd"?40:1000} autoComplete="off" lang={en?"en":"ko"} readOnly={readOnly}
-   placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{keepNames(shown(k))}</span></>;
+   placeholder={en?(v[k]||"English"):(hint??"")} onChange={e=>onChange(key,e.target.value)} onBlur={()=>onBlur?.(key)}/>:null}<span className="pv">{(names?keepNames:keepPhrase)(shown(k))}</span></>;
  };
  // 시간이 같은 연속 행은 시간 칸을 합친다.
  const timeSpan=(i:number)=>{const r=rows[i],p=rows[i-1];if(p&&p.from===r.from&&p.to===r.to)return 0;let n=0;for(let j=i;j<rows.length&&rows[j].from===r.from&&rows[j].to===r.to;j++)n+=rows[j].lines.length;return n;};
@@ -143,7 +143,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  const staff=<div className="blk"><table className="cue-t">
   <colgroup><col className="c-role"/><col/></colgroup>
   <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
-  <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko)}</td></tr>)}</tbody></table></div>;
+  <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko,undefined,true)}</td></tr>)}</tbody></table></div>;
  return <section className="sheet cue-sheet svc" style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
   <div className="sheet-head">
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>

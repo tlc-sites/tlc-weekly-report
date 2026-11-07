@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,clockAt,keepNames,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,clockAt,keepNames,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -221,7 +221,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {songs?simple(songs.group,"큐시트와 같은 값",<div className="pd-songs">{songFields.map(f=><div key={f.id} className={"song-row"+(f.id===COMM_SONG.id?" opt":"")}>
      <label htmlFor={"pd-r-"+f.id} className="k">{f.label}</label>
      <input id={"pd-r-"+f.id} type="text" maxLength={1000} autoComplete="off" value={roster[f.id]??""} onChange={e=>setRosterField(f.id,e.target.value)} onBlur={()=>flush("roster:"+f.id)}/>
-     <div className="pv">{keepNames(roster[f.id]??"")}</div>
+     <div className="pv">{keepPhrase(roster[f.id]??"")}</div>
     </div>)}</div>):null}
     {simple(r.title??"PD REPORT","종료 후 보고",reportBody)}
    </div>
