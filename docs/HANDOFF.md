@@ -880,3 +880,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 증상(사용자 보고): 셀케어 없이 가입한 분이 이름이 비어 있는 채로 들어옴. 원인: 첫 로그인 때 real_name 없는 pending 프로필이 생기고, 이름·파트 신청(onboarding) 전에 관리자가 승인하면 onboarding을 건너뜀(셀케어 명단 사람은 ensure_profile이 셀케어 이름을 넣어 줘서 드러나지 않았음).
 - 수정: `requireActive`가 승인됐지만 real_name이 비면 `/onboarding`으로 보냄. onboarding은 이 경우 이름만 받는 화면(`saveRealName`, 본인 real_name 업데이트 — 기존 컬럼 권한). DB 변경 없음.
 - 검증: tsc·eslint·build 성공. 실제 화면 미확인.
+
+### 2026-11-07 교역자가 아니면 본인 보고만 DB49 (로컬, 운영 미적용)
+- 사용자 결정: 교역자가 아닌 분은 본인이 제출한 것만. 리더(팀 reviewer)는 맡은 팀 보고 유지, 교역자 태그·함께 보는 부서·개별 공유로 받은 보고는 유지.
+- DB49 `20261209000000_writer_own_reports.sql`: `same_content_layer`에 `is_clergy()` 조건 추가 → 비교역자의 '같은 직급(층) 보고·이슈 일반 내용 열람'이 사라짐(보고 can_view_report·reports 정책·can_view_group·이슈 읽기 모두 이 함수 사용). 교역자·담임 결과는 그대로. 앱 코드 변경 없음.
+- 이전 결정(동급 일반 내용 열람, ministry-round2 테스트)을 사용자 지시로 바꿈: 테스트 2개를 새 규칙으로 수정, `tests/writer-own-reports.test.mjs` 추가(DB49 없으면 실패 확인). test:db 161/161.

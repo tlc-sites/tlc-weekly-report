@@ -32,8 +32,10 @@ before(async()=>{
  assert.deepEqual((await db.query("select id,details,updated_at,last_edited_by from report.reports order by id")).rows,source);
 });
 after(()=>db.close());
-test('같은 직급 작성 보고는 다른 파트에서도 읽되 다른 직급·개인정보는 범위 밖에 공개하지 않는다',async()=>{
- for(const role of ['minister','lead','writer'])assert.equal((await as(id[role+'A'],'select id from report.reports where id=$1',[id['r'+role+'B']])).rows.length,1,role);
+test('같은 직급 작성 보고는 교역자끼리만 다른 파트에서도 읽고(DB49), 다른 직급·개인정보는 범위 밖에 공개하지 않는다',async()=>{
+ assert.equal((await as(id.ministerA,'select id from report.reports where id=$1',[id.rministerB])).rows.length,1);
+ // DB49: 교역자가 아닌 분(리더·작성자)은 다른 파트의 같은 직급 보고를 보지 않는다
+ for(const role of ['lead','writer'])assert.equal((await as(id[role+'A'],'select id from report.reports where id=$1',[id['r'+role+'B']])).rows.length,0,role);
  assert.equal((await as(id.writerA,'select id from report.reports where id=$1',[id.rleadB])).rows.length,0);
  assert.equal((await as(id.admin,'select id from report.reports')).rows.length,0);
  assert.equal((await as(id.ministerA,'select * from report.report_prayers')).rows.length,0);
@@ -81,7 +83,9 @@ test('이슈는 자기 팀 하나로 작성하고 같은 예배는 팀과 작성
  const create=(user,groups,title)=>as(user,"insert into report.worship_incidents(author_id,group_ids,occurred_on,service_name,title,circumstances,detailed) values($1,$2,current_date,'수요예배',$3,'경위',false) returning id,occurred_on::text as occurred_on,service_id,service_name",[user,groups,title]);
  const a=(await create(id.leadA,[id.sound],'음향')).rows[0],b=(await create(id.leadB,[id.video],'영상')).rows[0];
  await deny(create(id.leadA,[id.sound,id.video],'여러 팀'));await deny(create(id.leadA,[id.video],'다른 팀'));
- assert.equal((await as(id.leadA,'select id from report.worship_incidents where id=$1',[b.id])).rows.length,1);
+ // DB49: 교역자가 아닌 리더는 다른 팀 리더의 이슈를 보지 않는다(본인 것은 본다)
+ assert.equal((await as(id.leadA,'select id from report.worship_incidents where id=$1',[b.id])).rows.length,0);
+ assert.equal((await as(id.leadA,'select id from report.worship_incidents where id=$1',[a.id])).rows.length,1);
  assert.equal(groupIncidentEvents([a,b]).length,1);assert.equal(groupIncidentEvents([a,b])[0].items.length,2);
  assert.equal(groupIncidentEvents([a,{...b,occurred_on:'2000-01-01'}]).length,2);
   assert.equal(groupIncidentEvents([{...a,service_id:'known-service'},{...b,service_name:'수요 예배'}]).length,1);
