@@ -896,3 +896,4 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-07 DB50 운영 적용 확인(사용자 적용): 최신 sun1 v7·sun2 v6·sun3 v6·life v5, 순서에 offsong·offering 없음, staff …r8,r7,pd, 라이프라인 offlead to 65. 11/8 회차 sun1~3 모두 최신 버전.
 - 2026-11-07 DB 51 `20261211000000_cue_offsong_back.sql`(로컬, 운영 미적용): 헌금송(offsong, c_offsong)을 헌금인도 다음에 다시(시간은 그 줄이 있던 마지막 버전에서, 라이프라인 헌금인도 18:50-18:55·헌금송 18:55-19:05로 되돌림), Staffs에서 중계 믹싱 r20 제거. 큐시트 작성 칸을 자동으로 늘어나는 textarea(GrowText, field-sizing:content + JS 대체)로: 여러 줄 붙여넣기·긴 명단이 줄바꿈되어 칸이 커짐, 인쇄 .pv pre-wrap. 큐시트 제목 시간 12시간제(13:00 PM→01:00 PM, cueTitle). 복사·붙여넣기는 headless Chrome에서 Ctrl+C/V 동작 확인.
 - 2026-11-07 a002818을 origin/master에 일반 push(9c97eb7→a002818), Vercel success. DB51 운영 적용 확인(사용자 적용): 최신 sun1 v8·sun2 v7·sun3 v7·life v6, offsong 복귀, r20 없음, 11/8 회차 모두 최신. 이어서 큐시트 순서 표 시간도 12시간제(cueTime, clock12).
+- 2026-11-07 b7ac3e8을 origin/master에 일반 push(a002818→b7ac3e8), Vercel success.
