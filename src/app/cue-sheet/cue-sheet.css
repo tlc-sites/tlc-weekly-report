@@ -4,6 +4,7 @@
 .cue .cue-print { display: none; }
 .cue .sheet.cue-sheet { margin-top: 28px; }
 .cue .sheet-head .right { align-items: center; }
+.cue .lockup .ampm { font-size: .45em; font-weight: 700; margin-left: .25em; letter-spacing: .02em; }
 
 .cue .cue-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media screen and (max-width: 860px) { .cue .cue-body { grid-template-columns: minmax(0, 1fr); } }
