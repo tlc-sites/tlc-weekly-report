@@ -30,3 +30,15 @@ export async function submitOnboarding(formData: FormData) {
   try { await notifyRegistrationAlerts(profile.id); } catch { /* 정기 작업에서 재시도한다. */ }
   redirect("/pending");
 }
+
+// 이름 없이 승인된 분이 이름만 적는다(파트 배정은 이미 관리자가 함).
+export async function saveRealName(formData: FormData) {
+  const { supabase, profile } = await getSessionProfile();
+  if (!profile) redirect("/login");
+  if (profile.status !== "active") redirect("/onboarding");
+  const parsed = z.string().trim().min(1).max(30).safeParse(formData.get("realName"));
+  if (!parsed.success) redirect("/onboarding?error=name");
+  const { error } = await supabase.from("profiles").update({ real_name: parsed.data }).eq("id", profile.id);
+  if (error) redirect("/onboarding?error=save");
+  redirect("/");
+}

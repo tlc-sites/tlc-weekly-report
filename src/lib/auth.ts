@@ -41,6 +41,8 @@ export async function requireActive() {
   if (!profile) redirect("/login");
   if (profile.status === "pending" && profile.requested_group_ids.length === 0) redirect("/onboarding");
   if (profile.status !== "active") redirect("/pending");
+  // 이름·파트 신청 전에 승인된 분(셀케어 없이 가입한 분 등)은 이름부터 적는다. 보고서 작성자 이름에 쓰인다.
+  if (!profile.real_name?.trim()) redirect("/onboarding");
   return { supabase, profile };
 }
 

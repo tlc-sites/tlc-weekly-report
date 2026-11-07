@@ -875,3 +875,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 앱: 관리자 사용자 화면에 '주일예배 문서 작성' 카드(큐시트 작성·PD 체크리스트 작성 지정/해제, 지정 인원 표시). 큐시트는 cue 또는 pd 권한 없으면 입력 readOnly·성찬 스위치 잠금·안내 문구. PD 체크리스트는 pd 권한 없으면 시트를 `<fieldset disabled>`로 잠그고 PD 이름·조건·초기화 숨김/잠금, 저장 안 함. 화면 이동·인쇄는 그대로.
 - 테스트 `tests/worship-doc-roles.test.mjs`. 전체 test:db 160/160, tsc·eslint·build 성공. 실제 화면은 로컬 env가 없어 못 봄.
 - 적용 순서: DB48 SQL → 앱 배포(앱만 먼저 가면 can_write_worship_doc 호출이 실패해 모두 보기 전용으로 보임).
+
+### 2026-11-07 이름 없이 승인된 사용자 (로컬)
+- 증상(사용자 보고): 셀케어 없이 가입한 분이 이름이 비어 있는 채로 들어옴. 원인: 첫 로그인 때 real_name 없는 pending 프로필이 생기고, 이름·파트 신청(onboarding) 전에 관리자가 승인하면 onboarding을 건너뜀(셀케어 명단 사람은 ensure_profile이 셀케어 이름을 넣어 줘서 드러나지 않았음).
+- 수정: `requireActive`가 승인됐지만 real_name이 비면 `/onboarding`으로 보냄. onboarding은 이 경우 이름만 받는 화면(`saveRealName`, 본인 real_name 업데이트 — 기존 컬럼 권한). DB 변경 없음.
+- 검증: tsc·eslint·build 성공. 실제 화면 미확인.
