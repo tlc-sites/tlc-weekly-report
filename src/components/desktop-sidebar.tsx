@@ -14,7 +14,7 @@ export async function DesktopSidebar(){
  if(profile?.status!=="active")return null;
  const week=reportWeek(undefined,todayKST());
  const [{data:memberships},groups,{data:reports},{data:noMeeting},pd]=await Promise.all([
-  supabase.from("memberships").select("group_id,position").eq("user_id",profile.id),
+  supabase.from("memberships").select("group_id,role,position").eq("user_id",profile.id),
   listGroupsOrdered(supabase),
   supabase.from("reports").select("group_id,status").eq("week",week),
   supabase.from("week_status").select("group_id").eq("week",week).eq("no_meeting",true),
@@ -27,13 +27,15 @@ export async function DesktopSidebar(){
  for(const g of noMeeting??[])state.set(g.group_id as string,"none");
  for(const r of reports??[]){const id=r.group_id as string,cur=state.get(id);if(r.status!=="draft")state.set(id,"done");else if(cur!=="done")state.set(id,"draft");}
  const sections:SidebarSection[]=Object.entries(NAV_CATEGORY_LABEL).map(([key,label])=>({key,label,groups:parts.filter(g=>groupCategory(g)===key).map(g=>({id:g.id,label:groupDisplayName(g.name),state:state.get(g.id)??"todo",direct:mine.has(g.id)}))})).filter(s=>s.groups.length);
+ // 부서 안건: 두 분, 또는 어느 부서든 총괄·부장·팀장(reviewer)이거나 담당 교역자인 분(DB report.agenda_visible과 같은 기준)
+ const agenda=isSenior(profile)||(memberships??[]).some(m=>m.role==="reviewer"||(profile.is_minister&&["교역자","담당교역자"].includes(String(m.position))));
  const positions=[...new Set((memberships??[]).map(m=>m.position as string|null).filter((p):p is string=>Boolean(p)))];
  const role=profile.recipient_role==="pastor"?"담임목사":profile.recipient_role==="pastor_wife"?"담임사모":[profile.is_minister?"교역자":"",profile.is_admin?"관리자":""].filter(Boolean).join(" · ")||positions[0]||"팀원";
  return <><aside data-print-hide className="app-sidebar" aria-label="사이드 메뉴">
   <div className="app-sidebar-brand">
    <Link href="/" className="min-w-0 flex-1"><b>TLC 교회 보고서</b><small>이번 주 {formatWeek(week)}</small></Link>
   </div>
-  <DesktopSidebarNav clergy={isClergy(profile)} manage={canManage(profile)} pd={pd} sections={sections} name={profile.real_name??"이름 없음"} role={role}/>
+  <DesktopSidebarNav agenda={agenda} clergy={isClergy(profile)} manage={canManage(profile)} pd={pd} sections={sections} name={profile.real_name??"이름 없음"} role={role}/>
  </aside><DesktopReportColumn/>
  {/* 알림 종은 셀케어처럼 화면 오른쪽 위. 위에 붙은 얇은 줄이라 아래로 내려도 그 자리에 있다. */}
  <div data-print-hide className="app-topbar"><NotificationBell panel userId={profile.id} staff={canManage(profile)||isClergy(profile)}/></div></>;

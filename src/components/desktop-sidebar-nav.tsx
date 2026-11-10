@@ -27,6 +27,7 @@ const I = {
  calendar: icon(<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></>),
  gear: icon(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>),
  book: icon(<><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></>),
+ agenda: icon(<><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></>),
  pen: icon(<><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m14 11 6-6-2-2-6 6-1 4 3-2Z"/></>),
 };
 
@@ -41,14 +42,14 @@ function setSide(mini: boolean) {
  sideListeners.forEach(fn => fn());
 }
 
-export function DesktopSidebarNav({clergy,manage,pd=false,sections,name,role}:{clergy:boolean;manage:boolean;pd?:boolean;sections:SidebarSection[];name:string;role:string}){
+export function DesktopSidebarNav({agenda=false,clergy,manage,pd=false,sections,name,role}:{agenda?:boolean;clergy:boolean;manage:boolean;pd?:boolean;sections:SidebarSection[];name:string;role:string}){
  const path=usePathname();
  // 접기: 너비는 <html data-side="mini">와 CSS가 정하고(새로고침 전에 head 스크립트가 넣음), 여기서는 접혔을 때 묶음을 펼친 아이콘 줄로 그린다.
  const mini=useSyncExternalStore(subscribeSide,()=>document.documentElement.dataset.side==="mini",()=>false);
  const toggle=()=>setSide(!mini);
  const toggleLabel=mini?"메뉴 펼치기":"메뉴 접기";
  const active=(it:Item)=>{const base=it.match??it.href.split("?")[0];return base==="/"?path==="/":path===base||path.startsWith(base+"/");};
- const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"내 보고서",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people},...(pd?[{href:"/pd-checklist",label:"예배 PD 체크리스트",icon:I.check}]:[]),{href:"/cue-sheet",label:"주일예배 큐시트",icon:I.calendar}];
+ const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"내 보고서",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},...(agenda?[{href:"/agenda",label:"부서 안건",icon:I.agenda}]:[]),{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people},...(pd?[{href:"/pd-checklist",label:"예배 PD 체크리스트",icon:I.check}]:[]),{href:"/cue-sheet",label:"주일예배 큐시트",icon:I.calendar}];
  const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/missing",label:"미제출 보고",icon:I.list},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
  const admin:Item[]=[...(manage||clergy?[{href:"/manage",label:"관리 홈",icon:I.grid}]:[]),...(clergy?[{href:"/team-management",label:"담당 팀 명단",icon:I.people}]:[]),...(manage?[{href:"/admin/submissions",label:"전체 제출현황",icon:I.check},{href:"/admin/users",label:"가입 승인·담당 지정",icon:I.user},{href:"/admin/groups",label:"그룹 관리",icon:I.tree},{href:"/admin/services",label:"예배 목록",icon:I.calendar}]:[])];
  const link=(it:Item)=><Link key={it.href} href={it.href} title={mini?it.label:undefined} aria-current={active(it)?"page":undefined} className="app-sidebar-item">{it.icon}<span>{it.label}</span></Link>;

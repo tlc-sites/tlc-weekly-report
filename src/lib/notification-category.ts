@@ -5,6 +5,7 @@ export const NOTIFICATION_CATEGORIES = [
   ["feedback", "코멘트·답글"],
   ["request", "다른 부서 요청"],
   ["message", "비공개 메시지"],
+  ["agenda", "부서 안건"],
   ["notice", "공지"],
   ["reminder", "작성 안내"],
   ["other", "기타"],
@@ -12,6 +13,7 @@ export const NOTIFICATION_CATEGORIES = [
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number][0];
 
 export function notificationCategory({ title, url }: { title: string; url: string }): NotificationCategory {
+  if (url.startsWith("/agenda")) return "agenda";
   if (/다른 부서에서 함께 봐/.test(title)) return "request";
   if (/피드백|답글|코멘트|댓글/.test(title)) return "feedback";
   if (/보고서가 제출|보고서를 수정/.test(title)) return "report";

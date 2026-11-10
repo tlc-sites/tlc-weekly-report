@@ -917,3 +917,13 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 접히면 아이콘만(title 도움말), 목회·관리 묶음은 펼친 아이콘 줄, 「내 파트」 목록·밝기·로그아웃은 숨김. 아래 이름 칸(아바타)을 눌러도 펼친다. 휴대폰 화면은 그대로. DB 변경 없음.
 - 검증: test:db 166 통과, eslint(바꾼 파일)·tsc 통과, next build 성공. 운영 화면에 새 CSS만 넣어 접힘 모양(64px·글자 없음·가로 넘침 없음)을 확인했고, 로그인한 새 화면 전체는 배포 후 확인 필요.
 
+## 2026-11-10 부서 안건방 (DB 56 `20261216000000_dept_agenda.sql`)
+
+- 요청: 담임 목사님·사모님이 보고서 외에 부서 안건을 직접 말하는 창구. 기존 「대상 지정 소식」을 키우는 안 대신 새 안건방으로 결정(사용자, 2026-11-10).
+- DB: `agenda_items`(부서·제목·내용·상태 open/done·last_activity_at), `agenda_replies`. 글자 수 상한 없음(빈 글만 막음).
+  - 보는 분 `agenda_member(user, group)`: 두 분, 또는 그 부서와 위·아래 부서에서 reviewer(총괄·부장·팀장)이거나 교역자 계정의 직책 '교역자'·'담당교역자'. 팀원·작성자·'기타 교역자'·기능 관리자는 못 봄.
+  - 올리기는 두 분만(RLS), 지우기는 올린 분만. 상태는 `set_agenda_status`(두 분만). insert는 칼럼 단위 grant라 상태를 직접 넣을 수 없음.
+  - 알림: 새 안건 → 보는 분 모두(올린 분 제외). 답글 → 두 분이 쓰면 보는 분 모두, 다른 분이 쓰면 두 분 + 올린 분 + 앞서 답글 단 분. 알림 문구에 본문은 넣지 않고 부서 이름만. `inbox_notifications.agenda_id`(안건 지우면 같이 지워짐). inbox_read 정책은 바꾸지 않음.
+- 앱: `/agenda`(진행 중·완료·전체, 두 분은 새 안건 올리기), `/agenda/[id]`(본문·답글·완료 표시·지우기). 푸시는 `lib/agenda-push.ts`가 트리거가 만든 알림함 행으로 보냄. PC 사이드바 「부서 안건」, 휴대폰 홈 버튼, 알림함 종류 「부서 안건」. 메뉴 보임 기준은 DB `agenda_visible()`과 같음.
+- 테스트: tests/dept-agenda.test.mjs(권한·알림 대상·상태·지우기·재실행), tests/agenda-push.test.mjs, notification-category 갱신.
+
