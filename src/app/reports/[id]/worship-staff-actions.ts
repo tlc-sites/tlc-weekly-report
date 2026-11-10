@@ -9,7 +9,7 @@ import {redirect} from "next/navigation";
 type State={message:string;version:string};
 export async function saveReportWorshipStaff(previous:State,form:FormData):Promise<State>{
  const {supabase,profile}=await requireActive();
- const parsed=z.object({reportId:z.uuid(),staff:z.string().trim().max(4000),version:z.string().max(100)}).safeParse(formFields(form));
+ const parsed=z.object({reportId:z.uuid(),staff:z.string().trim(),version:z.string().max(100)}).safeParse(formFields(form));
  const failed={message:"저장하지 못했습니다. 내용을 보관한 뒤 다시 확인해 주세요.",version:previous.version};
  if(!parsed.success||!isClergy(profile))return failed;
  const {reportId,staff,version}=parsed.data;
@@ -27,7 +27,7 @@ export async function saveReportWorshipStaff(previous:State,form:FormData):Promi
 // 예배위원 보고서의 담당자 영역: 같은 공유 명단(worship_staff)을 저장하고 보고서로 돌아간다.
 export async function saveStaffFromStaffReport(form:FormData){
  const {supabase,profile}=await requireActive();
- const parsed=z.object({reportId:z.uuid(),staff:z.string().trim().max(4000)}).safeParse(formFields(form));
+ const parsed=z.object({reportId:z.uuid(),staff:z.string().trim()}).safeParse(formFields(form));
  if(!parsed.success)redirect("/");
  const {reportId,staff}=parsed.data;
  const back=`/reports/${reportId}`;

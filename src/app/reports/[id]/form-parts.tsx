@@ -31,7 +31,6 @@ export function TextArea({
   onChange,
   placeholder,
   rows = 3,
-  maxLength = 1000,
   required = false,
 }: {
   label?: string;
@@ -39,7 +38,6 @@ export function TextArea({
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
-  maxLength?: number;
   required?: boolean;
 }) {
   return (
@@ -53,7 +51,6 @@ export function TextArea({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        maxLength={maxLength}
         rows={rows}
         placeholder={placeholder}
         className={textareaClass}
@@ -169,7 +166,6 @@ export function RequestsEditor({ value, onChange }: { value: Request[]; onChange
           <input
             value={r.content}
             onChange={(e) => update(i, { content: e.target.value })}
-            maxLength={500}
             placeholder="요청 내용"
             className={inputClass}
           />

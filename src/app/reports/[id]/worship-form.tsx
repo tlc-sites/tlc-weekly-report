@@ -28,10 +28,10 @@ export function WorshipForm({ action, reportId, initial, showMessages, mentionGr
       {worshipTeam?<Section title="예배인도자"><Field label="예배인도자 (선택)"><input value={p.details.worship_leader??""} maxLength={100} placeholder="이 예배의 예배인도자 이름" onChange={e=>setP({...p,details:{...p.details,worship_leader:e.target.value}})} className={inputClass}/></Field></Section>:null}
       {staffReport?null:<><Section title="말씀 (선택)" hint="팀마다 반복 입력하지 않아도 제출할 수 있습니다.">
         <Field label="말씀본문 (선택)"><input value={p.details.sermon_passage} onChange={e=>setP({...p,details:{...p.details,sermon_passage:e.target.value}})} maxLength={100} placeholder="예: 요한복음 3:16" className={inputClass}/></Field>
-        <TextArea label="말씀·예배 내용 (선택)" value={p.details.sermon_content} maxLength={2000} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
+        <TextArea label="말씀·예배 내용 (선택)" value={p.details.sermon_content} onChange={sermon_content=>setP({...p,details:{...p.details,sermon_content}})}/>
         <p className="text-sm text-muted">예배위원은 별도 ‘예배위원’ 메뉴에서 관리하며, 위쪽의 공유 명단을 확인해 주세요.</p>{p.details.service_staff?<p className="whitespace-pre-wrap text-sm">기존 보고의 예배위원: {p.details.service_staff}</p>:null}
       </Section>
-      <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} maxLength={1000} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section></>}
+      <Section title="해당 부서 로테이션"><TextArea label="담당자·담당 파트" value={p.details.rotation??""} placeholder="예: 메인 김OO / 모니터 박OO / 다음 주 이OO" onChange={rotation=>setP({...p,details:{...p.details,rotation}})}/></Section></>}
       <Section title="진행 결과"><button type="button" className="min-h-11 rounded-xl border border-border px-3 text-sm text-accent" onClick={()=>setP({...p,details:{...p.details,result:"normal",notes:p.details.notes||"특이사항 없습니다."}})}>이슈 없음 · 정상 진행으로 작성</button>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {Object.entries(RESULT_LABEL).map(([value, label]) => (
@@ -74,7 +74,7 @@ export function OtherForm({ action, reportId, initial, showMessages, mentionGrou
   return (
     <ReportForm action={action} reportId={reportId} type="other" payload={p}>
       <Section title={internship ? "스데반 인턴십 · 예배 보고":"채플·교육"}>
-        <TextArea label="예배 송리스트" value={p.details.song_list} maxLength={2000}
+        <TextArea label="예배 송리스트" value={p.details.song_list}
           placeholder="곡 제목을 순서대로 한 줄에 하나씩 적어 주세요."
           onChange={(song_list) => setP({ ...p, details: { ...p.details, song_list } })} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -88,7 +88,7 @@ export function OtherForm({ action, reportId, initial, showMessages, mentionGrou
               onChange={(e) => setP({ ...p, details: { ...p.details, preacher: e.target.value } })} />
           </Field>
         </div>
-        <TextArea label="예배·교육 내용" value={p.details.content} rows={6} maxLength={2000}
+        <TextArea label="예배·교육 내용" value={p.details.content} rows={6}
           placeholder="설교 요약, 교육 내용, 활동과 반응 등을 적어 주세요."
           onChange={(content) => setP({ ...p, details: { ...p.details, content } })} />
       </Section>

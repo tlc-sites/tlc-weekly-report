@@ -49,10 +49,11 @@ const mentions = z.array(z.uuid()).max(5).optional();
 const notify = z.enum(["clergy", "leadership"]).optional();
 // 알림을 받을 교역자를 직접 고른다 (DB 트리거가 활성 교역자인지 다시 확인한다)
 const notify_ministers = z.array(z.uuid()).max(50).optional();
-const longText = text(1000);
+// 여러 줄로 쓰는 본문 칸은 글자수 제한을 두지 않는다(한 줄 칸만 길이를 제한한다)
+const longText = z.string().trim();
 
-const requestSchema = z.object({ category: z.enum(REQUEST_CATEGORIES), content: text(500).min(1) });
-const messagesSchema = z.object({ pastor: text(2000), pastor_wife: text(2000) });
+const requestSchema = z.object({ category: z.enum(REQUEST_CATEGORIES), content: longText.min(1) });
+const messagesSchema = z.object({ pastor: longText, pastor_wife: longText });
 
 const issueSchema = z.object({
   category: text(30).min(1),
@@ -99,17 +100,17 @@ export const educationPayload = z.object({
         .refine((n) => !n.guardian_contact || n.consent, { message: "consent" }),
     )
     .max(30),
-  prayer: text(1000),
+  prayer: longText,
   messages: messagesSchema,
 });
 
 export const worshipPayload = z.object({
   details: z.object({
     sermon_passage: text(100).default(""),
-    sermon_content: text(2000).default(""),
-    service_staff: text(1000).default(""),
+    sermon_content: longText.default(""),
+    service_staff: longText.default(""),
     worship_leader: text(100).optional(),
-    rotation: text(1000).optional(),
+    rotation: longText.optional(),
     needs_attention: z.boolean().optional(),
     attention_status: z.enum(["open","temporary","resolved"]).optional(),
     mentions,
@@ -126,11 +127,11 @@ export const worshipPayload = z.object({
 export const otherPayload = z.object({
   details: z.object({
     // 이전에 작성한 기타 모임 보고도 그대로 열고 저장할 수 있도록 기본값을 둔다.
-    song_list: text(2000).default(""),
-    sharing_topic:text(1000).optional(),sharing_passage:text(200).optional(),sharing_place:text(200).optional(),
+    song_list: longText.default(""),
+    sharing_topic:longText.optional(),sharing_passage:text(200).optional(),sharing_place:text(200).optional(),
     sermon_passage: text(100).default(""),
     preacher: text(100).default(""),
-    content: text(2000).default(""),
+    content: longText.default(""),
     mentions,
     notify,
     notify_ministers,
@@ -146,7 +147,7 @@ const countSchema = z.union([z.number().int().min(0).max(99), z.null()]);
 export const campusPayload = z.object({
   details: z.object({
     report_mode:z.enum(["legacy","sections"]).optional(),
-    sections:z.record(z.string().max(40),text(2000)).optional(),
+    sections:z.record(z.string().max(40),longText).optional(),
     companion: text(50),
     depart_pangyo: z.union([z.iso.date(), z.literal("")]),
     depart_busan: z.union([z.iso.date(), z.literal("")]),

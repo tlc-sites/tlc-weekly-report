@@ -45,15 +45,15 @@ export function IncidentForm({ incident, groups=[], services=[], initial, today,
     </>}
     <Field label="이슈 제목"><input name="title" required maxLength={100} className={inputClass} defaultValue={value("title",incident?.title)}/></Field>
     <Field label="이슈 분류"><select name="category" className={selectClass} defaultValue={value("category",incident?.category ?? WORSHIP_ISSUE_CATEGORIES[0])}>{Array.from(new Set([...WORSHIP_ISSUE_CATEGORIES,incident?.category].filter(Boolean) as string[])).map(c=><option key={c}>{c}</option>)}</select></Field>
-    <Field label="발생 경위" hint="언제, 어떤 상황에서 무엇이 발생했는지 적어 주세요."><textarea name="circumstances" required maxLength={3000} className={textareaClass} defaultValue={value("circumstances",incident?.circumstances)}/></Field>
-    <Field label="조치 내용·대응 결과"><textarea name="response" maxLength={2000} className={textareaClass} defaultValue={value("response",incident?.response)}/></Field>
+    <Field label="발생 경위" hint="언제, 어떤 상황에서 무엇이 발생했는지 적어 주세요."><textarea name="circumstances" required className={textareaClass} defaultValue={value("circumstances",incident?.circumstances)}/></Field>
+    <Field label="조치 내용·대응 결과"><textarea name="response" className={textareaClass} defaultValue={value("response",incident?.response)}/></Field>
     <details open={detailed} onToggle={e=>{if(e.currentTarget.open) setDetailed(true);}} className="rounded-xl border border-border p-4">
       <summary className="font-medium text-accent">상세 경위·후속 조치 작성</summary>
       <div className="mt-5 flex flex-col gap-5">
         <Field label="담당 교역자"><input name="pastor" maxLength={100} className={inputClass} defaultValue={value("pastor",incident?.pastor)}/></Field>
         <Field label="당시 참여 인원"><input name="participants" maxLength={500} className={inputClass} defaultValue={value("participants",incident?.participants)}/></Field>
-        <Field label="발생 원인" hint="아직 파악하지 못했다면 비워 두세요. 열람 화면에는 ‘확인 중’으로 표시합니다."><textarea name="cause" maxLength={2000} className={textareaClass} defaultValue={value("cause",incident?.cause)}/></Field>
-        <Field label="향후 개선대책"><textarea name="prevention" maxLength={2000} className={textareaClass} defaultValue={value("prevention",incident?.prevention)}/></Field>
+        <Field label="발생 원인" hint="아직 파악하지 못했다면 비워 두세요. 열람 화면에는 ‘확인 중’으로 표시합니다."><textarea name="cause" className={textareaClass} defaultValue={value("cause",incident?.cause)}/></Field>
+        <Field label="향후 개선대책"><textarea name="prevention" className={textareaClass} defaultValue={value("prevention",incident?.prevention)}/></Field>
         <Field label="후속 조치 담당자"><input name="follow_up_owner" maxLength={100} className={inputClass} defaultValue={value("follow_up_owner",incident?.follow_up_owner)}/></Field>
         <Field label="조치 목표일"><input name="due_on" type="date" className={inputClass} defaultValue={value("due_on",incident?.due_on ?? "")}/></Field>
       </div>

@@ -146,11 +146,11 @@ export function CampusForm({
         ["welcome", "웰컴팀", null, "방문자 관련 보고"],
         ["training", "새가족 교육", null, "진행 내용"],
       ].map(([key,title,textKey,sectionLabel]) => <Section key={key!} title={title!}>
-        {sectionLabel ? <TextArea label={sectionLabel} value={d.sections?.[key!]??""} maxLength={2000} onChange={value=>set({sections:{...d.sections,[key!]:value}})} placeholder={key==="welcome"?"방문자 관련 특이사항 적어주세요":undefined}/> : null}
+        {sectionLabel ? <TextArea label={sectionLabel} value={d.sections?.[key!]??""} onChange={value=>set({sections:{...d.sections,[key!]:value}})} placeholder={key==="welcome"?"방문자 관련 특이사항 적어주세요":undefined}/> : null}
         {textKey ? CAMPUS_TEXTS.filter(([k])=>k===textKey).map(([k,label,placeholder])=><TextArea key={k} label={label} required value={d.texts[k]} onChange={value=>set({texts:{...d.texts,[k]:value}})} placeholder={placeholder}/>) : null}
-        {!sectionLabel && d.sections?.[key!]?.trim() ? <TextArea label="이전에 작성한 추가 기록" value={d.sections[key!]} maxLength={2000} onChange={value=>set({sections:{...d.sections,[key!]:value}})}/> : null}
+        {!sectionLabel && d.sections?.[key!]?.trim() ? <TextArea label="이전에 작성한 추가 기록" value={d.sections[key!]} onChange={value=>set({sections:{...d.sections,[key!]:value}})}/> : null}
       </Section>)}
-      {d.sections?.worship?.trim()?<Section title="이전에 작성한 예배 기록"><TextArea label="예배 기록" value={d.sections.worship} maxLength={2000} onChange={value=>set({sections:{...d.sections,worship:value}})}/></Section>:null}
+      {d.sections?.worship?.trim()?<Section title="이전에 작성한 예배 기록"><TextArea label="예배 기록" value={d.sections.worship} onChange={value=>set({sections:{...d.sections,worship:value}})}/></Section>:null}
       {CAMPUS_TEXTS.filter(([key])=>["facilities","served","others"].includes(key)).map(([key,label,placeholder])=><div key={key} className="mb-5"><TextArea label={label} required value={d.texts[key]} onChange={value=>set({texts:{...d.texts,[key]:value}})} placeholder={placeholder}/></div>)}
       {showMessages ? <MessagesEditor value={p.messages} onChange={(messages) => setP({ ...p, messages })} /> : null}
     </ReportForm>

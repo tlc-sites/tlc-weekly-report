@@ -6,9 +6,9 @@ export const incidentFields = z.object({
   detailed: z.preprocess(v=>v===undefined ? true : v===true || v==="true",z.boolean()),
   title: z.string().trim().min(1).max(100),
   pastor: z.string().trim().max(100), participants: z.string().trim().max(500),
-  circumstances: z.string().trim().min(1).max(3000),
-  cause: z.string().trim().max(2000), response: z.string().trim().max(2000),
-  prevention: z.string().trim().max(2000), follow_up_owner: z.string().trim().max(100),
+  circumstances: z.string().trim().min(1),
+  cause: z.string().trim(), response: z.string().trim(),
+  prevention: z.string().trim(), follow_up_owner: z.string().trim().max(100),
   due_on: z.union([z.iso.date(),z.literal("")]),
   status: z.enum(["open","temporary","resolved"]),
 }).refine(p=>!p.detailed || p.status!=="resolved" || Boolean(p.response && p.prevention));
