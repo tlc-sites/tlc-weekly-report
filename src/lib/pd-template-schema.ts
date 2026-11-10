@@ -22,7 +22,7 @@ const item=z.discriminatedUnion("type",[
 const items=z.array(item).max(30);
 
 const block=z.object({
- id,offsetMin:offset,label:text(20),title:opt(40),style:z.enum(["default","accent","cue","go"]),
+ id,offsetMin:offset,label:text(20),title:opt(40),style:z.enum(["default","accent","cue","go"]),wide:z.boolean().optional(),
  arrivals:z.array(z.object({offsetMin:offset,text:text(80),place:opt(80).optional()})).max(6).optional(),
  items,
 });

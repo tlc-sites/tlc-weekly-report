@@ -14,6 +14,8 @@ export type Item =
 export type Block = {
   id: string; offsetMin: number; label: string; title: string;
   style: "default" | "accent" | "cue" | "go";
+  /** 넓게: 줄에서 두 칸을 차지하고 안쪽을 두 단으로 나눈다(합친 블록처럼 내용이 많을 때). */
+  wide?: boolean;
   arrivals?: { offsetMin: number; text: string; place?: string }[];
   items: Item[];
 };

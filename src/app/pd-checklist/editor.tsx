@@ -235,6 +235,7 @@ function BlockEditor({b,start,rows,ri,bi,n,edit,onMove,onRow,onDel,items}:{b:Blo
    <L label="표시" className="w-28"><input className={inp+" w-full"} value={b.label} maxLength={20} onChange={e=>edit(x=>{x.label=e.target.value;})}/></L>
    <L label="제목" className="min-w-32 flex-1"><input className={inp+" w-full"} value={b.title} maxLength={40} onChange={e=>edit(x=>{x.title=e.target.value;})}/></L>
    <L label="모양"><select className={sel} value={b.style} onChange={e=>edit(x=>{x.style=e.target.value as Block["style"];})}><option value="default">기본</option><option value="accent">강조(파랑)</option><option value="cue">큐(테두리)</option><option value="go">시작(진한 색)</option></select></L>
+   <label className="inline-flex items-center gap-1.5 self-end pb-2 text-sm"><input type="checkbox" checked={!!b.wide} onChange={e=>edit(x=>{if(e.target.checked)x.wide=true;else delete x.wide;})}/>넓게(2칸)</label>
    <span className="inline-flex gap-1">
     {ri>0?<button type="button" className={btn+" px-2"} onClick={()=>onRow(-1)}>윗줄로</button>:null}
     {ri<rows-1?<button type="button" className={btn+" px-2"} onClick={()=>onRow(1)}>아랫줄로</button>:null}

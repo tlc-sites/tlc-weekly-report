@@ -102,6 +102,12 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .blk-h .tt { font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 8px; }
 .pdc .blk-h .ti { font-size: 13px; color: var(--muted); }
 .pdc .blk-b { padding: 2px 16px 16px; display: flex; flex-direction: column; gap: 1px; }
+/* 넓은 블록(wide): 두 칸을 차지하고 안쪽은 두 단으로 흐른다. 제목과 묶음은 단 사이에서 떨어지지 않게. */
+.pdc .blk.wide { grid-column: span 2; }
+.pdc .blk.wide .blk-b { display: block; column-count: 2; column-gap: 18px; }
+.pdc .blk.wide .blk-b > * { break-inside: avoid; }
+.pdc .blk.wide .blk-b > .shd { break-after: avoid; }
+@media screen and (max-width: 640px) { .pdc .blk.wide { grid-column: auto; } .pdc .blk.wide .blk-b { column-count: 1; } }
 .pdc .blk.accent { background: var(--accent-soft); border-color: transparent; }
 .pdc .blk.accent .blk-h .tm, .pdc .blk.cue .blk-h .tm { color: var(--accent); }
 .pdc .blk.accent .blk-h .tt, .pdc .blk.cue .blk-h .tt { background: var(--accent); color: var(--on-strong); }
@@ -268,6 +274,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .blk-h .tt { font-size: 7.4pt; padding: .3mm 1.8mm; }
   .pdc .blk-h .ti { font-size: 8.6pt; }
   .pdc .blk-b { padding: 0 2.6mm 2.2mm; gap: 0; }
+  .pdc .blk.wide .blk-b { column-gap: 3.4mm; }
   .pdc .arr { font-size: 8.8pt; padding: 1.2mm 1.8mm; margin-bottom: 1.2mm; border-radius: 1.8mm; gap: .3mm; }
   .pdc .arr .at { font-size: 8pt; }
   .pdc .ck { padding: .45mm .6mm; margin: 0 -.6mm; gap: 1.8mm; }

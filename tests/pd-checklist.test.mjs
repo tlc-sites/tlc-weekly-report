@@ -191,7 +191,10 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (18:00)');
  assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r11']);
  // DB52: 1부 담당에서 녹음팀(r19)을 뺐다
- for(const t of Object.values(by))assert.ok(!t.cue.staff.some(x=>x.key==='r19'),t.id);assert.equal(by.sun2.cue.staff[4].en,'Video');
+ for(const t of Object.values(by))assert.ok(!t.cue.staff.some(x=>x.key==='r19'),t.id);
+ // DB55: 부산 ATEM 블록은 바로 앞 T-30 블록에 합쳐 '넓게'(두 칸)로, 시스템 점검의 '부산' 칸은 뺀다. 1부엔 마이크·의전 음료·마이크 위치 항목
+ for(const t of Object.values(by)){const bl=t.page1.rows.flat();assert.ok(!bl.some(b=>b.label==='부산 ATEM'),t.id);const atem=bl.find(b=>JSON.stringify(b.items).includes('층별 송출'));if(atem){assert.ok(atem.wide&&atem.title.endsWith('부산 ATEM'),t.id);assert.ok(!JSON.stringify(atem.items).includes('"text":"부산"'),t.id);}}
+ {const ids=JSON.stringify(s1);for(const k of ['e_mic','e_drink','j_micpos'])assert.ok(ids.includes('"'+k+'"'),k);}assert.equal(by.sun2.cue.staff[4].en,'Video');
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));

@@ -130,7 +130,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   }
  });
 
- const block=(b:Block)=><div key={b.id} className={"blk"+(b.style==="default"?"":" "+b.style)}>
+ const block=(b:Block)=><div key={b.id} className={"blk"+(b.style==="default"?"":" "+b.style)+(b.wide?" wide":"")}>
   <div className="blk-h"><span className="tm num">{clockAt(t.start,b.offsetMin)}</span><span className="tt">{b.label}</span>{b.title?<span className="ti">{b.title}</span>:null}</div>
   <div className="blk-b">
    {b.arrivals?.length?<div className="arr">{b.arrivals.map((a,i)=><div key={i}><b className="num">{clockAt(t.start,a.offsetMin)}</b><span>{a.text}{a.place?<span className="at"> @{a.place}</span>:null}</span></div>)}</div>:null}
@@ -196,7 +196,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   <fieldset disabled={readOnly} className="contents">
   <section className="sheet" aria-label={t.page1.title}>
    {head(t.page1.title)}
-   {t.page1.rows.map((row,i)=><div key={i} className={"row row"+(i+1)} style={{"--cols":row.length} as CSSProperties}>{row.map(block)}</div>)}
+   {t.page1.rows.map((row,i)=><div key={i} className={"row row"+(i+1)} style={{"--cols":row.reduce((n,b)=>n+(b.wide?2:1),0)} as CSSProperties}>{row.map(block)}</div>)}
   </section>
 
   <section className="sheet" aria-label={t.page2.title}>
