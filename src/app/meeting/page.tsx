@@ -70,6 +70,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
 
       <MeetingSummary reports={data.overview.flatMap(o=>o.reports)} groupName={data.groupName}/>
       <Section title="1. 제출 현황" sub={Object.entries(counts).map(([k, n]) => `${STATUS[k as GroupStatus].label} ${n}`).join(" · ")}>
+        <p data-print-hide className="mb-2 text-sm"><Link href="/missing" className="font-semibold text-accent">여러 주 미제출 보기 (사람별·부서별) →</Link></p>
         <ul className="flex flex-col divide-y divide-border text-sm">
           {data.overview.map(({ group, status, reports, reason }) => (
             <li key={group.id} className="flex items-start justify-between gap-2 py-2">

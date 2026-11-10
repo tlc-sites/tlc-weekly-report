@@ -36,7 +36,7 @@ export function DesktopSidebarNav({clergy,manage,pd=false,sections,name,role}:{c
  const path=usePathname();
  const active=(it:Item)=>{const base=it.match??it.href.split("?")[0];return base==="/"?path==="/":path===base||path.startsWith(base+"/");};
  const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"내 보고서",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people},...(pd?[{href:"/pd-checklist",label:"예배 PD 체크리스트",icon:I.check}]:[]),{href:"/cue-sheet",label:"주일예배 큐시트",icon:I.calendar}];
- const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
+ const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/missing",label:"미제출 보고",icon:I.list},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
  const admin:Item[]=[...(manage||clergy?[{href:"/manage",label:"관리 홈",icon:I.grid}]:[]),...(clergy?[{href:"/team-management",label:"담당 팀 명단",icon:I.people}]:[]),...(manage?[{href:"/admin/submissions",label:"전체 제출현황",icon:I.check},{href:"/admin/users",label:"가입 승인·담당 지정",icon:I.user},{href:"/admin/groups",label:"그룹 관리",icon:I.tree},{href:"/admin/services",label:"예배 목록",icon:I.calendar}]:[])];
  const link=(it:Item)=><Link key={it.href} href={it.href} aria-current={active(it)?"page":undefined} className="app-sidebar-item">{it.icon}<span>{it.label}</span></Link>;
  // 자주 쓰지 않는 묶음은 접어 두고, 지금 보고 있는 화면이 들어 있으면 펼친다.
