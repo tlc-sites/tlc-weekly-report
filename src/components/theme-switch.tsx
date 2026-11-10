@@ -4,7 +4,9 @@ import {useSyncExternalStore} from "react";
 // 화면 밝기: 기기 설정 따르기(기본) / 라이트 / 다크. 이 기기(브라우저)에만 저장된다.
 // 첫 화면이 번쩍이지 않도록 layout의 THEME_SCRIPT가 그리기 전에 같은 값을 <html data-theme>에 넣는다.
 export const THEME_KEY = "tlc-theme";
-export const THEME_SCRIPT = `try{var t=localStorage.getItem("${THEME_KEY}");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+export const SIDE_KEY = "tlc-side";
+// 사이드바 접힘(desktop-sidebar-nav의 접기 단추)도 같은 스크립트에서 <html data-side="mini">로 넣는다.
+export const THEME_SCRIPT = `try{var t=localStorage.getItem("${THEME_KEY}");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;if(localStorage.getItem("${SIDE_KEY}")==="mini")document.documentElement.dataset.side="mini"}catch(e){}`;
 type Theme = "system" | "light" | "dark";
 const listeners = new Set<() => void>();
 const read = (): Theme => { try { const t = localStorage.getItem(THEME_KEY); return t === "dark" || t === "light" ? t : "system"; } catch { return "system"; } };

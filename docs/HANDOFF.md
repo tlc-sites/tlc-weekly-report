@@ -910,3 +910,10 @@ curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/cron/mon
 - 2026-11-10 DB 54 `20261214000000_free_text_reports.sql`(로컬, 운영 미적용): 사용자 요청 "글자수 제한 아예 풀어줘". 보고서 본문(여러 줄 칸) 글자수 제한 제거. 화면 TextArea 기본 maxLength(1000)·각 칸 maxLength, 서버 zod(report-forms longText·요청·말씀·기도제목, team-session 본문·결석 사유·후속 조치, 주중 기도회 참석자·기도제목, 예배 이슈 경위·원인·조치·대책, 예배위원 명단), DB check(report_prayers, report_issues content·action, report_messages, prayer_meeting_reports/drafts, worship_incidents, worship_staff) 상한 제거. 꼭 쓰는 칸은 '비어 있지 않음'만 유지. 자동저장 한도 256KB→1MB(앱·report_drafts check·autosave_report). 한 줄 칸(이름·학년·연락처·본문 구절·제목 등)과 코멘트·답글·공지 길이 제한은 그대로. 남은 한도: Next 서버 액션 요청 1MB, 영문 번역은 보고 전체 24000자 넘으면 'too-long'. 테스트 tests/free-text-reports.test.mjs(DB54 없으면 실패 확인). 앱만 먼저 배포하면 2000자 넘는 말씀·1000자 넘는 이슈가 DB에서 저장 실패하므로 DB54 먼저.
 - 2026-11-10 acde420을 origin/master에 일반 push(24838f7→acde420), Vercel success. DB54 운영 적용 확인(사용자 적용, 확인 쿼리 상한_제거·이슈_본문·자동저장_1MB 모두 true). 채팅 붙여넣기 때 긴 한 줄(함수 머리)이 잘려 42601 문법 오류가 한 번 났음 → SQL은 짧은 줄로 나눠 전달.
 - 2026-11-10 미제출 보고 화면 `/missing`(DB 변경 없음): 사용자 요청 "사람별 부서별 미싱 보고서, 담당교역자·사모님·담임목사님". 교역자만(isClergy), 담임 목사님·사모님(recipient_role)은 전체 부서, 담당 교역자는 report.assigned_clergy와 같은 기준(reviewScope: position null+reviewer 또는 교역자·담당교역자, 하위 그룹 포함). 마감(금 17시) 지난 최근 4/8/12주, 미제출 기준은 회의 자료·금요일 알림과 같음(하위 없는 활성 주간 그룹, 예배·기술팀 제외, 제출 없음·모임 없음 아님). 그 주 마감 뒤에 만든 부서·맡은 작성자는 그 주에 안 셈. 사람별은 writer 기준(직접 작성자 없으면 가장 가까운 상위 그룹 작성자, 활성 계정만, 없으면 '작성자 미지정'). 진입: 사이드바 목회 '미제출 보고', 회의 자료 1. 제출 현황 위 링크. src/lib/missing-reports.ts, tests/missing-reports.test.mjs.
+
+## 2026-11-10 PC 사이드바 접기
+
+- `desktop-sidebar-nav.tsx` 맨 위 `.app-sidebar-toggle`로 268px(900~1199px는 232px) ↔ 64px. 상태는 `<html data-side="mini">` + localStorage `tlc-side`(THEME_SCRIPT가 그리기 전에 넣음), 컴포넌트는 `useSyncExternalStore`로 읽는다.
+- 접히면 아이콘만(title 도움말), 목회·관리 묶음은 펼친 아이콘 줄, 「내 파트」 목록·밝기·로그아웃은 숨김. 아래 이름 칸(아바타)을 눌러도 펼친다. 휴대폰 화면은 그대로. DB 변경 없음.
+- 검증: test:db 166 통과, eslint(바꾼 파일)·tsc 통과, next build 성공. 운영 화면에 새 CSS만 넣어 접힘 모양(64px·글자 없음·가로 넘침 없음)을 확인했고, 로그인한 새 화면 전체는 배포 후 확인 필요.
+

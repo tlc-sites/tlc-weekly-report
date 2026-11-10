@@ -501,3 +501,32 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   body:has(.app-sidebar) .home-col-side { top: calc(var(--topbar-h) + 1rem); }
 }
 @media print { .app-topbar { display: none !important; } }
+
+/* 사이드바 접기: 아이콘만 남는 64px 줄. 이 기기에 기억(localStorage tlc-side, <html data-side="mini">) */
+.app-sidebar-toggle { display: none; }
+@media (min-width: 900px) {
+  .app-sidebar-brand { padding-right: 46px; }
+  .app-sidebar-toggle { position: absolute; top: 14px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--side-muted); cursor: pointer; }
+  .app-sidebar-toggle:hover { background: var(--side-hover); color: var(--side-fg); }
+  .app-sidebar-toggle svg { width: 18px; height: 18px; }
+  body:has(.app-sidebar), .app-sidebar, .app-listcol { transition: padding-left .18s ease, width .18s ease, left .18s ease; }
+  :root[data-side="mini"]:has(.app-sidebar) { --sidebar-w: 64px; }
+  :root[data-side="mini"] .app-sidebar-brand { min-height: 58px; padding: 0; border-bottom-color: transparent; }
+  :root[data-side="mini"] .app-sidebar-brand > * { display: none; }
+  :root[data-side="mini"] .app-sidebar-toggle { left: 17px; right: auto; }
+  :root[data-side="mini"] .app-sidebar-search { justify-content: center; width: 40px; margin: 8px auto 0; padding: 0; }
+  :root[data-side="mini"] .app-sidebar-search :is(span, kbd) { display: none; }
+  :root[data-side="mini"] .app-sidebar-write { width: 40px; min-height: 40px; margin: 8px auto 0; padding: 0; }
+  :root[data-side="mini"] .app-sidebar-write > span { display: none; }
+  :root[data-side="mini"] .app-sidebar-scroll { padding: 4px 8px 16px; }
+  :root[data-side="mini"] .app-sidebar-item { justify-content: center; min-height: 38px; padding: 0; }
+  :root[data-side="mini"] .app-sidebar-item > span { display: none; }
+  :root[data-side="mini"] .app-sidebar-item svg { width: 19px; height: 19px; }
+  :root[data-side="mini"] .app-sidebar-foot { padding: 10px 0 12px; }
+  :root[data-side="mini"] .app-sidebar-foot .theme-switch, :root[data-side="mini"] .app-sidebar-me > span:last-child, :root[data-side="mini"] .app-sidebar-links form, :root[data-side="mini"] .app-sidebar-mini > span { display: none; }
+  :root[data-side="mini"] .app-sidebar-me { justify-content: center; padding: 2px 0 6px; }
+  :root[data-side="mini"] button.app-sidebar-avatar { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+  :root[data-side="mini"] .app-sidebar-links { flex-direction: column; }
+  :root[data-side="mini"] .app-sidebar-mini { justify-content: center; width: 40px; padding: 0; }
+}
+
