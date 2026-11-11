@@ -10,7 +10,8 @@ import { notifyReportSubmission } from "@/lib/report-submission-push";
 import { z } from "zod";
 import { requireActive, isClergy } from "@/lib/auth";
 import { campusPayload, educationPayload, missingOnSubmit, otherPayload, worshipPayload } from "@/lib/report-forms";
-import { weekOf } from "@/lib/week";
+import { serviceOccursOn } from "@/lib/service-schedule";
+import { todayKST, weekOf } from "@/lib/week";
 
 const SCHEMAS = { education: educationPayload, worship: worshipPayload, other: otherPayload, campus: campusPayload } as const;
 
@@ -75,6 +76,36 @@ export async function deleteDraft(formData: FormData) {
   const { data: deleted, error } = await supabase.from("reports").delete().eq("id", reportId.data).eq("status", "draft").select("id");
   if (error || !deleted?.length || !data) redirect(`/reports/${reportId.data}?error=delete`);
   redirect(`/groups/${data.group_id}?week=${weekOf(data.meeting_date)}`);
+}
+
+// 모임 날짜 바꾸기: 다음 날 작성해서 오늘 날짜로 만들어진 보고를 실제 모임 날로 옮긴다.
+// 수정 권한은 DB 정책(작성자는 확인 전까지, 검토자는 언제나)을 따르고, 미래 날짜는 DB 트리거도 막는다.
+export async function changeMeetingDate(formData: FormData) {
+  const { supabase } = await requireActive();
+  const parsed = z.object({ reportId: z.uuid(), meetingDate: z.iso.date() }).safeParse({ reportId: formData.get("reportId"), meetingDate: formData.get("meetingDate") });
+  if (!parsed.success) redirect("/");
+  const { reportId, meetingDate } = parsed.data;
+  const back = `/reports/${reportId}`;
+  const { data: report } = await supabase
+    .from("reports")
+    .select("meeting_date, meeting_label, service_type_id, group_meeting_type_id, group:groups!reports_group_id_fkey(type)")
+    .eq("id", reportId)
+    .maybeSingle<{ meeting_date: string; meeting_label: string | null; service_type_id: string | null; group_meeting_type_id: string | null; group: { type: string } | null }>();
+  if (!report) redirect("/");
+  // 부산 방문 보고의 날짜는 보고 주차이고 실제 출발일은 본문에서 따로 고친다
+  if (report.group?.type === "campus" && report.meeting_label === "부산 방문") redirect(`${back}?error=date`);
+  if (meetingDate === report.meeting_date) redirect(back);
+  if (meetingDate > todayKST()) redirect(`${back}?error=date`);
+  // 정해진 요일의 예배·모임은 그 요일로만 옮길 수 있다
+  const schedule = report.service_type_id
+    ? (await supabase.from("service_types").select("weekday, month_week").eq("id", report.service_type_id).maybeSingle()).data
+    : report.group_meeting_type_id
+      ? (await supabase.from("group_meeting_types").select("weekday").eq("id", report.group_meeting_type_id).maybeSingle()).data
+      : { weekday: null };
+  if (!schedule || !serviceOccursOn(meetingDate, schedule)) redirect(`${back}?error=date-weekday`);
+  const { data, error } = await supabase.from("reports").update({ meeting_date: meetingDate }).eq("id", reportId).select("id");
+  if (error || !data?.length) redirect(`${back}?error=forbidden`);
+  redirect(`${back}?dated=1`);
 }
 
 // 검토자의 확인 처리 / 확인 취소 (확인자와 시각은 DB 트리거가 기록)
