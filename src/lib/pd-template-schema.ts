@@ -2,6 +2,8 @@
 // 테스트에서 바로 불러 쓰도록 상대 경로 모듈은 타입만 가져온다.
 import {z} from "zod";
 import type {Item,PdTemplate} from "./pd-checklist";
+// pd-checklist의 peopleCheckId와 같은 규칙(상대 경로 모듈은 타입만 가져오므로 여기 따로 둔다).
+const peopleCheckId=(person:string,step:string)=>`pp_${person}_${step}`;
 
 const ID=/^[A-Za-z0-9_]{1,40}$/;
 const id=z.string().regex(ID);
@@ -18,6 +20,9 @@ const item=z.discriminatedUnion("type",[
  z.object({type:z.literal("locationMatrix"),
   columns:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,8}$/),label:text(20)})).min(1).max(6),
   rows:z.array(z.object({id:z.string().regex(/^[A-Za-z0-9_]{1,30}$/),label:text(40)})).min(1).max(12)}),
+ z.object({type:z.literal("people"),
+  steps:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,8}$/),label:text(20)})).min(1).max(4),
+  people:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,20}$/),label:text(20),field:id.optional(),sub:opt(30).optional()})).min(1).max(12)}),
 ]);
 const items=z.array(item).max(30);
 
@@ -64,7 +69,7 @@ export const pdTemplateSchema=z.object({
 
 /** 체크 칸 ID(회차의 checks에 저장되는 키) 모두. 항목·그룹·위치표·FLOW·리포트 분류가 한 이름 공간을 쓴다. */
 export function allCheckIds(t:PdTemplate){
- const of=(list:Item[])=>list.flatMap(i=>i.type==="check"?[i.id]:i.type==="checkGroup"?i.items.map(x=>x.id):i.type==="locationMatrix"?i.rows.flatMap(r=>i.columns.map(c=>r.id+c.key)):[]);
+ const of=(list:Item[])=>list.flatMap(i=>i.type==="check"?[i.id]:i.type==="checkGroup"?i.items.map(x=>x.id):i.type==="locationMatrix"?i.rows.flatMap(r=>i.columns.map(c=>r.id+c.key)):i.type==="people"?i.steps.flatMap(s=>i.people.map(p=>peopleCheckId(p.key,s.key))):[]);
  return [...t.page1.rows.flat().flatMap(b=>of(b.items)),...t.page2.flow.map(s=>s.id),...of(t.page2.during.items),...of(t.page2.after.items),...t.page2.report.categories.map(c=>c.id)];
 }
 
@@ -102,6 +107,8 @@ export function parseTemplate(raw:unknown):ParseResult{
  const bad=(c:string|null|undefined)=>!!c&&!conds.has(c);
  const all=[...t.page1.rows.flat().flatMap(b=>b.items),...t.page2.during.items,...t.page2.after.items];
  if(all.some(i=>i.type==="check"&&bad(i.condition))||t.page2.flow.some(s=>bad(s.condition)||Object.keys(s.subWhen??{}).some(bad))||t.cue?.rows.some(r=>bad(r.condition)))errors.push("없는 조건을 쓰는 항목이 있습니다");
+ const rosterIds=new Set(t.page2.roster.flatMap(g=>g.fields.map(f=>f.id)));
+ if(all.some(i=>i.type==="people"&&i.people.some(p=>p.field&&!rosterIds.has(p.field))))errors.push("섬기는 사람 표에 없는 담당자 칸을 쓰는 사람이 있습니다");
  if(t.page2.report.fields.some(f=>f.type==="choice"&&(f.options?.length??0)<2))errors.push("PD REPORT의 선택 항목에는 선택지가 두 개 이상 있어야 합니다");
  return errors.length?{ok:false,errors}:{ok:true,data:t};
 }

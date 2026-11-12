@@ -163,6 +163,18 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc table.floor td:first-child { font-weight: 500; }
 .pdc table.floor .ck { justify-content: center; padding: 0; margin: 0; }
 .pdc table.floor .ck:hover { background: transparent; }
+/* 섬기는 사람 표: 사람이 열, 단계(확인·도착·STANDBY)가 행. 넓은 블록 안에서도 두 단으로 나누지 않는다. 휴대폰에선 가로로 밀어 본다. */
+.pdc .blk.wide .blk-b:has(> .people-wrap) { column-count: 1; }
+.pdc .people-wrap { overflow-x: auto; }
+.pdc table.people { table-layout: fixed; min-width: calc(76px + var(--n) * 108px); }
+.pdc table.people th { text-align: center; vertical-align: bottom; letter-spacing: 0; }
+.pdc table.people th:first-child { width: 76px; }
+.pdc table.people td { text-align: center; }
+.pdc table.people td:first-child { white-space: nowrap; }
+.pdc table.people .pp-role { white-space: nowrap; }
+.pdc table.people .pp-sub { font-weight: 500; color: var(--faint); margin-top: 3px; }
+.pdc table.people th input { display: block; width: 100%; min-width: 0; margin-top: 3px; border: 1px solid var(--line2); border-radius: 6px; background: var(--paper); padding: 3px 5px; font-size: 13px; font-weight: 600; color: var(--ink); text-align: center; }
+.pdc table.people th input:focus { border-color: var(--accent); outline: none; }
 
 /* ---------- 2페이지 ---------- */
 .pdc .banner { display: flex; align-items: center; justify-content: center; gap: 14px; background: var(--navy); color: var(--on-strong); border-radius: 14px; font-weight: 600; font-size: 20px; padding: 16px 20px; text-align: center; text-wrap: balance; }
@@ -288,6 +300,13 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc table.floor { font-size: 9pt; border-radius: 1.6mm; }
   .pdc table.floor th, .pdc table.floor td { padding: .6mm 1.6mm; }
   .pdc table.floor th { font-size: 7.6pt; }
+  .pdc .people-wrap { overflow: visible; }
+  .pdc table.people { min-width: 0; }
+  .pdc table.people th { padding-left: 1mm; padding-right: 1mm; }
+  .pdc table.people th:first-child { width: 15mm; }
+  .pdc table.people th input { display: none; }
+  .pdc table.people th .pv { display: block; min-height: 1.25em; margin-top: .4mm; border-bottom: 1px solid var(--line2); font-size: 8.6pt; font-weight: 600; color: var(--ink); line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
+  .pdc table.people .pp-sub { margin-top: .4mm; }
   .pdc .banner { font-size: 13pt; padding: 2.2mm; border-radius: 2.6mm; }
   .pdc .banner small { font-size: 7pt; }
   .pdc .flow-wrap { overflow: visible; margin-top: 2.4mm; padding: 2mm; border-radius: 2.6mm; }

@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,peopleCheckId,peopleFields,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
 import {NameList} from "@/components/name-list";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
@@ -88,6 +88,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  const toggle=(id:string,on:boolean)=>{setChecks(c=>({...c,[id]:on}));void save({checks:{[id]:on}});};
  const setCond=(id:string,on:boolean)=>{setConds(c=>({...c,[id]:on}));void save({conditions:{[id]:on}});};
  const setRosterField=(id:string,v:string)=>{setRoster(r=>({...r,[id]:v}));typeText("roster:"+id,{roster:{[id]:v}});};
+ const rosterBlur=(id:string)=>flush("roster:"+id);
  const setReportText=(id:string,v:string)=>{setReport(r=>({...r,[id]:v}));typeText("report:"+id,{report:{[id]:v}});};
  const setReportChoice=(id:string,v:string)=>{setReport(r=>({...r,[id]:v}));void save({report:{[id]:v}});};
  const setPdName=(v:string)=>{setPd(v);typeText("pd",{pd:v});};
@@ -127,6 +128,13 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
    case "checkGroup":return <div key={i} className={"grid"+(it.layout==="auto"?" flexy":"")} style={it.layout==="auto"?undefined:{gridTemplateColumns:`repeat(${it.columns??2},minmax(0,1fr))`}}>{it.items.map(g=>ck(g.id,g.text))}</div>;
    case "locationMatrix":return <table key={i} className="floor"><thead><tr><th scope="col">위치</th>{it.columns.map(c=><th key={c.key} scope="col">{c.label}</th>)}</tr></thead>
     <tbody>{it.rows.map(r=><tr key={r.id}><td>{r.label}</td>{it.columns.map(c=><td key={c.key}>{ck(r.id+c.key,null,{label:`${r.label} ${c.label}`})}</td>)}</tr>)}</tbody></table>;
+   // 섬기는 사람 표: 이름 칸은 담당자 칸(roster)과 같은 값. 화면에선 입력, 인쇄에선 이름.
+   case "people":return <div key={i} className="people-wrap"><table className="floor people" style={{"--n":it.people.length} as CSSProperties}><thead><tr><th scope="col"><span className="sr-only">단계</span></th>{it.people.map(p=><th key={p.key} scope="col">
+     <div className="pp-role">{p.label}</div>
+     {p.field?<NameInput id={p.field} label={p.label} value={roster[p.field]??""} onChange={setRosterField} onBlur={rosterBlur}/>
+      :p.sub?<div className="pp-sub">{p.sub}</div>:null}
+    </th>)}</tr></thead>
+    <tbody>{it.steps.map(s=><tr key={s.key}><td>{s.label}</td>{it.people.map(p=><td key={p.key}>{ck(peopleCheckId(p.key,s.key),null,{label:`${p.label} ${s.label}`})}</td>)}</tr>)}</tbody></table></div>;
   }
  });
 
@@ -150,6 +158,9 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
  // 송리스트(칸 ID가 모두 song…인 구분)는 담당자 칸 대신 2쪽 아래 가운데 박스로 보인다.
  const songs=t.page2.roster.find(g=>g.fields.length>0&&g.fields.every(f=>f.id.startsWith("song")));
  // 성찬주간이면 헌금 다음에 성찬 곡 칸(큐시트와 같은 값).
+ // 섬기는 사람 표에서 이름을 받는 칸은 2쪽 담당자 칸에서 뺀다(같은 값을 두 곳에 두지 않게).
+ const inPeople=peopleFields(t);
+ const rosterGroups=t.page2.roster.filter(g=>g!==songs).map(g=>({...g,fields:g.fields.filter(f=>!inPeople.has(f.id))})).filter(g=>g.fields.length);
  const songFields=songs?[...songs.fields,...(conds.communion&&!songs.fields.some(f=>f.id===COMM_SONG.id)?[{id:COMM_SONG.id,label:COMM_SONG.ko}]:[])]:[];
  const reportBody=<>
   <div className="shd">문제 분류</div>
@@ -212,7 +223,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {t.page2.flow.map(s=><div key={s.id} className={"fc"+(isOn(s.condition,conds)?"":" hide")}>{ck(s.id,null,{label:s.label})}</div>)}
    </div></div>
 
-   <div className="roster">{t.page2.roster.filter(g=>g!==songs).map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>
+   {rosterGroups.length?<div className="roster">{rosterGroups.map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>:null}
 
    <div className="cols3">
     <div className="stack">
@@ -229,6 +240,11 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   </section>
   </fieldset>
  </div>;
+}
+
+// 섬기는 사람 표의 이름 칸: 화면에선 입력, 인쇄에선 이름(NameList).
+function NameInput({id,label,value,onChange,onBlur}:{id:string;label:string;value:string;onChange:(id:string,v:string)=>void;onBlur:(id:string)=>void}){
+ return <><input type="text" maxLength={1000} autoComplete="off" aria-label={label+" 이름"} title={value||undefined} value={value} onChange={e=>onChange(id,e.target.value)} onBlur={()=>onBlur(id)}/><div className="pv"><NameList text={value}/></div></>;
 }
 
 function RosterGroupView({g,roster,onChange,onBlur}:{g:PdTemplate["page2"]["roster"][number];roster:Record<string,string>;onChange:(id:string,v:string)=>void;onBlur:(id:string)=>void}){

@@ -4,7 +4,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
-import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,splitNames,serviceNameEn,keepPhrase} from '../src/lib/pd-checklist.ts';
+import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,splitNames,serviceNameEn,keepPhrase,peopleFields} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
 
 async function setup(){
@@ -195,6 +195,14 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  // DB55: 부산 ATEM 블록은 바로 앞 T-30 블록에 합쳐 '넓게'(두 칸)로, 시스템 점검의 '부산' 칸은 뺀다. 1부엔 마이크·의전 음료·마이크 위치 항목
  for(const t of Object.values(by)){const bl=t.page1.rows.flat();assert.ok(!bl.some(b=>b.label==='부산 ATEM'),t.id);const atem=bl.find(b=>JSON.stringify(b.items).includes('층별 송출'));if(atem){assert.ok(atem.wide&&atem.title.endsWith('부산 ATEM'),t.id);assert.ok(!JSON.stringify(atem.items).includes('"text":"부산"'),t.id);}}
  {const ids=JSON.stringify(s1);for(const k of ['e_mic','e_drink','j_micpos'])assert.ok(ids.includes('"'+k+'"'),k);}assert.equal(by.sun2.cue.staff[4].en,'Video');
+ // DB57: 1부 1쪽 맨 위 '섬기는 사람' 표. 이름은 담당자 칸(r1…r8)과 같은 값이라 2쪽 담당자 칸에서는 빠지고(기술팀은 남는다), 흩어진 사람 체크는 표로 옮겼다
+ {const pb=s1.page1.rows[0][0];const pp=pb.items[0];assert.deepEqual([pb.label,pb.wide,s1.page1.rows[0].length,pp.type],['섬기는 사람',true,1,'people']);
+  assert.deepEqual(pp.people.map(p=>p.field??p.key),['r1','r2','r3','r4','r7','r8','wt','tech']);assert.deepEqual(pp.steps.map(x=>x.label),['확인','도착','STANDBY']);
+  assert.deepEqual([...peopleFields(s1)],['r1','r2','r3','r4','r7','r8']);
+  const ids=applicableCheckIds(s1,{});assert.ok(ids.includes('pp_r1_ok')&&ids.includes('pp_tech_sb'));for(const k of ['a2','a3','c10','c11','e1','e2','e3','e6','c9','e5'])assert.ok(!ids.includes(k),k);
+  assert.equal(JSON.stringify(s1).match(/"id": ?"b3"[^}]*/)[0].includes('성찬 순서·자막·준비'),true);
+  for(const k of ['sun2','sun3','life'])assert.ok(!JSON.stringify(by[k]).includes('"people"'),k);
+  const bad=structuredClone(s1);bad.page1.rows[0][0].items[0].people[0].field='nope';assert.ok(!parseTemplate(bad).ok);}
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));

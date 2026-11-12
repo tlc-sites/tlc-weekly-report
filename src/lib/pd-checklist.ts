@@ -9,7 +9,21 @@ export type Item =
   | { type: "heading"; text: string }
   | { type: "checkGroup"; layout: "columns" | "auto"; columns?: number | null; items: { id: string; text: string }[] }
   | { type: "note"; parts: { text: string; bold: boolean }[] }
-  | { type: "locationMatrix"; columns: { key: string; label: string }[]; rows: { id: string; label: string }[] };
+  | { type: "locationMatrix"; columns: { key: string; label: string }[]; rows: { id: string; label: string }[] }
+  | PeopleTable;
+
+/** 섬기는 사람 표: 사람(열)마다 단계(행: 확인·도착·STANDBY…) 체크. field가 있으면 그 담당자 칸(회차 roster) 이름을 표에서 바로 적고,
+ *  그 칸은 2쪽 담당자 칸에서 빠진다. field가 없으면 sub(예: '악기·싱어')만 보인다. 체크 ID는 peopleCheckId. */
+export type PeopleTable = {
+  type: "people";
+  steps: { key: string; label: string }[];
+  people: { key: string; label: string; field?: string; sub?: string }[];
+};
+export const peopleCheckId = (person: string, step: string) => `pp_${person}_${step}`;
+
+/** 섬기는 사람 표가 이름을 받는 담당자 칸 ID들(2쪽 담당자 칸에서 뺀다) */
+export const peopleFields = (tpl: PdTemplate) =>
+  new Set(tpl.page1.rows.flat().flatMap(b => b.items).flatMap(i => i.type === "people" ? i.people.flatMap(p => p.field ? [p.field] : []) : []));
 
 export type Block = {
   id: string; offsetMin: number; label: string; title: string;
@@ -70,6 +84,7 @@ export function itemCheckIds(item: Item): string[] {
   if (item.type === "check") return [item.id];
   if (item.type === "checkGroup") return item.items.map(i => i.id);
   if (item.type === "locationMatrix") return item.rows.flatMap(r => item.columns.map(c => r.id + c.key));
+  if (item.type === "people") return item.steps.flatMap(s => item.people.map(p => peopleCheckId(p.key, s.key)));
   return [];
 }
 
