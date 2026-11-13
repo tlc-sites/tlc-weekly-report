@@ -112,7 +112,8 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
           </Card>
         ) : null}
 
-        <section id="my-parts" aria-labelledby="home-parts" className="mb-6 scroll-mt-24">
+        {/* 담임 목사님·사모님은 맡은 파트가 없으면 이 칸을 감춘다(보고를 쓰지 않고 읽는 분) */}
+        {isSenior(profile) && !myParts.length ? null : <section id="my-parts" aria-labelledby="home-parts" className="mb-6 scroll-mt-24">
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="home-parts" className="text-xl font-semibold">내 파트</h2>
             <Link href={`/reports?week=${week}&author=${profile.id}`} className="inline-flex min-h-11 items-center font-semibold text-accent">내 보고 모두 보기 ›</Link>
@@ -120,7 +121,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
           {failed ? <Card><p role="alert" className="text-danger">이번 주 상태를 불러오지 못했습니다. 새로고침해 주세요.</p></Card>
             : myParts.length ? <HomePartCards parts={myParts} reports={reports} noMeeting={noMeeting} userId={profile.id} week={week} />
             : <Card><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-[15px] text-muted">{canManage(profile) ? "「보고 쓰기」에서 파트를 골라 보고를 쓸 수 있습니다. 출결 명단이나 팀 이슈는 담당 파트 권한이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card>}
-        </section>
+        </section>}
 
         {comments.length ? (
           <section aria-labelledby="home-comments" className="mb-6">
