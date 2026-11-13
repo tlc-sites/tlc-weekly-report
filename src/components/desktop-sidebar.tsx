@@ -35,7 +35,7 @@ export async function DesktopSidebar(){
   <div className="app-sidebar-brand">
    <Link href="/" className="min-w-0 flex-1"><b>TLC 교회 보고서</b><small>이번 주 {formatWeek(week)}</small></Link>
   </div>
-  <DesktopSidebarNav agenda={agenda} clergy={isClergy(profile)} manage={canManage(profile)} pd={pd} sections={sections} name={profile.real_name??"이름 없음"} role={role}/>
+  <DesktopSidebarNav agenda={agenda} clergy={isClergy(profile)} manage={canManage(profile)} pd={pd} senior={isSenior(profile)} sections={sections} name={profile.real_name??"이름 없음"} role={role}/>
  </aside><DesktopReportColumn/>
  {/* 알림 종은 셀케어처럼 화면 오른쪽 위. 위에 붙은 얇은 줄이라 아래로 내려도 그 자리에 있다. */}
  <div data-print-hide className="app-topbar"><NotificationBell panel userId={profile.id} staff={canManage(profile)||isClergy(profile)}/></div></>;

@@ -20,7 +20,7 @@ export default function HomePage(props: PageProps<"/">) {
   );
 }
 
-// 홈: 이번 주에 내가 할 일만. 예배 도구·내 소속·설정·관리 메뉴는 「더보기」(/more)와 PC 왼쪽 메뉴에 있다.
+// 홈: 이번 주에 내가 할 일만. 예배 도구·내 소속·설정·관리 메뉴는 하단 「더보기」 탭(/more)과 PC 왼쪽 메뉴에 있다.
 async function HomeContent({ searchParams }: PageProps<"/">) {
   const { supabase, profile } = await requireActive();
   const params = await searchParams;
@@ -136,10 +136,6 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         ) : null}
       </div><div className="home-col-side">
         {news}
-        <Link href="/more" className={`home-pc-hide ${listRowClass} rounded-2xl border border-border bg-surface px-4`}>
-          <span><span className="block font-semibold">더보기</span><span className="text-[15px] text-muted">예배 도구 · {staff ? "목회 · 관리 · " : ""}내 소속 · 알림 설정 · 사용 안내</span></span>
-          <span aria-hidden className="text-accent">›</span>
-        </Link>
       </div></div>
     </>
   );
