@@ -7,7 +7,7 @@ import {QuickSwitcher} from "./quick-switcher";
 
 export type WeekState = "done" | "draft" | "todo" | "none";
 export type SidebarSection = { key: string; label: string; groups: { id: string; label: string; state: WeekState; direct: boolean }[] };
-const STATE_LABEL: Record<WeekState, string> = { done: "이번 주 보고 있음", draft: "임시저장만 있음", todo: "이번 주 보고 없음", none: "이번 주 모임 없음" };
+const STATE_LABEL: Record<WeekState, string> = { done: "이번 주 제출함", draft: "작성 중", todo: "작성 전", none: "이번 주 모임 없음" };
 
 const icon = (d: ReactNode) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 const I = {
@@ -49,17 +49,17 @@ export function DesktopSidebarNav({agenda=false,clergy,manage,pd=false,sections,
  const toggle=()=>setSide(!mini);
  const toggleLabel=mini?"메뉴 펼치기":"메뉴 접기";
  const active=(it:Item)=>{const base=it.match??it.href.split("?")[0];return base==="/"?path==="/":path===base||path.startsWith(base+"/");};
- const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"내 보고서",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},...(agenda?[{href:"/agenda",label:"부서 안건",icon:I.agenda}]:[]),{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people},...(pd?[{href:"/pd-checklist",label:"예배 PD 체크리스트",icon:I.check}]:[]),{href:"/cue-sheet",label:"주일예배 큐시트",icon:I.calendar}];
- const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"회의 자료",icon:I.meeting},{href:"/missing",label:"미제출 보고",icon:I.list},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
- const admin:Item[]=[...(manage||clergy?[{href:"/manage",label:"관리 홈",icon:I.grid}]:[]),...(clergy?[{href:"/team-management",label:"담당 팀 명단",icon:I.people}]:[]),...(manage?[{href:"/admin/submissions",label:"전체 제출현황",icon:I.check},{href:"/admin/users",label:"가입 승인·담당 지정",icon:I.user},{href:"/admin/groups",label:"그룹 관리",icon:I.tree},{href:"/admin/services",label:"예배 목록",icon:I.calendar}]:[])];
+ const main:Item[]=[{href:"/",label:"홈",icon:I.home},{href:"/reports",label:"보고 목록",icon:I.list},{href:"/notices",label:"공지·소통",icon:I.notice},...(agenda?[{href:"/agenda",label:"부서 안건",icon:I.agenda}]:[]),{href:"/incidents",label:"확인·조치 목록",icon:I.flag},{href:"/worship-staff",label:"예배위원",icon:I.people},...(pd?[{href:"/pd-checklist",label:"예배 PD 체크리스트",icon:I.check}]:[]),{href:"/cue-sheet",label:"주일예배 큐시트",icon:I.calendar}];
+ const pastoral:Item[]=clergy?[{href:"/weekly-summary",label:"주간 요약",icon:I.summary},{href:"/meeting",label:"교역자 회의 자료",icon:I.meeting},{href:"/missing",label:"미제출 보고",icon:I.list},{href:"/notices?tab=restricted",label:"비공개 메시지",icon:I.lock,match:"/__restricted"}]:[];
+ const admin:Item[]=[...(manage||clergy?[{href:"/manage",label:"관리",icon:I.grid}]:[]),...(clergy?[{href:"/team-management",label:"팀 명단",icon:I.people}]:[]),...(manage?[{href:"/admin/submissions",label:"전체 제출현황",icon:I.check},{href:"/admin/users",label:"가입 승인·담당 지정",icon:I.user},{href:"/admin/groups",label:"그룹 관리",icon:I.tree},{href:"/admin/services",label:"예배 목록",icon:I.calendar}]:[])];
  const link=(it:Item)=><Link key={it.href} href={it.href} title={mini?it.label:undefined} aria-current={active(it)?"page":undefined} className="app-sidebar-item">{it.icon}<span>{it.label}</span></Link>;
  // 자주 쓰지 않는 묶음은 접어 두고, 지금 보고 있는 화면이 들어 있으면 펼친다.
  const block=(title:string,items:Item[],open=false)=>!items.length?null:mini?<div className="app-sidebar-block">{items.map(link)}</div>:<div className="app-sidebar-block"><details className="app-sidebar-group" open={open||items.some(active)||undefined}><summary><span className="chev" aria-hidden="true">▾</span><span className="flex-1">{title}</span><span className="app-sidebar-count">{items.length}</span></summary>{items.map(link)}</details></div>;
- const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 작성",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...(clergy?[{href:"/prayer-meetings",label:"주중 기도회 보고",hint:"목회"}]:[]),...(clergy||manage?[{href:"/sunday-notice",label:"이번 주 공지",hint:"목회"}]:[]),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"설정",hint:"메뉴"}];
+ const quick=[...main.map(i=>({href:i.href,label:i.label,hint:"메뉴"})),{href:"/write",label:"보고 쓰기",hint:"메뉴"},...sections.flatMap(sec=>sec.groups.map(g=>({href:`/groups/${g.id}`,label:g.label,hint:sec.label}))),...pastoral.map(i=>({href:i.href,label:i.label,hint:"목회"})),...(clergy?[{href:"/prayer-meetings",label:"주중 기도회 보고",hint:"목회"}]:[]),...(clergy||manage?[{href:"/sunday-notice",label:"이번 주 공지",hint:"목회"}]:[]),...admin.map(i=>({href:i.href,label:i.label,hint:"관리"})),{href:"/settings",label:"알림 설정",hint:"메뉴"}];
  return <>
   <button type="button" className="app-sidebar-toggle" onClick={toggle} aria-expanded={!mini} aria-label={toggleLabel} title={toggleLabel}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={mini?"M9 6l6 6-6 6":"M15 6l-6 6 6 6"}/></svg></button>
   <QuickSwitcher items={quick}/>
-  <Link href="/write" title={mini?"보고 작성":undefined} className="app-sidebar-write">{I.pen}<span>보고 작성</span></Link>
+  <Link href="/write" title={mini?"보고 쓰기":undefined} className="app-sidebar-write">{I.pen}<span>보고 쓰기</span></Link>
   {clergy?<Link href="/prayer-meetings" title={mini?"주중 기도회 보고":undefined} aria-current={path.startsWith("/prayer-meetings")?"page":undefined} className="app-sidebar-write is-prayer">{I.pray}<span>주중 기도회 보고</span></Link>:null}
   {clergy||manage?<Link href="/sunday-notice" title={mini?"이번 주 공지":undefined} aria-current={path.startsWith("/sunday-notice")?"page":undefined} className="app-sidebar-write is-prayer">{I.notice}<span>이번 주 공지</span></Link>:null}
   <nav className="app-sidebar-scroll" aria-label="주요 메뉴">
@@ -70,7 +70,7 @@ export function DesktopSidebarNav({agenda=false,clergy,manage,pd=false,sections,
      <summary><span className="chev" aria-hidden="true">▾</span><span className="flex-1">{s.label}</span><span className="app-sidebar-count" title="이번 주 보고했거나 모임 없음으로 표시한 파트">{done}/{s.groups.length}</span></summary>
      {s.groups.map(g=>{const on=path===`/groups/${g.id}`||path.startsWith(`/groups/${g.id}/`);return <Link key={g.id} href={`/groups/${g.id}`} aria-current={on?"page":undefined} className={"app-sidebar-item app-sidebar-part"+(g.direct?" is-mine":"")} title={`${g.label} · ${STATE_LABEL[g.state]}`}><span className={"app-sidebar-dot is-"+g.state} aria-hidden="true"/><span>{g.label}</span><span className="sr-only">, {STATE_LABEL[g.state]}</span></Link>;})}
     </details>;})}
-    <p className="app-sidebar-legend"><span><i className="app-sidebar-dot is-done"/>보고 있음</span><span><i className="app-sidebar-dot is-draft"/>임시저장</span><span><i className="app-sidebar-dot is-todo"/>아직 없음</span></p>
+    <p className="app-sidebar-legend"><span><i className="app-sidebar-dot is-done"/>제출함</span><span><i className="app-sidebar-dot is-draft"/>작성 중</span><span><i className="app-sidebar-dot is-todo"/>작성 전</span></p>
    </div>:null}
    {block("목회",pastoral,true)}
    {block("관리",admin)}
@@ -79,7 +79,7 @@ export function DesktopSidebarNav({agenda=false,clergy,manage,pd=false,sections,
    <ThemeSwitch className="mb-2 w-full [&>button]:flex-1"/>
    <div className="app-sidebar-me">{mini?<button type="button" className="app-sidebar-avatar" onClick={toggle} title={name+" · 메뉴 펼치기"} aria-label="메뉴 펼치기">{name.slice(0,1)}</button>:<span className="app-sidebar-avatar" aria-hidden="true">{name.slice(0,1)}</span>}<span className="min-w-0 flex-1"><b>{name}</b><small>{role}</small></span></div>
    <div className="app-sidebar-links">
-    <Link href="/settings" title={mini?"설정":undefined} aria-current={path==="/settings"?"page":undefined} className="app-sidebar-mini">{I.gear}<span>설정</span></Link>
+    <Link href="/settings" title={mini?"알림 설정":undefined} aria-current={path==="/settings"?"page":undefined} className="app-sidebar-mini">{I.gear}<span>알림 설정</span></Link>
     <a href="/guide.html" title={mini?"사용 안내":undefined} className="app-sidebar-mini">{I.book}<span>사용 안내</span></a>
     <form action="/auth/signout" method="post" className="ml-auto"><button type="submit" className="app-sidebar-mini">로그아웃</button></form>
    </div>

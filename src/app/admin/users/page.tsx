@@ -63,7 +63,7 @@ async function AdminUsersContent({ searchParams }: Pick<PageProps<"/admin/users"
       <Link href="/" className="mb-3 text-sm text-muted">
         ← 홈
       </Link>
-      <PageTitle info={HELP.users}>사용자 관리</PageTitle>
+      <PageTitle info={HELP.users}>가입 승인·담당 지정</PageTitle>
       <AdminNav current="/admin/users" />
       {message ? (
         <div className="mb-4">

@@ -22,6 +22,6 @@ async function Content({searchParams}:Pick<PageProps<"/incidents/new">,"searchPa
     if(!r || !groups.some(g=>g.id===r.group_id && g.type==="worship")) notFound();
     redirect(`/reports/${r.id}#team-issues`);
   }
-  return <><BackLink href="/incidents">확인·조치 목록</BackLink><PageTitle sub="사역 내용을 한 번만 작성하고 ‘확인·조치 필요’를 표시해 주세요.">사역 보고 작성</PageTitle><ul className="divide-y divide-border">{available.map(g=><li key={g.id}><Link href={`/groups/${g.id}#new-report`} className="block py-4 font-semibold text-accent">{g.label} ›</Link></li>)}</ul>{!available.length?<p>작성할 팀이 없습니다. 담당 파트 배정을 확인해 주세요.</p>:null}</>;
+  return <><BackLink href="/incidents">확인·조치 목록</BackLink><PageTitle sub="사역 내용을 한 번만 작성하고 ‘확인·조치 필요’를 표시해 주세요.">사역 보고 쓰기</PageTitle><ul className="divide-y divide-border">{available.map(g=><li key={g.id}><Link href={`/groups/${g.id}#new-report`} className="block py-4 font-semibold text-accent">{g.label} ›</Link></li>)}</ul>{!available.length?<p>작성할 팀이 없습니다. 담당 파트 배정을 확인해 주세요.</p>:null}</>;
 
 }

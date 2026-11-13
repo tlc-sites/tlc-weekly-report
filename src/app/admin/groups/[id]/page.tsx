@@ -224,7 +224,7 @@ async function AdminGroupContent({ params, searchParams }: PageProps<"/admin/gro
             )}
           </ul>
         ) : (
-          <p className="text-sm text-muted">아직 배정된 사용자가 없습니다. 사용자 관리에서 배정할 수 있습니다.</p>
+          <p className="text-sm text-muted">아직 배정된 사용자가 없습니다. 「가입 승인·담당 지정」에서 배정할 수 있습니다.</p>
         )}
       </Card>
 

@@ -2,7 +2,7 @@ import Link from "@/components/pending-link";
 
 const ITEMS = [
   { href: "/admin/submissions", label: "제출현황" },
-  { href: "/admin/users", label: "사용자" },
+  { href: "/admin/users", label: "가입 승인" },
   { href: "/admin/groups", label: "그룹" },
   { href: "/admin/services", label: "예배" },
 ] as const;

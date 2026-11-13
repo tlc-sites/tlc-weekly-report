@@ -160,7 +160,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
 
       {canCreateReport ? (
         <>
-          <h2 id="new-report" className="mb-1 scroll-mt-24 font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 작성" : "새 보고 작성"}</h2>
+          <h2 id="new-report" className="mb-1 scroll-mt-24 font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 쓰기" : "새 보고 쓰기"}</h2>
           <p className="mb-2 text-xs text-muted">2단계 · 어떤 예배·모임의 보고인지 고르고 「작성 시작」을 누르면 내용을 쓰는 화면이 열립니다.</p>
           <Card className="mb-6 border-accent/40">
             <form action={createReport} className="flex flex-col gap-3">

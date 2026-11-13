@@ -6,7 +6,7 @@ import {loadReportColumn,type ReportColumn,type ColumnReport} from "./report-col
 import {DesktopNotificationColumn} from "./desktop-notification-column";
 import {useNotificationPanel} from "./notification-panel-store";
 
-const STATUS: Record<ColumnReport["status"], [string, string]> = { draft: ["임시저장", "is-draft"], submitted: ["확인 대기", "is-sub"], reviewed: ["확인됨", "is-rev"] };
+const STATUS: Record<ColumnReport["status"], [string, string]> = { draft: ["작성 중", "is-draft"], submitted: ["확인 대기", "is-sub"], reviewed: ["확인 완료", "is-rev"] };
 const RESULT: Record<string, [string, string]> = { minor: ["경미한 문제", "is-minor"], incident: ["사고", "is-incident"], other: ["기타", ""] };
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
@@ -14,7 +14,7 @@ type Filter = "all" | "wait" | "draft" | "issue";
 const FILTERS: [Filter, string, (r: ColumnReport) => boolean][] = [
  ["all", "전체", () => true],
  ["wait", "확인 대기", r => r.status === "submitted"],
- ["draft", "임시저장", r => r.status === "draft"],
+ ["draft", "작성 중", r => r.status === "draft"],
  ["issue", "이슈", r => r.result === "minor" || r.result === "incident" || r.attention],
 ];
 // 보고 날짜가 속한 주(일요일 시작)

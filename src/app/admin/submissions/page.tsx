@@ -25,7 +25,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
   const rows = data.reports.filter(r => (!group || r.group_id === group) && (status === "all" || (status === "sent" ? r.status !== "draft" : r.status === status)));
   const href = (value: string) => `/admin/submissions?${new URLSearchParams({week:value,status,group})}`;
   return <>
-    <BackLink href={`/?week=${week}`}>홈 · 제출현황</BackLink>
+    <BackLink href={`/?week=${week}`}>홈</BackLink>
     <span className="page-wide" hidden /><PageTitle info={HELP.submissions} sub={formatWeek(week)}>전체 제출현황</PageTitle>
     <AdminNav current="/admin/submissions"/>
     <p className="mb-4 text-sm text-muted">관리자에게는 파트·작성자·예배·제출 상태만 표시됩니다. 본문은 별도 열람 권한이 있을 때만 열 수 있습니다.</p>
@@ -34,7 +34,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
     <form method="get" className="mb-4 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
       <input type="hidden" name="week" value={week}/>
       <Field label="파트"><select name="group" defaultValue={group} className={selectClass}><option value="">전체 파트</option>{data.groups.map(g => <option key={g.id} value={g.id}>{groupDisplayName(g.name)}</option>)}</select></Field>
-      <Field label="제출 상태"><select name="status" defaultValue={status} className={selectClass}><option value="all">전체 상태</option><option value="draft">작성 중</option><option value="sent">제출 완료 전체</option><option value="submitted">제출 완료 · 확인 대기</option><option value="reviewed">확인 완료</option></select></Field>
+      <Field label="제출 상태"><select name="status" defaultValue={status} className={selectClass}><option value="all">전체 상태</option><option value="draft">작성 중</option><option value="sent">확인 대기 + 확인 완료</option><option value="submitted">확인 대기</option><option value="reviewed">확인 완료</option></select></Field>
       <button className={smallButtonClass}>선택 적용</button>
     </form>
     <Card><p className="mb-2 text-sm text-muted">보고 {rows.length}건</p><ul className="divide-y divide-border">{rows.map(r => {

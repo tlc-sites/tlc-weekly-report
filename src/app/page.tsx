@@ -76,20 +76,20 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
       {!sundayNotice && (isClergy(profile) || profile.is_admin) ? <Link href="/sunday-notice" className="mb-4 flex min-h-12 items-center justify-between gap-2 rounded-xl border border-dashed border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent">📌 이번 주 공지 쓰기 <span className="text-xs font-normal text-muted">쓰면 모두의 첫 화면에 팝업</span></Link> : null}
       {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
       {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/notices?tab=restricted" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">비공개 메시지</Link></div> : null}
-      {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리 · 담당 팀 명단</span><span>팀원 추가·수정 ›</span></Link> : null}
+      {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리</span><span>팀 명단 · 팀원 추가·수정 ›</span></Link> : null}
       <nav aria-label="주요 메뉴" className="mb-4 grid grid-cols-2 gap-2">
-        <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 작성 · 추가</Link>
-        {canManage(profile) ? <Link href={`/admin/submissions?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">관리 · 제출현황</Link> : <Link href={`/reports?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">내 보고 목록</Link>}
+        <Link href={`/write?week=${week}`} className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-foreground"><MenuIcon name="report" small/>보고 쓰기</Link>
+        {canManage(profile) ? <Link href={`/admin/submissions?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">전체 제출현황</Link> : <Link href={`/reports?week=${week}`} className="flex min-h-14 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">보고 목록</Link>}
       </nav>
       </div>
       {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-sm text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
       <div className="home-cols"><div className="home-col-main">
       <HomeOverview week={week} currentWeek={reportWeek(undefined, todayKST())} reports={adminStatus?.reports ?? weeklyReports.data ?? []} parts={adminStatus?.groups.map(g => ({ ...g, settings: groups.find(x => x.id === g.id)?.settings })) ?? reportGroups} noMeeting={adminStatus?.no_meeting ?? (weekStatuses.data ?? []).map(s => s.group_id as string)} userId={profile.id} failed={!adminStatus && Boolean(weeklyReports.error || weekStatuses.error)} allParts={canManage(profile)} adminStatus={Boolean(adminStatus)} writablePartIds={(canManage(profile) ? adminStatus?.groups ?? reportGroups : reportGroups).map(g => g.id)} />
-      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "보고 작성 탭에서 파트를 선택해 내 보고를 추가할 수 있습니다. 출결 명단이나 팀 이슈 작성은 담당 파트 권한이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
+      {!reportGroups.length ? <Card className="mb-4"><p className="font-semibold">아직 담당 파트가 배정되지 않았습니다.</p><p className="mt-1 text-sm text-muted">{canManage(profile) ? "「보고 쓰기」에서 파트를 선택해 내 보고를 추가할 수 있습니다. 출결 명단이나 팀 이슈 작성은 담당 파트 권한이 필요합니다." : "담당 관리자에게 배정을 요청해 주세요."}</p></Card> : null}
       <div className="home-pc-hide">
       {reportGroups.length ? (
         <Card className="mb-4">
-          <MenuHeading icon="report" description="새 보고를 작성할 파트를 선택해 주세요.">보고 작성</MenuHeading>
+          <MenuHeading icon="report" description="새 보고를 쓸 파트를 선택해 주세요.">보고 쓰기</MenuHeading>
           <GroupPicker groups={reportGroups} suffix={`?week=${week}`} defaultCategory={myGroups[0] ? groupCategory(myGroups[0]) : undefined} />
         </Card>
       ) : null}
@@ -109,7 +109,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
           <ul className="flex flex-col divide-y divide-border text-sm">
             <li>
               <Link href="/admin/users" className="flex items-center justify-between py-3 font-medium">
-                <span>사용자 관리</span>
+                <span>가입 승인·담당 지정</span>
                 <span className={pendingCount ? "text-accent" : "text-muted"}>승인 대기 {pendingCount}명 ›</span>
               </Link>
             </li>

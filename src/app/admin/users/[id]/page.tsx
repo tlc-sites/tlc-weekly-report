@@ -60,7 +60,7 @@ async function AdminUserContent({ params, searchParams }: PageProps<"/admin/user
 
   return (
     <>
-      <BackLink href="/admin/users">사용자 관리</BackLink>
+      <BackLink href="/admin/users">가입 승인·담당 지정</BackLink>
       <PageTitle sub={user.email ?? undefined}>
         <span className="flex items-center gap-2">
           {user.real_name ?? "(이름 미입력)"}

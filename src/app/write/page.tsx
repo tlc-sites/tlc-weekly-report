@@ -42,7 +42,7 @@ async function Content({ searchParams }: PageProps<"/write">) {
         </Link></li>; })}</ul>
     </section> : null;
   });
-  return <><BackLink href={`/?week=${week}`}>홈</BackLink><PageTitle info={HELP.write} sub={formatWeek(week)}>보고 작성</PageTitle>
+  return <><BackLink href={`/?week=${week}`}>홈</BackLink><PageTitle info={HELP.write} sub={formatWeek(week)}>보고 쓰기</PageTitle>
     <WeekNav week={week} href="/write"/>
     {week < reportWeek(undefined, todayKST()) ? <PastWeekNotice week={week} href="/write"/> : null}
     <ol className="mb-4 grid grid-cols-3 gap-2 text-center text-xs" aria-label="작성 순서">

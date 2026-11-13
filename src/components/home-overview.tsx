@@ -38,13 +38,13 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
     <Card>
       {failed ? <p role="alert" className="text-sm text-danger">현황을 불러오지 못했습니다. 새로고침해 주세요.</p> : <>
         <div className="grid grid-cols-3 gap-2 text-center">
-          {[{ label: "제출 완료", value: sent.length, status: "sent" }, { label: "작성 중", value: drafts.length, status: "draft" }, { label: "확인 대기", value: pending.length, status: "submitted" }].map(item =>
+          {[{ label: "작성 중", value: drafts.length, status: "draft" }, { label: "확인 대기", value: pending.length, status: "submitted" }, { label: "확인 완료", value: sent.length - pending.length, status: "reviewed" }].map(item =>
             <Link key={item.status} href={`${listBase}?week=${week}&status=${item.status}`} className="rounded-xl bg-background px-1 py-3 transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent">
               <span className="block text-2xl font-semibold tabular-nums text-accent">{item.value}<span className="ml-1 text-xs font-normal">건</span></span><span className="text-sm">{item.label}</span>
             </Link>)}
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted">{adminStatus ? "전체 파트의 제출 상태 기준" : "열람 가능한 보고 기준"} · 제출 완료에는 확인 완료 {sent.length - pending.length}건이 포함됩니다.</p>
-        <Link href={`${listBase}?week=${week}`} className="mt-3 flex min-h-11 items-center justify-between border-t border-border pt-3 text-sm font-semibold text-accent">{adminStatus ? "전체 제출현황 보기" : "보고 목록 · 사람별 조회"} <span aria-hidden>›</span></Link>
+        <p className="mt-3 text-xs leading-relaxed text-muted">{adminStatus ? "전체 파트의 보고 기준입니다." : "열람할 수 있는 보고 기준입니다."}</p>
+        <Link href={`${listBase}?week=${week}`} className="mt-3 flex min-h-11 items-center justify-between border-t border-border pt-3 text-sm font-semibold text-accent">{adminStatus ? "전체 제출현황" : "보고 목록"} <span aria-hidden>›</span></Link>
       </>}
     </Card>
     {!failed && myDrafts.length ? <Card className="mt-3 border-accent/40">
@@ -79,7 +79,7 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
               <span className="flex min-w-0 items-center gap-2 font-medium"><span className="home-part-dot" aria-hidden="true"/>{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
                 {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
                 {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
-                {no ? <span className="text-muted">모임 없음</span> : !mine.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "등록된 보고 없음"}</span> : null}
+                {no ? <span className="text-muted">모임 없음</span> : !mine.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "작성 전"}</span> : null}
                 <span aria-hidden className="text-accent">›</span>
               </span>
             </Link></li>;

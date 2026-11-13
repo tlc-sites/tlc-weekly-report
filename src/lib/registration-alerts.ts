@@ -18,7 +18,7 @@ export async function notifyRegistrationAlerts(applicantId?:string){
     const {data:subscriptions,error:subError}=await admin.from("push_subscriptions").select("id,endpoint,p256dh,auth").in("user_id",people.map(p=>p.id));
     if(subError || !subscriptions?.length){failed++;continue;}
     try {
-      const result=await sendToSubscriptions(admin,subscriptions,{title:"새 등록 신청이 도착했습니다",body:"사용자 관리에서 신청 내용을 확인해 주세요.",url:"/admin/users",tag:`registration:${alert.applicant_id}`});
+      const result=await sendToSubscriptions(admin,subscriptions,{title:"새 등록 신청이 도착했습니다",body:"가입 승인·담당 지정 화면에서 신청 내용을 확인해 주세요.",url:"/admin/users",tag:`registration:${alert.applicant_id}`});
       if(result.failed===0 && result.sent>0){await admin.from("registration_alerts").update({delivered_at:new Date().toISOString()}).eq("applicant_id",alert.applicant_id);sent++;}else failed++;
     }catch{failed++;}
   }

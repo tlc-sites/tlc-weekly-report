@@ -150,7 +150,7 @@ async function MembersContent({ params, searchParams }: PageProps<"/groups/[id]/
           </Card>
         </>
       ) : (
-        <p className="text-sm text-muted">명단 등록과 수정은 부서 검토자가 할 수 있습니다. 새친구는 보고 작성 화면에서 추가합니다.</p>
+        <p className="text-sm text-muted">명단 등록과 수정은 부서 검토자가 할 수 있습니다. 새친구는 보고 쓰기 화면에서 추가합니다.</p>
       )}
     </>
   );

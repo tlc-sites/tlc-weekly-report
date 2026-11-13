@@ -3,7 +3,7 @@ import { GUARDIAN_RELATIONS } from "./members";
 
 // 보고 양식 정의. 브라우저(입력 화면)와 서버(저장 검증)가 함께 쓴다.
 
-export const REPORT_STATUS_LABEL = { draft: "임시저장", submitted: "제출", reviewed: "확인됨" } as const;
+export const REPORT_STATUS_LABEL = { draft: "작성 중", submitted: "확인 대기", reviewed: "확인 완료" } as const;
 export type ReportStatus = keyof typeof REPORT_STATUS_LABEL;
 
 export const REQUEST_CATEGORIES = ["시설", "물품", "예산", "기타"] as const;
