@@ -8,9 +8,11 @@ import { ChoiceChips } from "./choice-chips";
 type Option = { value: string; label: string; date: string; fixedDate?: boolean };
 
 // 예배를 고르면 그 요일에 맞춰 날짜가 자동으로 바뀐다 (직접 고친 날짜는 다음에 예배를 바꿀 때까지 유지)
-export function NewReportFields({ options, fallbackDate, maxDate, minDate }: { options: Option[]; fallbackDate: string; maxDate: string; minDate: string }) {
-  const [meeting, setMeeting] = useState(options[0]?.value ?? "custom");
-  const [date, setDate] = useState(options[0]?.date ?? fallbackDate);
+// initial: 지난번에 이 파트에서 고른 예배·모임(이번 주에 있으면 먼저 골라 둔다)
+export function NewReportFields({ options, fallbackDate, maxDate, minDate, initial }: { options: Option[]; fallbackDate: string; maxDate: string; minDate: string; initial?: string }) {
+  const first = options.find((o) => o.value === initial) ?? options[0];
+  const [meeting, setMeeting] = useState(first?.value ?? "custom");
+  const [date, setDate] = useState(first?.date ?? fallbackDate);
 
   return (
     <>

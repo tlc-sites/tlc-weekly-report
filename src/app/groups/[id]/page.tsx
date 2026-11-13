@@ -3,7 +3,7 @@ import {CampusDepartureField} from "@/components/campus-departure-field";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
 import { ReportKindFields } from "./report-kind-fields";
-import { sessionKinds } from "@/lib/team-session";
+import { SESSION_LABEL, sessionKinds } from "@/lib/team-session";
 import { NoMeeting } from "./no-meeting";
 import { SubmitButton } from "@/components/submit-button";
 import { serviceOccursOn } from "@/lib/service-schedule";
@@ -17,7 +17,9 @@ import {
   Loading,
   PageTitle,
   inputClass,
+  listRowClass,
   pickMessage,
+  smallButtonClass,
 } from "@/components/ui";
 import { getGroupAccess } from "@/lib/access";
 import { requireActive } from "@/lib/auth";
@@ -56,7 +58,7 @@ export default function GroupPage({ params, searchParams }: PageProps<"/groups/[
 
 async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">) {
   const { supabase, profile } = await requireActive();
-  const [{ id }, { week: weekParam, error }] = await Promise.all([params, searchParams]);
+  const [{ id }, { week: weekParam, error, tab }] = await Promise.all([params, searchParams]);
   const { group, canWrite, canCreateReport, isLeaf } = await getGroupAccess(supabase, id);
   const today = todayKST();
   const week = reportWeek(weekParam, today);
@@ -86,7 +88,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
     );
   }
 
-  const [reportsRes, weekStatus, services, meetingTypes, myMembership] = await Promise.all([
+  const [reportsRes, weekStatus, services, meetingTypes, myMembership, lastMine] = await Promise.all([
     supabase
       .from("reports")
       .select(
@@ -115,6 +117,8 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
       .order("sort_order")
       .then((r) => r.data ?? []),
     supabase.from("memberships").select("position").eq("user_id",profile.id).eq("group_id",id).maybeSingle(),
+    // 지난번 내 보고(이 파트): 보고 종류와 예배·모임을 기본으로 골라 두는 데만 쓴다
+    supabase.from("reports").select("session_type:details->>session_type, service_type_id, group_meeting_type_id").eq("group_id", id).eq("author_id", profile.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (reportsRes.error) throw reportsRes.error;
   const reports = reportsRes.data ?? [];
@@ -125,6 +129,13 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
   // 선택한 주차 안에서 예배 요일을 자동 지정한다.
   const defaultDate = (weekday: number | null) =>
     weekday === null ? maxDate : dateInWeek(week, weekday);
+  const last = lastMine.data;
+  const lastKind = typeof last?.session_type === "string" ? (last.session_type as keyof typeof SESSION_LABEL) : undefined;
+  const lastMeeting = last?.service_type_id ? `service:${last.service_type_id}` : last?.group_meeting_type_id ? `meeting:${last.group_meeting_type_id}` : undefined;
+  const view = tab === "team" ? "team" : "week";
+  const tabHref = (t: string) => `/groups/${id}?${new URLSearchParams({ week, ...(t === "team" ? { tab: "team" } : {}) })}`;
+  const authorName = profile.real_name ?? "";
+  const duty = myMembership.data?.position ?? "";
   const options = [
     ...services.filter(s => serviceOccursOn(defaultDate(s.weekday), s)).filter(s => defaultDate(s.weekday) <= today).map((s) => ({ value: `service:${s.id}`, label: s.name, date: defaultDate(s.weekday), fixedDate: s.weekday !== null })),
     ...meetingTypes.filter(m => defaultDate(m.weekday) <= today).map((m) => ({ value: `meeting:${m.id}`, label: meetingDisplayName(m.name), date: defaultDate(m.weekday), fixedDate: m.weekday !== null })),
@@ -133,93 +144,102 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
   return (
     <>
       <BackLink href={`/?week=${week}`}>홈</BackLink>
-      <PageTitle>{groupDisplayName(group.name)}</PageTitle>
-      <nav aria-label="파트 관리" className="mb-3 flex flex-wrap gap-4 text-sm text-accent"><Link href={`/groups/${id}/team`}>팀 구성 명단</Link><Link href={`/groups/${id}/schedule`}>모임 시간 설정</Link></nav>
-      <p className="mb-4 text-sm text-muted">일요일~토요일 주간 보고 · 금요일 오후 5시 전달</p>
-      <Link href="/notices" className="mb-4 self-start text-sm text-accent underline">공지·소통 확인하기</Link>
+      <PageTitle sub="일요일~토요일 주간 보고 · 금요일 오후 5시 전달">{groupDisplayName(group.name)}</PageTitle>
       {message ? (
         <div className="mb-4">
           <ErrorText>{message}</ErrorText>
         </div>
       ) : null}
 
-      <nav className="mb-4 flex items-center justify-between text-sm">
-        <Link href={`/groups/${id}?week=${addDays(week, -7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
-          ← 지난주
-        </Link>
-        <span className="font-semibold">{formatWeek(week)}</span>
-        {isCurrentWeek ? (
-          <span className="px-2 py-1 text-muted/40">다음 주 →</span>
-        ) : (
-          <Link href={`/groups/${id}?week=${addDays(week, 7)}`} className="inline-flex min-h-11 items-center rounded-xl border border-accent/40 bg-surface px-3 py-2 font-semibold text-accent shadow-sm hover:bg-accent/10">
-            다음 주 →
-          </Link>
-        )}
+      <nav aria-label="주차 이동" className="mb-4 flex items-center justify-between gap-2">
+        <Link href={`/groups/${id}?week=${addDays(week, -7)}${view === "team" ? "&tab=team" : ""}`} className={smallButtonClass}>← 지난주</Link>
+        <span className="text-center font-semibold">{formatWeek(week)}</span>
+        {isCurrentWeek ? <span className="w-[5.5rem]" aria-hidden /> : <Link href={`/groups/${id}?week=${addDays(week, 7)}${view === "team" ? "&tab=team" : ""}`} className={smallButtonClass}>다음 주 →</Link>}
       </nav>
       {!isCurrentWeek ? <PastWeekNotice week={week} href={`/groups/${id}`}/> : null}
 
       {canCreateReport ? (
         <>
-          <h2 id="new-report" className="mb-1 scroll-mt-24 font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 쓰기" : "새 보고 쓰기"}</h2>
-          <p className="mb-2 text-xs text-muted">2단계 · 어떤 예배·모임의 보고인지 고르고 「작성 시작」을 누르면 내용을 쓰는 화면이 열립니다.</p>
+          <h2 id="new-report" className="mb-2 scroll-mt-24 text-xl font-semibold">{group.type === "education" ? "출결 관리 · 새 보고 쓰기" : "새 보고 쓰기"}</h2>
           <Card className="mb-6 border-accent/40">
-            <form action={createReport} className="flex flex-col gap-3">
+            <form action={createReport} className="flex flex-col gap-4">
               <input type="hidden" name="groupId" value={id} />
               <input type="hidden" name="reportWeek" value={week} />
-              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)}>
+              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)} initialKind={lastKind}>
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
                   <CampusDepartureField defaultDate={maxDate}/>
                 </>
               ) : (
-                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} />
+                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} initial={lastMeeting} />
               )}
               </ReportKindFields>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={profile.real_name ?? ""} className={inputClass}/></Field>
-                <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={myMembership.data?.position ?? ""} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
-              </div>
-              <p className="text-xs text-muted">같은 예배에도 담당자마다 별도의 보고를 작성할 수 있습니다.</p>
+              {/* 작성자·담당은 로그인 정보와 파트 직책으로 채워 두고, 필요할 때만 펼쳐 고친다(접혀 있어도 함께 저장된다) */}
+              <details className="rounded-xl border border-border px-3 py-2" open={!authorName || undefined}>
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2">
+                  <span className="min-w-0">작성자 <b>{authorName || "이름 없음"}</b>{duty ? <> · {duty}</> : null}</span>
+                  <span className="shrink-0 font-semibold text-accent">바꾸기</span>
+                </summary>
+                <div className="grid grid-cols-1 gap-3 pb-2 pt-1 sm:grid-cols-2">
+                  <Field label="작성자 이름 (필수)"><input name="authorName" required maxLength={100} defaultValue={authorName} className={inputClass}/></Field>
+                  <Field label="담당 직책·파트"><input name="dutyPart" maxLength={100} defaultValue={duty} placeholder="예: 오퍼레이터 · 방송 음향" className={inputClass}/></Field>
+                </div>
+              </details>
               <SubmitButton pendingText="작성 화면 여는 중…">{group.type === "education" ? "출결 체크 시작" : "작성 시작"}</SubmitButton>
+              <p className="text-[15px] text-muted">같은 예배에도 담당자마다 따로 보고를 쓸 수 있습니다.</p>
             </form>
           </Card>
-
         </>
       ) : null}
-      {group.type==="worship" ? <Link href={`/groups/${id}/rehearsals`} className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent">팀원·리허설 참석 관리</Link>:null}
-      <Card className="mb-4">
-        <h2 className="mb-2 text-sm font-medium text-muted">{isCurrentWeek ? "이번 주" : "이 주"} 보고 {reports.length}건</h2>
-        {reports.length ? (
+
+      <nav aria-label="파트 화면 보기" className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-surface p-1">
+        {[["week", isCurrentWeek ? "이번 주 보고" : "이 주 보고"], ["team", "팀 관리"]].map(([t, label]) => (
+          <Link key={t} href={tabHref(t)} aria-current={view === t ? "page" : undefined} className={`flex min-h-11 items-center justify-center rounded-xl font-semibold ${view === t ? "bg-accent text-accent-foreground" : "text-muted"}`}>{label}</Link>
+        ))}
+      </nav>
+
+      {view === "week" ? (
+        <>
+          <Card className="mb-4">
+            <h2 className="mb-2 font-semibold">{isCurrentWeek ? "이번 주" : "이 주"} 보고 {reports.length}건</h2>
+            {reports.length ? (
+              <ul className="flex flex-col divide-y divide-border">
+                {reports.map((r) => (
+                  <li key={r.id}>
+                    <Link href={`/reports/${r.id}`} className="flex min-h-14 items-center justify-between gap-2 py-3">
+                      <span className="min-w-0">
+                        <span className="block font-medium">{meetingDisplayName(r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "보고")}</span>
+                        <span className="text-[15px] text-muted">
+                          {formatDate(r.meeting_date)} · {getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""}
+                        </span>
+                      </span>
+                      <ReportStatusBadge status={r.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted">{noMeeting ? `${isCurrentWeek ? "이번 주" : "이 주"}는 모임 없음으로 표시되어 있습니다.` : "아직 보고가 없습니다."}</p>
+            )}
+          </Card>
+          {canCreateReport && canWrite ? <div id="no-meeting" className="scroll-mt-24"><NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /></div> : null}
+        </>
+      ) : (
+        <Card className="mb-4">
           <ul className="flex flex-col divide-y divide-border">
-            {reports.map((r) => (
-              <li key={r.id}>
-                <Link href={`/reports/${r.id}`} className="flex items-center justify-between gap-2 py-3">
-                  <span>
-                    <span className="font-medium">{meetingDisplayName(r.service?.name ?? r.meeting?.name ?? r.meeting_label ?? "보고")}</span>
-                    <span className="ml-2 text-xs text-muted">
-                      {formatDate(r.meeting_date)} · {getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""}
-                    </span>
-                  </span>
-                  <ReportStatusBadge status={r.status} />
-                </Link>
-              </li>
+            {[
+              [`/groups/${id}/team`, "팀 구성 명단", "팀원 이름과 역할"],
+              [`/groups/${id}/schedule`, "모임 시간 설정", "모임 요일·시간"],
+              ...(group.type === "worship" ? [[`/groups/${id}/rehearsals`, "팀원·리허설 참석 관리", ""]] : []),
+              ...(group.type === "education" || group.type === "worship" ? [[`/groups/${id}/members`, group.type === "worship" ? "팀원 명단" : "출결·명단", ""]] : []),
+              ["/notices", "공지·소통", ""],
+            ].map(([href, label, hint]) => (
+              <li key={href}><Link href={href} className={listRowClass}><span><span className="block">{label}</span>{hint ? <span className="text-[15px] text-muted">{hint}</span> : null}</span><span aria-hidden className="text-accent">›</span></Link></li>
             ))}
           </ul>
-        ) : (
-          <p className="text-sm text-muted">{noMeeting ? `${isCurrentWeek ? "이번 주" : "이 주"}는 모임 없음으로 표시되어 있습니다.` : "아직 보고가 없습니다."}</p>
-        )}
-      </Card>
-
-
-      {canCreateReport && canWrite ? <NoMeeting key={week + String(noMeeting)} groupId={id} week={week} noMeeting={noMeeting} reason={weekStatus.data?.reason ?? null} /> : null}
-
-      {group.type === "education" || group.type === "worship" ? (
-        <Link href={`/groups/${id}/members`} className="mt-6 text-sm text-accent underline underline-offset-4">
-          {groupDisplayName(group.name)} {group.type === "worship" ? "팀원 명단" : "명단"} →
-        </Link>
-      ) : null}
+        </Card>
+      )}
     </>
   );
 }
-

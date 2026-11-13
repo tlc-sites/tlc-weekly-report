@@ -16,6 +16,11 @@ export function HomePartCards({ parts, reports, noMeeting, userId, week }: { par
             <Link href={s.href} className={`mt-auto inline-flex min-h-11 items-center gap-1 font-semibold ${s.primary ? "text-accent" : "text-muted hover:text-accent"}`}>
               {s.action} <span aria-hidden>›</span>
             </Link>
+            {s.action === "쓰기" ? (
+              <Link href={`/groups/${g.id}?week=${week}#no-meeting`} className="inline-flex min-h-11 items-center gap-1 text-[15px] text-muted hover:text-accent">
+                모임 없음 표시 <span aria-hidden>›</span>
+              </Link>
+            ) : null}
             {g.type === "education" ? (
               <Link href={`/groups/${g.id}/members`} className="inline-flex min-h-11 items-center gap-1 text-[15px] text-muted hover:text-accent">
                 출결·명단 <span aria-hidden>›</span>

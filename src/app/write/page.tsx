@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
 import { requireActive, canManage, isSenior } from "@/lib/auth";
@@ -29,6 +30,8 @@ async function Content({ searchParams }: PageProps<"/write">) {
   const writable = groups.filter(g => g.childCount===0 && (canManage(profile) || isSenior(profile) || isMine(g)));
   // 관리자는 모든 파트를 쓸 수 있어 목록이 길다. 내 파트를 먼저 보여 주고 나머지는 접어 둔다.
   const own = writable.filter(isMine), others = writable.filter(g => !isMine(g));
+  // 쓸 수 있는 파트가 하나뿐이고 쓰다 만 보고가 없으면 파트 고르기를 건너뛴다(관리 권한으로 다른 파트도 쓸 수 있으면 건너뛰지 않음)
+  if (own.length === 1 && !others.length && !drafts?.length) redirect(`/groups/${own[0].id}?week=${week}#new-report`);
   const count = (gid: string) => { const rs = (weekReports ?? []).filter(r => r.group_id === gid); return { total: rs.filter(r => r.status !== "draft").length, mineDraft: rs.some(r => r.status === "draft" && r.author_id === profile.id), mineDone: rs.some(r => r.status !== "draft" && r.author_id === profile.id) }; };
   const nameOf = (gid: string) => { const g = groups.find(x => x.id === gid); return g ? groupDisplayName(g.name) : "파트"; };
   const tiles = (list: typeof writable) => Object.entries(NAV_CATEGORY_LABEL).map(([key, label]) => {
