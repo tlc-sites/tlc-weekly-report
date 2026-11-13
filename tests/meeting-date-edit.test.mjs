@@ -24,3 +24,9 @@ test('작성자는 제출한 보고의 모임 날짜를 하루 앞으로 옮길 
  const none=await as("update report.reports set meeting_date='2026-10-30' where id=$1 returning id",[r.id]);
  assert.equal(none.rows.length,0);
 }finally{await db.close();}});
+
+test('보고 시각은 초 없이 「11/12 오후 12:35」',async()=>{
+ const {formatDateTime}=await import('../src/lib/week.ts');
+ assert.equal(formatDateTime('2026-11-12T03:35:20Z'),'11/12 오후 12:35');
+ assert.equal(formatDateTime('2026-11-12T00:05:00Z'),'11/12 오전 9:05');
+});

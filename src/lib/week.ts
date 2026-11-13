@@ -46,6 +46,12 @@ export function formatDate(iso: string) {
   return `${m}/${d}(${WEEKDAY[weekdayOf(iso)]})`;
 }
 
+// 저장 시각을 초 없이 짧게: 「11/12 오후 12:35」(한국 시간)
+export function formatDateTime(ts: string | Date) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+  return `${p.month}/${p.day} ${p.dayPeriod} ${p.hour}:${p.minute}`;
+}
+
 export function formatWeek(sunday: string) {
   return `${formatDate(sunday)} ~ ${formatDate(addDays(sunday, 6))}`;
 }

@@ -35,7 +35,7 @@ import {
   type ReportStatus,
   type WorshipPayload,
 } from "@/lib/report-forms";
-import { formatDate, weekOf, todayKST } from "@/lib/week";
+import { formatDate, formatDateTime, weekOf, todayKST } from "@/lib/week";
 import { changeMeetingDate, deleteDraft, saveReport } from "./actions";
 import { PrivateSharing } from "./sharing";
 import { Comments, ReviewActions, ReviewPanel } from "./review";
@@ -137,6 +137,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
   const messages: Messages = { ...emptyMessages() };
   for (const m of messagesRes.data ?? []) messages[m.recipient as keyof Messages] = m.body;
   const messagesToMe = isAuthor ? [] : (messagesRes.data ?? []);
+  const identity = getReportIdentity(report.details, report.author?.real_name);
   const title = meetingDisplayName(report.service?.name ?? report.meeting?.name ?? report.meeting_label ?? "보고");
   const message = pickMessage(MESSAGES, error);
   const d = report.details;
@@ -351,7 +352,8 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         ) : null}
       </div>
       {dated ? <p className="mb-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">모임 날짜를 {formatDate(report.meeting_date)}로 바꿨습니다.</p> : null}
-      <p className="mb-3 text-[15px] text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
+      {/* 값이 없는 항목은 빼고 한 줄로: 담당 · 최종 수정 이름 · 11/12 오후 12:35 */}
+      <p className="mb-3 text-[15px] text-muted">{[identity.duty_part && identity.duty_part !== "파트" ? `담당 ${identity.duty_part}` : "", `최종 수정 ${identity.last_editor_name || identity.author_name} · ${formatDateTime(report.updated_at)}`].filter(Boolean).join(" · ")}</p>
       {/* 열람 현황은 한 줄로. 담임 목사님·사모님은 본문을 읽은 뒤 확인 버튼을 누르도록 본문 아래에 둔다 */}
       {report.status!=="draft" && !isSenior(profile)?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
       {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
