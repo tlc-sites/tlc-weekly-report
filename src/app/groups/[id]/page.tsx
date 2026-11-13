@@ -1,3 +1,4 @@
+import { ReportStatusBadge } from "@/components/report-status";
 import {CampusDepartureField} from "@/components/campus-departure-field";
 import {groupDisplayName,meetingDisplayName} from "@/lib/group-display";
 import { getReportIdentity } from "@/lib/report-identity";
@@ -10,7 +11,6 @@ import { Suspense } from "react";
 import Link from "@/components/pending-link";
 import {
   BackLink,
-  Badge,
   Card,
   ErrorText,
   Field,
@@ -22,7 +22,7 @@ import {
 import { getGroupAccess } from "@/lib/access";
 import { requireActive } from "@/lib/auth";
 import { listGroupsOrdered } from "@/lib/groups";
-import { REPORT_STATUS_LABEL, type ReportStatus } from "@/lib/report-forms";
+import type { ReportStatus } from "@/lib/report-forms";
 import { addDays, dateInWeek, formatDate, formatWeek, reportWeek, reportDateMax, latestWeekday, todayKST } from "@/lib/week";
 import { PastWeekNotice } from "@/components/week-nav";
 import { createReport } from "./actions";
@@ -201,9 +201,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
                       {formatDate(r.meeting_date)} · {getReportIdentity(r.details,r.author?.real_name).author_name}{getReportIdentity(r.details).duty_part ? ` · ${getReportIdentity(r.details).duty_part}` : ""}
                     </span>
                   </span>
-                  <Badge tone={r.status === "draft" ? "danger" : r.status === "reviewed" ? "accent" : "muted"}>
-                    {REPORT_STATUS_LABEL[r.status]}
-                  </Badge>
+                  <ReportStatusBadge status={r.status} />
                 </Link>
               </li>
             ))}

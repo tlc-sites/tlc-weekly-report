@@ -5,10 +5,16 @@ import Link from "@/components/pending-link";
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="page-back mb-4 inline-flex max-w-full min-h-11 self-start items-center gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent shadow-sm transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98]">
+    <Link href={href} className="page-back mb-2 inline-flex max-w-full min-h-11 self-start items-center gap-1 rounded-lg text-[15px] font-semibold text-accent underline-offset-4 transition hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
       ← {children}
     </Link>
   );
+}
+
+// 보고 상태 표시: 작성 전 회색 · 작성 중 호박색 · 확인 대기 파랑 · 확인 완료 초록. 색만으로 구분하지 않도록 글자도 함께 쓴다.
+export type StatusTone = "todo" | "draft" | "wait" | "done";
+export function StatusChip({ tone, children }: { tone: StatusTone; children: ReactNode }) {
+  return <span className={`st st-${tone}`}>{children}</span>;
 }
 
 export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "accent" | "danger" }) {
@@ -17,7 +23,7 @@ export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?
     accent: "bg-accent/15 text-accent",
     danger: "bg-danger/10 text-danger",
   }[tone];
-  return <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[15px] font-medium ${toneClass}`}>{children}</span>;
 }
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
@@ -36,13 +42,13 @@ export function pickMessage(messages: Record<string, string>, code: string | str
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`ui-card rounded-[14px] border border-border bg-surface p-[18px] ${className}`}>{children}</section>;
+  return <section className={`ui-card rounded-2xl border border-border bg-surface p-4 ${className}`}>{children}</section>;
 }
 
 export function PageTitle({ children, sub, info }: { children: ReactNode; sub?: ReactNode; info?: { body: ReactNode; guide?: string } }) {
   const heading = <h1 className="text-[26px]">{children}</h1>;
   return (
-    <header className="page-title mb-5">
+    <header className="page-title mb-6">
       {info ? <InfoTip title={heading} guide={info.guide}>{info.body}</InfoTip> : heading}
       {sub ? <p className="mt-2 text-[15px] leading-relaxed text-muted">{sub}</p> : null}
     </header>
@@ -61,8 +67,12 @@ export const buttonClass =
   "ui-btn inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent bg-accent px-[18px] py-3 text-[17px] font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
 export const secondaryButtonClass =
   "ui-btn inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-accent/50 bg-surface px-[18px] py-3 text-[17px] font-medium text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+// 작은 보조 버튼: 보조 버튼과 같은 모양(테두리·버건디 글자)에 크기만 작다
 export const smallButtonClass =
-  "ui-btn-sm inline-flex min-h-11 min-w-0 max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-border bg-surface px-3.5 py-2 text-[15px] font-medium hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+  "ui-btn-sm inline-flex min-h-11 min-w-0 max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-accent/40 bg-surface px-3.5 py-2 text-[15px] font-semibold text-accent hover:bg-accent/5 disabled:opacity-50 transition active:translate-y-px active:scale-[0.98]";
+// 목록 행: 줄 전체를 누르고 오른쪽에 › 를 둔다
+export const listRowClass =
+  "flex min-h-14 w-full items-center justify-between gap-3 py-3 text-left transition hover:text-accent";
 export const inputClass =
   "ui-input h-12 min-w-0 max-w-full w-full rounded-xl border border-border bg-surface px-3 text-base transition focus:border-accent";
 export const selectClass =

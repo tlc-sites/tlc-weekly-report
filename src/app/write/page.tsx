@@ -46,7 +46,7 @@ async function Content({ searchParams }: PageProps<"/write">) {
     <WeekNav week={week} href="/write"/>
     {week < reportWeek(undefined, todayKST()) ? <PastWeekNotice week={week} href="/write"/> : null}
     <ol className="mb-4 grid grid-cols-3 gap-2 text-center text-xs" aria-label="작성 순서">
-      {["파트 고르기", "예배·모임 고르기", "내용 쓰고 제출"].map((s, i) => <li key={s} className={`rounded-xl border px-2 py-2 ${i === 0 ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border text-muted"}`}><span className="block text-[11px]">{i + 1}단계</span>{s}</li>)}
+      {["파트 고르기", "예배·모임 고르기", "내용 쓰고 제출"].map((s, i) => <li key={s} className={`rounded-xl border px-2 py-2 ${i === 0 ? "border-accent bg-accent/10 font-semibold text-accent" : "border-border text-muted"}`}><span className="block text-[15px]">{i + 1}단계</span>{s}</li>)}
     </ol>
     {drafts?.length ? <Card className="mb-4">
       <h2 className="mb-2 font-semibold">쓰다 만 보고</h2>

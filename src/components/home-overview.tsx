@@ -2,7 +2,7 @@ import {groupDisplayName} from "@/lib/group-display";
 import { NAV_CATEGORY_LABEL, groupCategory } from "@/lib/groups";
 import type { Group } from "@/lib/groups";
 import Link from "@/components/pending-link";
-import { Card, smallButtonClass } from "./ui";
+import { Card, smallButtonClass, StatusChip } from "./ui";
 import { ReportStatusBadge } from "./report-status";
 import type { ReportStatus } from "@/lib/report-forms";
 import { addDays, formatDate, formatWeek, reportDeadline } from "@/lib/week";
@@ -38,9 +38,9 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
     <Card>
       {failed ? <p role="alert" className="text-sm text-danger">현황을 불러오지 못했습니다. 새로고침해 주세요.</p> : <>
         <div className="grid grid-cols-3 gap-2 text-center">
-          {[{ label: "작성 중", value: drafts.length, status: "draft" }, { label: "확인 대기", value: pending.length, status: "submitted" }, { label: "확인 완료", value: sent.length - pending.length, status: "reviewed" }].map(item =>
-            <Link key={item.status} href={`${listBase}?week=${week}&status=${item.status}`} className="rounded-xl bg-background px-1 py-3 transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent">
-              <span className="block text-2xl font-semibold tabular-nums text-accent">{item.value}<span className="ml-1 text-xs font-normal">건</span></span><span className="text-sm">{item.label}</span>
+          {[{ label: "작성 중", value: drafts.length, status: "draft", tone: "st-draft" }, { label: "확인 대기", value: pending.length, status: "submitted", tone: "st-wait" }, { label: "확인 완료", value: sent.length - pending.length, status: "reviewed", tone: "st-done" }].map(item =>
+            <Link key={item.status} href={`${listBase}?week=${week}&status=${item.status}`} className={`${item.tone} rounded-xl px-1 py-3 transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-accent`}>
+              <span className="block text-2xl font-semibold tabular-nums">{item.value}<span className="ml-1 text-[15px] font-normal">건</span></span><span className="text-[15px] font-semibold">{item.label}</span>
             </Link>)}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted">{adminStatus ? "전체 파트의 보고 기준입니다." : "열람할 수 있는 보고 기준입니다."}</p>
@@ -77,9 +77,9 @@ export function HomeOverview({ week, currentWeek, reports, parts, noMeeting, use
             const required = g.type !== "worship" && g.schedule === "weekly";
             return <li key={g.id} className={"home-part is-" + state}><Link href={adminStatus ? `/admin/submissions?week=${week}&group=${g.id}` : `/groups/${g.id}?week=${week}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 py-3">
               <span className="flex min-w-0 items-center gap-2 font-medium"><span className="home-part-dot" aria-hidden="true"/>{groupDisplayName(g.name)}</span><span className="flex flex-wrap items-center gap-2 text-xs">
-                {submitted ? <span className="font-semibold text-accent">제출 {submitted}건</span> : null}
-                {drafting ? <span className="text-muted">작성 중 {drafting}건</span> : null}
-                {no ? <span className="text-muted">모임 없음</span> : !mine.length ? <span className={required && overdue ? "text-danger" : "text-muted"}>{required ? overdue ? "미제출" : "작성 전" : "작성 전"}</span> : null}
+                {submitted ? <StatusChip tone={mine.some(r => r.status === "submitted") ? "wait" : "done"}>제출 {submitted}건</StatusChip> : null}
+                {drafting ? <StatusChip tone="draft">작성 중 {drafting}건</StatusChip> : null}
+                {no ? <span className="text-muted">모임 없음</span> : !mine.length ? required && overdue ? <span className="font-semibold text-danger">미제출</span> : <StatusChip tone="todo">작성 전</StatusChip> : null}
                 <span aria-hidden className="text-accent">›</span>
               </span>
             </Link></li>;

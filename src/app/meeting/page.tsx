@@ -4,7 +4,7 @@ import { MeetingSummary } from "@/components/meeting-summary";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
 import { redirect } from "next/navigation";
-import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
+import { BackLink, Badge, Card, ErrorText, Loading, PageTitle, pickMessage, smallButtonClass, StatusChip, type StatusTone } from "@/components/ui";
 import { requireActive, isClergy } from "@/lib/auth";
 import { FOLLOW_UP_LABEL } from "@/lib/members";
 import { loadMeeting, reportTitle, type GroupStatus } from "@/lib/meeting";
@@ -15,12 +15,12 @@ import { PrintButton } from "./print-button";
 import { INCIDENT_STATUS, type Incident } from "@/lib/incidents";
 import {HELP} from "@/lib/help-text";
 
-const STATUS: Record<GroupStatus, { label: string; tone: "muted" | "accent" | "danger" }> = {
-  reviewed: { label: "확인", tone: "accent" },
-  submitted: { label: "제출", tone: "muted" },
+const STATUS: Record<GroupStatus, { label: string; tone: "muted" | "accent" | "danger"; chip?: StatusTone }> = {
+  reviewed: { label: "확인 완료", tone: "accent", chip: "done" },
+  submitted: { label: "확인 대기", tone: "muted", chip: "wait" },
   late: { label: "전달 후 추가", tone: "muted" },
   no_meeting: { label: "모임 없음", tone: "muted" },
-  draft: { label: "작성 중", tone: "danger" },
+  draft: { label: "작성 중", tone: "danger", chip: "draft" },
   missing: { label: "미제출", tone: "danger" },
   none: { label: "-", tone: "muted" },
 };
@@ -85,7 +85,7 @@ async function MeetingContent({ searchParams }: Pick<PageProps<"/meeting">, "sea
                 ) : null}
                 {reason ? <p className="text-xs text-muted">사유: {reason}</p> : null}
               </div>
-              <Badge tone={STATUS[status].tone}>{STATUS[status].label}</Badge>
+              {STATUS[status].chip ? <StatusChip tone={STATUS[status].chip}>{STATUS[status].label}</StatusChip> : <Badge tone={STATUS[status].tone}>{STATUS[status].label}</Badge>}
             </li>
           ))}
         </ul>

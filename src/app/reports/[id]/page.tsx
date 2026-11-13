@@ -1,3 +1,4 @@
+import { ReportStatusBadge } from "@/components/report-status";
 import {FailureDialog} from "@/components/form-validation";
 import { ReportTeamTags } from "./team-tags";
 import Link from "@/components/pending-link";
@@ -17,7 +18,7 @@ import { TeamIssues } from "@/components/team-issues";
 import type { Incident } from "@/lib/incidents";
 import { listGroupsOrdered } from "@/lib/groups";
 import { notFound } from "next/navigation";
-import { BackLink, Badge, Card, ErrorText, inputClass, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
+import { BackLink, Card, ErrorText, inputClass, Loading, PageTitle, pickMessage, smallButtonClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { requireActive, isSenior, isClergy } from "@/lib/auth";
 import type { Group } from "@/lib/groups";
@@ -26,7 +27,6 @@ import {
   CAMPUS_TEXTS,
   campusSectionRows,
   ISSUE_STATUS_LABEL,
-  REPORT_STATUS_LABEL,
   RESULT_LABEL,
   emptyMessages,
   type CampusPayload,
@@ -316,9 +316,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       <PageTitle sub={`${group.parent ? `${groupDisplayName(group.parent.name)} · ` : ""}${groupDisplayName(group.name)} · ${formatDate(report.meeting_date)} · ${getReportIdentity(report.details,report.author?.real_name).author_name}`}>
         <span className="flex items-center gap-2">
           {title}
-          <Badge tone={report.status === "draft" ? "danger" : report.status === "reviewed" ? "accent" : "muted"}>
-            {REPORT_STATUS_LABEL[report.status]}
-          </Badge>
+          <ReportStatusBadge status={report.status} />
         </span>
       </PageTitle>
       </div>
