@@ -73,7 +73,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
       <PushBanner />
       <div className="home-pc-hide">{/* PC에서는 사이드바에 같은 메뉴가 있어 감춘다 */}
-      {!sundayNotice && (isClergy(profile) || profile.is_admin) ? <Link href="/sunday-notice" className="mb-4 flex min-h-12 items-center justify-between gap-2 rounded-xl border border-dashed border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent">📌 이번 주 공지 쓰기 <span className="text-xs font-normal text-muted">쓰면 모두의 첫 화면에 팝업</span></Link> : null}
+      {!sundayNotice && (isClergy(profile) || profile.is_admin) ? <Link href="/sunday-notice" className="mb-4 flex min-h-12 items-center justify-between gap-2 rounded-xl border border-dashed border-accent/40 bg-surface px-4 py-2 text-sm font-semibold text-accent">이번 주 공지 쓰기 <span className="text-xs font-normal text-muted">쓰면 모두의 첫 화면에 팝업</span></Link> : null}
       {isClergy(profile)?<Link href="/weekly-summary" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-surface px-4 py-3 font-semibold text-accent">주간 요약 <span>예배별 · 부서별 전체 보기 ›</span></Link>:null}
       {isClergy(profile) ? <div className="mb-4 grid grid-cols-2 gap-2"><Link href="/prayer-meetings" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">주중 기도회 보고</Link><Link href="/notices?tab=restricted" className="flex min-h-20 min-w-0 items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-base font-semibold text-accent sm:text-lg">비공개 메시지</Link></div> : null}
       {isClergy(profile) ? <Link href="/manage" className="mb-4 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-surface px-4 py-3 font-semibold text-accent"><span>관리</span><span>팀 명단 · 팀원 추가·수정 ›</span></Link> : null}
@@ -176,7 +176,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
         <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
           <MenuIcon name="bell" small />알림 설정
         </Link>
-        <a href="/guide.html" className="inline-flex min-h-11 items-center text-sm text-muted hover:text-accent">📖 사용 안내</a>
+        <a href="/guide.html" className="inline-flex min-h-11 items-center text-sm text-muted hover:text-accent">사용 안내</a>
         <SignOutButton />
       </div>
       </div>

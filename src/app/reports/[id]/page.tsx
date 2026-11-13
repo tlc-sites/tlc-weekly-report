@@ -328,7 +328,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       </div>
       </div>
 
-      {mentionedNames.length||notify||notifiedMinisterNames.length?<div className="report-chips">{mentionedNames.map(n=><span key={"m"+n} className="report-chip"># {n} 함께 보기</span>)}{notify==="leadership"?<span className="report-chip">🔔 리더십 전체</span>:notify==="clergy"?<span className="report-chip">🔔 교역자 전체</span>:null}{notifiedMinisterNames.map(n=><span key={"n"+n} className="report-chip">🔔 {n}</span>)}</div>:null}
+      {mentionedNames.length||notify||notifiedMinisterNames.length?<div className="report-chips">{mentionedNames.map(n=><span key={"m"+n} className="report-chip"># {n} 함께 보기</span>)}{notify==="leadership"?<span className="report-chip">알림 · 리더십 전체</span>:notify==="clergy"?<span className="report-chip">알림 · 교역자 전체</span>:null}{notifiedMinisterNames.map(n=><span key={"n"+n} className="report-chip">알림 · {n}</span>)}</div>:null}
       {mentionedNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
       {notify||notifiedMinisterNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
       {canEdit && !(group.type === "campus" && report.meeting_label === "부산 방문") ? (

@@ -12,7 +12,7 @@ export function SundayNoticePopup({sunday,label,body,version,canWrite}:{sunday:s
  const close=()=>{try{localStorage.setItem(key,"1");}catch{}setOpen(false);};
  return <>
   <section className="mb-4 rounded-xl border border-accent/40 bg-accent/5 px-4 py-3" aria-label="이번 주 공지">
-   <div className="flex flex-wrap items-center gap-2"><b className="text-sm text-accent">📌 이번 주 공지 · {label}</b>{canWrite?<Link href={`/sunday-notice?sunday=${sunday}`} className="ml-auto text-xs font-semibold text-accent underline">고치기</Link>:null}</div>
+   <div className="flex flex-wrap items-center gap-2"><b className="text-sm text-accent">이번 주 공지 · {label}</b>{canWrite?<Link href={`/sunday-notice?sunday=${sunday}`} className="ml-auto text-xs font-semibold text-accent underline">고치기</Link>:null}</div>
    <p className="mt-1 whitespace-pre-wrap text-sm">{body}</p>
   </section>
   {open?<div className="fixed inset-0 z-[80] grid place-items-center bg-black/40 p-4" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)close();}} onKeyDown={e=>{if(e.key==="Escape")close();}}>
