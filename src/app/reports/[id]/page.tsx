@@ -331,30 +331,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {mentionedNames.length||notify||notifiedMinisterNames.length?<div className="report-chips">{mentionedNames.map(n=><span key={"m"+n} className="report-chip"># {n} 함께 보기</span>)}{notify==="leadership"?<span className="report-chip">알림 · 리더십 전체</span>:notify==="clergy"?<span className="report-chip">알림 · 교역자 전체</span>:null}{notifiedMinisterNames.map(n=><span key={"n"+n} className="report-chip">알림 · {n}</span>)}</div>:null}
       {mentionedNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
       {notify||notifiedMinisterNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
-      {canEdit && !(group.type === "campus" && report.meeting_label === "부산 방문") ? (
-        <details className="mb-2 text-sm" open={error === "date" || error === "date-weekday" || undefined}>
-          <summary className="cursor-pointer text-xs font-semibold text-accent">모임 날짜 수정 ({formatDate(report.meeting_date)})</summary>
-          <form action={changeMeetingDate} className="mt-2 flex flex-wrap items-end gap-2">
-            <input type="hidden" name="reportId" value={id} />
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              실제 모임 날짜
-              <input type="date" name="meetingDate" required max={todayKST()} defaultValue={report.meeting_date} className={inputClass} />
-            </label>
-            <SubmitButton className={smallButtonClass} pendingText="바꾸는 중…">날짜 바꾸기</SubmitButton>
-          </form>
-          <p className="mt-1 text-xs text-muted">모임 다음 날 작성해서 날짜가 틀렸을 때 고쳐 주세요. 다른 주로 옮기면 그 주의 보고로 셉니다.</p>
-        </details>
-      ) : null}
-      {dated ? <p className="mb-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">모임 날짜를 {formatDate(report.meeting_date)}로 바꿨습니다.</p> : null}
-      <p className="mb-4 text-xs text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
-      {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
-      {report.status!=="draft"?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
-      {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
-      <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date} staffReport={group.name==="예배위원"?{reportId:id,editable:isClergy(profile)&&report.meeting_date<=todayKST()}:undefined} status={typeof staffStatus==="string"?staffStatus:undefined}/>
-      <ReportImages reportId={id} images={images} canEdit={canEdit} />
-      {group.type === "worship" && !editMode && (incidentResult?.error || incidentResult?.data?.length) ? <TeamIssues canWrite={false} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
-
-      <div className="mb-4 flex flex-col gap-2">
+      <div className="mb-4 flex flex-col gap-2 empty:hidden">
         {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}
         {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt returnTo={`/groups/${group.id}?week=${weekOf(report.meeting_date)}`}/> : null}
         {message ? <><ErrorText>{message}</ErrorText><FailureDialog message={message}/></> : null}
@@ -373,23 +350,46 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
           <p className="rounded-lg bg-border/60 px-3 py-2 text-sm text-muted">검토자가 확인한 보고라 수정할 수 없습니다.</p>
         ) : null}
       </div>
+      {dated ? <p className="mb-2 rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">모임 날짜를 {formatDate(report.meeting_date)}로 바꿨습니다.</p> : null}
+      <p className="mb-3 text-[15px] text-muted">담당 파트: {getReportIdentity(report.details).duty_part || "미입력"} · 최종 수정: {getReportIdentity(report.details,report.author?.real_name).last_editor_name || getReportIdentity(report.details,report.author?.real_name).author_name} · {new Date(report.updated_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})}</p>
+      {/* 열람 현황은 한 줄로. 담임 목사님·사모님은 본문을 읽은 뒤 확인 버튼을 누르도록 본문 아래에 둔다 */}
+      {report.status!=="draft" && !isSenior(profile)?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
+      {report.status!=="draft" && isSenior(profile)?<AutoTranslation kind="report" id={id} source={reportSummaryLines({details:report.details} as Parameters<typeof reportSummaryLines>[0]).join("\n")} senior/>:null}
+      {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">이전에 저장된 작성 내용을 불러왔습니다.</p>:null}
+      <AutosaveContext version={draftVersion} enabled={report.status==="draft" && isAuthor}>{body}</AutosaveContext>
 
-      {canReview && report.status !== "draft" ? (
-        <ReviewPanel className="report-mobile-only" reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
-      ) : null}
-
-      {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="report-mobile-only mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
-      <PrivateSharing reportId={id}/>
-      {report.status !== "draft" && !editMode ? <ReportTeamTags reportId={id} groups={mentionGroups} /> : null}
+      {/* 본문 아래: 받은 글 → 확인 → 수정·사진·공유·날짜 수정 */}
       {messagesToMe.map((m) => (
         <Card key={m.recipient} className="mb-4 border-accent/40">
           <p className="mb-1 text-xs font-medium text-accent">{m.recipient === "pastor" ? "담임 목사님께 드리는 글" : "담임 사모님께 드리는 글"}</p>
           <p className="whitespace-pre-wrap text-sm">{m.body}</p>
         </Card>
       ))}
-
-      {draftResult?.data?<p role="status" className="mb-3 text-sm text-accent">이전에 저장된 작성 내용을 불러왔습니다.</p>:null}
-      <AutosaveContext version={draftVersion} enabled={report.status==="draft" && isAuthor}>{body}</AutosaveContext>
+      {report.status!=="draft" && isSenior(profile)?<ReportReadStatus key={id+report.updated_at} reportId={id} version={report.updated_at} senior={isSenior(profile)} role={profile.recipient_role} confirmed={(confirmations?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.confirmed_at}))} initial={(reads?.data??[]).map(r=>({role:r.recipient_role,version:r.report_version,viewedAt:r.viewed_at}))}/>:null}
+      {isSenior(profile)?<Link href="/notices?tab=restricted" className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">교역자에게 메시지 보내기 →</Link>:null}
+      {canReview && report.status !== "draft" ? (
+        <ReviewPanel className="report-mobile-only" reportId={id} status={report.status} canEditAsReviewer={canEdit && !isAuthor} editing={editMode && !isAuthor} />
+      ) : null}
+      {isAuthor&&canEdit&&report.status!=="draft"?<Link href={editMode?`/reports/${id}`:`/reports/${id}?edit=1`} className="report-mobile-only mb-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-accent">{editMode?"열람 화면으로 · 코멘트 보기":"보고서 수정"}</Link>:null}
+      {group.type === "worship" && !editMode && (incidentResult?.error || incidentResult?.data?.length) ? <TeamIssues canWrite={false} items={(incidentResult?.data ?? []) as Incident[]} groups={teamGroups} error={Boolean(incidentResult?.error)} context={{report_id:id,group_id:group.id,occurred_on:report.meeting_date,service_id:report.service_type_id ?? "",service_name:serviceName}} today={todayKST()}/> : null}
+      <SharedWorshipStaff serviceId={report.service_type_id} date={report.meeting_date} staffReport={group.name==="예배위원"?{reportId:id,editable:isClergy(profile)&&report.meeting_date<=todayKST()}:undefined} status={typeof staffStatus==="string"?staffStatus:undefined}/>
+      <ReportImages reportId={id} images={images} canEdit={canEdit} />
+      <PrivateSharing reportId={id}/>
+      {report.status !== "draft" && !editMode ? <ReportTeamTags reportId={id} groups={mentionGroups} /> : null}
+      {canEdit && !(group.type === "campus" && report.meeting_label === "부산 방문") ? (
+        <details className="mb-4 mt-2" open={error === "date" || error === "date-weekday" || undefined}>
+          <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-accent">모임 날짜 수정 ({formatDate(report.meeting_date)})</summary>
+          <form action={changeMeetingDate} className="mt-2 flex flex-wrap items-end gap-2">
+            <input type="hidden" name="reportId" value={id} />
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              실제 모임 날짜
+              <input type="date" name="meetingDate" required max={todayKST()} defaultValue={report.meeting_date} className={inputClass} />
+            </label>
+            <SubmitButton className={smallButtonClass} pendingText="바꾸는 중…">날짜 바꾸기</SubmitButton>
+          </form>
+          <p className="mt-1 text-xs text-muted">모임 다음 날 작성해서 날짜가 틀렸을 때 고쳐 주세요. 다른 주로 옮기면 그 주의 보고로 셉니다.</p>
+        </details>
+      ) : null}
 
       {!editMode && report.status !== "draft" ? <Comments reportId={id} myId={profile.id} isSenior={isSenior(profile)} canComment={isClergy(profile)} /> : null}
 
