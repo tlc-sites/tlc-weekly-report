@@ -5,7 +5,7 @@ export async function loadWeeklySummary(client:ReportClient,week:string){
  const end=[addDays(week,6),todayKST()].sort()[0];
  const [{data:groups,error:gError},{data:reports,error:rError},{data:incidents,error:iError}]=await Promise.all([
  client.from("groups").select("id,name,type,sort_order,settings,parent_id").eq("is_active",true).order("sort_order"),
- client.from("reports").select("id,author_id,group_id,author_name,duty_part,meeting_date,meeting_label,status,details,service_type_id,service:service_types(name,sort_order)").eq("week",week).neq("status","draft").lte("meeting_date",end).order("meeting_date"),
+ client.from("reports").select("id,author_id,group_id,author_name,duty_part,meeting_date,meeting_label,status,updated_at,details,service_type_id,service:service_types(name,sort_order)").eq("week",week).neq("status","draft").lte("meeting_date",end).order("meeting_date"),
  client.from("worship_incidents").select("id,author_id,report_id,author:profiles!author_id(real_name),title,occurred_on,service_id,service_name,circumstances,response,status,group_ids").gte("occurred_on",week).lte("occurred_on",end).order("occurred_on")]);
  if(gError||rError||iError)throw gError??rError??iError;
  const rs=(reports??[]) as unknown as SummaryReport[];

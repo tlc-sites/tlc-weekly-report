@@ -1,6 +1,6 @@
 import {groupDisplayName} from "./group-display";
 import {attendanceLines} from "./team-session";
-export type SummaryReport={id:string;author_id?:string;group_id:string;author_name?:string;duty_part?:string;meeting_date:string;meeting_label:string|null;status:string;details:Record<string,unknown>;service:{name:string;sort_order?:number}|null;service_type_id?:string|null;group_meeting_type_id?:string|null};
+export type SummaryReport={id:string;author_id?:string;group_id:string;author_name?:string;duty_part?:string;meeting_date:string;meeting_label:string|null;status:string;updated_at?:string;details:Record<string,unknown>;service:{name:string;sort_order?:number}|null;service_type_id?:string|null;group_meeting_type_id?:string|null};
 export type SummaryGroup={id:string;name:string;type:string;sort_order?:number;parent_id?:string|null;settings?:Record<string,unknown>};
 export type SummaryIncident={id:string;author_id?:string;report_id?:string|null;author?:{real_name:string|null}|null;duty_part?:string;title:string;occurred_on:string;service_id:string|null;service_name:string;circumstances:string;response:string;status:string;group_ids:string[]};
 export type SummaryBlock={key:string;kind:string;title:string;order:number;reports:SummaryReport[];incidents:SummaryIncident[]};
