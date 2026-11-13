@@ -8,6 +8,8 @@ import { addDays, formatWeek, reportWeek, todayKST } from "@/lib/week";
 import { BackLink, Card, Field, Loading, PageTitle, selectClass, smallButtonClass } from "@/components/ui";
 import { ReportStatusBadge } from "@/components/report-status";
 import { AdminNav } from "@/components/admin-nav";
+import { PartStatusList } from "@/components/home-overview";
+import { listGroupsOrdered } from "@/lib/groups";
 import {HELP} from "@/lib/help-text";
 
 export default function Page(props: PageProps<"/admin/submissions">) {
@@ -19,7 +21,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
   const params = await searchParams;
   const week = reportWeek(params.week, todayKST());
   const status = ["draft","submitted","reviewed","sent"].includes(String(params.status)) ? String(params.status) : "all";
-  const data = await loadAdminSubmissions(supabase, week);
+  const [data, ordered] = await Promise.all([loadAdminSubmissions(supabase, week), listGroupsOrdered(supabase)]);
   const group = typeof params.group === "string" && data.groups.some(g => g.id === params.group) ? params.group : "";
   const names = new Map(data.groups.map(g => [g.id, groupDisplayName(g.name)]));
   const rows = data.reports.filter(r => (!group || r.group_id === group) && (status === "all" || (status === "sent" ? r.status !== "draft" : r.status === status)));
@@ -31,6 +33,7 @@ async function Content({ searchParams }: PageProps<"/admin/submissions">) {
     <p className="mb-4 text-sm text-muted">관리자에게는 파트·작성자·예배·제출 상태만 표시됩니다. 본문은 별도 열람 권한이 있을 때만 열 수 있습니다.</p>
     {data.setup_expires_at ? <Card className="mb-4"><p className="text-sm">셋업용 일반 내용 열람 중 · {new Date(data.setup_expires_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"})} 자동 종료</p><p className="mt-1 text-xs text-muted">읽기만 가능하며 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
     <nav className="mb-4 flex flex-wrap gap-2" aria-label="현황 주차 이동"><Link className={smallButtonClass} href={href(addDays(week,-7))}>← 지난 주</Link>{week < reportWeek(undefined,todayKST()) ? <><Link className={smallButtonClass} href={href(addDays(week,7))}>다음 주 →</Link><Link className={smallButtonClass} href={href(reportWeek(undefined,todayKST()))}>이번 주</Link></> : null}</nav>
+    {!group ? <PartStatusList week={week} reports={data.reports} parts={data.groups.map(g => ({ ...g, settings: ordered.find(x => x.id === g.id)?.settings }))} noMeeting={data.no_meeting} linkFor={(id) => `/admin/submissions?${new URLSearchParams({ week, status, group: id })}`} /> : null}
     <form method="get" className="mb-4 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
       <input type="hidden" name="week" value={week}/>
       <Field label="파트"><select name="group" defaultValue={group} className={selectClass}><option value="">전체 파트</option>{data.groups.map(g => <option key={g.id} value={g.id}>{groupDisplayName(g.name)}</option>)}</select></Field>
