@@ -94,7 +94,7 @@ test('2·3부·라이프라인 템플릿이 있고 1부는 v2에서 T-5가 빠�
   {life:[await latestV(as,'life'),'라이프라인','18:00'],sun1:[await latestV(as,'sun1'),'주일 1부','08:20'],sun2:[await latestV(as,'sun2'),'주일 2부','10:40'],sun3:[await latestV(as,'sun3'),'주일 3부','13:00']});
  const labels=t=>t.page1.rows.flat().map(b=>b.label);
  assert.ok(!labels(by.sun1.content).includes('T-5'));
- assert.deepEqual(labels(by.sun2.content),['T-60','T-30','T-20','T-10','T-2','T-1','START']);
+ assert.deepEqual(labels(by.sun2.content),['섬기는 사람','T-60','T-30','T-20','T-10','T-2','T-1','START']);
  // 시작 시각 기준 시각: 2부 예배팀 기도 9:50, 영상팀 10:10, 안내위원 10:20, 전체 집결 10:30 / 3부는 2시간 20분 뒤
  const arr=t=>t.page1.rows.flat().flatMap(b=>(b.arrivals??[]).map(a=>clockAt(t.start,a.offsetMin)+' '+a.text));
  assert.deepEqual(arr(by.sun2.content),['09:50 예배팀 기도 시작','10:10 영상 · 사진 · 조명팀 집결 · 기도','10:20 안내위원 집결','10:30 전체 집결 상태 확인']);
@@ -201,8 +201,14 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
   assert.deepEqual([...peopleFields(s1)],['r1','r2','r3','r4','r7','r8']);
   const ids=applicableCheckIds(s1,{});assert.ok(ids.includes('pp_r1_ok')&&ids.includes('pp_tech_sb'));for(const k of ['a2','a3','c10','c11','e1','e2','e3','e6','c9','e5'])assert.ok(!ids.includes(k),k);
   assert.equal(JSON.stringify(s1).match(/"id": ?"b3"[^}]*/)[0].includes('성찬 순서·자막·준비'),true);
-  for(const k of ['sun2','sun3','life'])assert.ok(!JSON.stringify(by[k]).includes('"people"'),k);
   const bad=structuredClone(s1);bad.page1.rows[0][0].items[0].people[0].field='nope';assert.ok(!parseTemplate(bad).ok);}
+ // DB58: 2부·3부·라이프라인도 같은 표. 라이프라인은 광고(r16)·강대상 옮김(r17)까지, 시각은 가장 이른 블록(T-100). a10·e4는 남는다
+ for(const k of ['sun2','sun3','life']){const t=by[k];const pb=t.page1.rows[0][0];assert.equal(pb.items[0].type,'people',k);assert.equal(t.page1.rows[0].length,1,k);
+  assert.ok(parseTemplate(t).ok,k);const ids=applicableCheckIds(t,{});assert.ok(ids.includes('pp_r1_in')&&ids.includes('pp_wt_sb'),k);
+  for(const x of ['a2','a3','a9','c12','c13','c14','e1','e2','e3','e6','e7','e8'])assert.ok(!ids.includes(x),k+' '+x);for(const x of ['a10','e4'])assert.ok(ids.includes(x),k+' '+x);
+  assert.ok(!t.page1.rows.flat().some(b=>b.items.some(i=>i.type==='heading'&&i.text.startsWith('도착'))),k);}
+ assert.deepEqual([...peopleFields(by.sun2)],['r1','r2','r3','r4','r7','r8']);
+ assert.deepEqual([...peopleFields(by.life)],['r1','r2','r3','r4','r16','r7','r8','r17']);assert.equal(by.life.page1.rows[0][0].offsetMin,-100);
  assert.deepEqual(cueSongKeys(life.cue),['song1','song2','song3','song4','song5','song6','song_off']);
  // 성찬주간이면 헌금 다음에 성찬 곡(song_comm). 큐시트·PD 체크리스트 송리스트에 같이 보인다
  assert.deepEqual(cueSongKeys(s1.cue,{communion:true}).slice(-2),['song_off','song_comm']);assert.ok(!cueSongKeys(s1.cue,{communion:false}).includes('song_comm'));
