@@ -7,6 +7,7 @@ import { Badge, Field, inputClass, selectClass, smallButtonClass } from "@/compo
 import { GUARDIAN_RELATIONS } from "@/lib/members";
 import type { EducationPayload } from "@/lib/report-forms";
 import { MessagesEditor, ReportForm, RequestsEditor, Section, TextArea } from "./form-parts";
+import { SiblingCopy } from "./sibling-copy";
 
 export type RosterMember = {
   id: string;
@@ -40,6 +41,7 @@ export function EducationForm({
   canEditPrayer,
   mentionGroups = [],
   ministers = [],
+  copyFrom,
 }: {
   action: (formData: FormData) => Promise<void>;
   reportId: string;
@@ -50,6 +52,7 @@ export function EducationForm({
   canEditPrayer: boolean;
   mentionGroups?: { id: string; label: string }[];
   ministers?: { id: string; label: string }[];
+  copyFrom?: string;
 }) {
   const [p, setP] = useState(initial);
   const byId = new Map(p.attendance.map((a) => [a.member_id, a]));
@@ -215,6 +218,7 @@ export function EducationForm({
       </Section>
 
       <Section title="예배·교육">
+        {copyFrom ? <SiblingCopy reportId={reportId} from={copyFrom} current={{ sermon_passage: p.details.sermon_passage, preacher: p.details.preacher, sermon_summary: p.details.sermon_summary ?? "", activity: p.details.activity }} onApply={(f) => setDetails(f)} /> : null}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="설교 본문">
             <input

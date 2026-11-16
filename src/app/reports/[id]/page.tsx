@@ -192,6 +192,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
         mentionGroups={mentionGroups} ministers={ministers}
         guardianCheck={Boolean(group.settings?.guardian_check)}
         showMessages={isAuthor}
+        copyFrom={({ 중등부: "고등부", 고등부: "중등부" } as Record<string, string>)[group.name]}
       />
     ) : (
       <ReadOnly
