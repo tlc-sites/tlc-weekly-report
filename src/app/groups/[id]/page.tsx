@@ -8,6 +8,7 @@ import { NoMeeting } from "./no-meeting";
 import { SubmitButton } from "@/components/submit-button";
 import { serviceOccursOn } from "@/lib/service-schedule";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import Link from "@/components/pending-link";
 import {
   BackLink,
@@ -58,7 +59,7 @@ export default function GroupPage({ params, searchParams }: PageProps<"/groups/[
 
 async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">) {
   const { supabase, profile } = await requireActive();
-  const [{ id }, { week: weekParam, error, tab }] = await Promise.all([params, searchParams]);
+  const [{ id }, { week: weekParam, error, tab, pick: pickParam, date: dateParam }] = await Promise.all([params, searchParams]);
   const { group, canWrite, canCreateReport, isLeaf } = await getGroupAccess(supabase, id);
   const today = todayKST();
   const week = reportWeek(weekParam, today);
@@ -86,6 +87,15 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
         </Card>
       </>
     );
+  }
+
+  // 모임 알림에서 왔을 때(pick·date): 그 예배·날짜에 내가 쓰던 보고가 있으면 바로 연다
+  const pick = typeof pickParam === "string" && /^(service|meeting):[0-9a-f-]{36}$/.test(pickParam) ? pickParam : undefined;
+  const pickDate = typeof dateParam === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : undefined;
+  if (pick && pickDate && canCreateReport) {
+    const [kind, pickId] = pick.split(":");
+    const { data: mine } = await supabase.from("reports").select("id").eq("group_id", id).eq("author_id", profile.id).eq("status", "draft").eq("meeting_date", pickDate).eq(kind === "service" ? "service_type_id" : "group_meeting_type_id", pickId).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+    if (mine) redirect(`/reports/${mine.id}`);
   }
 
   const [reportsRes, weekStatus, services, meetingTypes, myMembership, lastMine] = await Promise.all([
@@ -165,14 +175,14 @@ async function GroupContent({ params, searchParams }: PageProps<"/groups/[id]">)
             <form action={createReport} className="flex flex-col gap-4">
               <input type="hidden" name="groupId" value={id} />
               <input type="hidden" name="reportWeek" value={week} />
-              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)} initialKind={lastKind}>
+              <ReportKindFields minDate={week} maxDate={maxDate} kinds={sessionKinds(group.type)} initialKind={pick ? "standard" : lastKind}>
               {group.type === "campus" ? (
                 <>
                   <input type="hidden" name="meeting" value="campus" />
                   <CampusDepartureField defaultDate={maxDate}/>
                 </>
               ) : (
-                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} initial={lastMeeting} />
+                <NewReportFields key={week} options={options} fallbackDate={defaultDate(null)} maxDate={maxDate} minDate={week} initial={pick ?? lastMeeting} />
               )}
               </ReportKindFields>
               {/* 작성자·담당은 로그인 정보와 파트 직책으로 채워 두고, 필요할 때만 펼쳐 고친다(접혀 있어도 함께 저장된다) */}
