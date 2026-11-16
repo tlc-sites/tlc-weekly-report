@@ -1,7 +1,8 @@
 -- DB 59: 중등부 ↔ 고등부 보고 가져오기.
--- 지금 고치는 보고를 고칠 수 있는 사람에게만, 같은 날 상대 부서 보고의
--- 설교 본문·설교자·설교 요약·공과·활동 네 칸만 돌려준다(출결·기도제목·글은 없음).
--- 제출된 보고 중 가장 최근 것, 없으면 내가 쓰던 상대 부서 임시저장.
+-- 이 보고를 고칠 수 있는 사람에게만, 같은 날
+-- 상대 부서 보고의 설교 본문·설교자·설교 요약·
+-- 공과·활동만 돌려준다(출결·기도제목 없음).
+-- 제출본 중 최신, 없으면 내 임시저장.
 create or replace function report.sibling_sermon(rid uuid)
 returns table(
   from_group text, meeting_date date,
@@ -40,5 +41,6 @@ set search_path = '' as $$
 $$;
 revoke all on function report.sibling_sermon(uuid)
   from public, anon;
-grant execute on function report.sibling_sermon(uuid)
+grant execute
+  on function report.sibling_sermon(uuid)
   to authenticated;
