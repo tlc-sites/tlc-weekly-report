@@ -3,7 +3,8 @@
 -- 상대 부서 보고의 설교 본문·설교자·설교 요약·
 -- 공과·활동만 돌려준다(출결·기도제목 없음).
 -- 제출본 중 최신, 없으면 내 임시저장.
-create or replace function report.sibling_sermon(rid uuid)
+create or replace function
+  report.sibling_sermon(rid uuid)
 returns table(
   from_group text, meeting_date date,
   sermon_passage text, preacher text,
