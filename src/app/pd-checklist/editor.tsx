@@ -298,10 +298,13 @@ function ItemsEditor({items,edit,newId,teams,condSelect,rosterFields}:{items:Ite
    <button type="button" className={add} onClick={()=>edit(l=>{l.push({type:"checkGroup",layout:"auto",columns:null,items:[{id:newId("n"),text:""}]});})}>+ 묶음 체크</button>
    <button type="button" className={add} onClick={()=>edit(l=>{l.push({type:"note",parts:[{text:"기준 ",bold:true},{text:"",bold:false}]});})}>+ 기준 문구</button>
    <button type="button" className={add} onClick={()=>edit(l=>{l.push({type:"locationMatrix",columns:[{key:"v",label:"영상"},{key:"a",label:"음향"}],rows:[{id:newId("m"),label:""}]});})}>+ 위치표</button>
-   {rosterFields&&!items.some(x=>x.type==="people")?<button type="button" className={add} onClick={()=>edit(l=>{l.push({type:"people",steps:[{key:"ok",label:"확인"},{key:"in",label:"도착"},{key:"sb",label:"STANDBY"}],people:rosterFields.slice(0,1).map(f=>({key:"p1",label:f.label,field:f.id}))});})}>+ 섬기는 사람 표</button>:null}
+   {rosterFields&&items.filter(x=>x.type==="people").length<2?<button type="button" className={add} onClick={()=>edit(l=>{l.push({type:"people",steps:[{key:"ok",label:"확인"},{key:"in",label:"도착"},{key:"sb",label:"STANDBY"}],people:rosterFields.slice(0,1).map(f=>({key:personKey(l),label:f.label,field:f.id}))});})}>+ 섬기는 사람 표</button>:null}
   </div>
  </div>;
 }
+
+/** 섬기는 사람 표의 새 사람 키. 한 블록에 표가 둘일 수 있어 다른 표의 키(체크 ID pp_사람_단계)와도 겹치지 않게 고른다. */
+const personKey=(items:Item[])=>{const keys=new Set(items.flatMap(x=>x.type==="people"?x.people.map(q=>q.key):[]));let k=1;while(keys.has("p"+k))k++;return "p"+k;};
 
 function ItemBody({it,edit,newId,teams,condSelect,rosterFields}:{it:Item;edit:Edit<Item>;newId:(prefix:string)=>string;teams:string[];condSelect:(v:string|null|undefined,f:(v:string|null)=>void)=>ReactNode;rosterFields:RosterField[]}){
  switch(it.type){
@@ -342,6 +345,10 @@ function ItemBody({it,edit,newId,teams,condSelect,rosterFields}:{it:Item;edit:Ed
    const nextKey=(p:string,keys:string[])=>{let k=1;while(keys.includes(p+k))k++;return p+k;};
    return <>
    <p className="text-xs text-muted">이름 칸을 고르면 그 담당자 칸(큐시트와 같은 값)을 이 표에서 적습니다. 고르지 않으면 작은 글만 보입니다.</p>
+   <div className="flex flex-wrap items-center gap-3 text-sm">
+    <input className={inp+" w-36"} aria-label="표 이름" placeholder="표 이름(예: 기술팀)" value={it.caption??""} maxLength={20} onChange={e=>edit(x=>{if(x.type==="people")x.caption=e.target.value||undefined;})}/>
+    <label className="text-xs"><input type="checkbox" checked={!!it.inline} onChange={e=>edit(x=>{if(x.type==="people")x.inline=e.target.checked||undefined;})}/> 단계를 한 줄로(칸마다 나란히)</label>
+   </div>
    <div className="space-y-1.5">{it.people.map((p,i)=><div key={p.key} className="flex flex-wrap items-center gap-1.5">
     <input className={inp+" w-32"} aria-label="역할" value={p.label} maxLength={20} onChange={e=>edit(x=>{if(x.type==="people")x.people[i].label=e.target.value;})}/>
     <select className={sel} aria-label="이름 칸" value={p.field??""} onChange={e=>edit(x=>{if(x.type!=="people")return;const v=e.target.value;if(v){x.people[i].field=v;delete x.people[i].sub;}else delete x.people[i].field;})}>
@@ -351,7 +358,7 @@ function ItemBody({it,edit,newId,teams,condSelect,rosterFields}:{it:Item;edit:Ed
     <button type="button" className={btn+" px-2"} aria-label="오른쪽으로" disabled={i===it.people.length-1} onClick={()=>edit(x=>{if(x.type==="people")move(x.people,i,1);})}>→</button>
     {it.people.length>1?<button type="button" className={btn+" px-2"} aria-label="사람 삭제" onClick={()=>edit(x=>{if(x.type==="people")x.people.splice(i,1);})}>✕</button>:null}
    </div>)}
-    {it.people.length<12?<button type="button" className={add} onClick={()=>edit(x=>{if(x.type==="people")x.people.push({key:nextKey("p",x.people.map(q=>q.key)),label:"새 사람"});})}>+ 사람</button>:null}</div>
+    {it.people.length<12?<button type="button" className={add} onClick={()=>edit(x=>{if(x.type==="people")x.people.push({key:"p"+Date.now().toString(36),label:"새 사람"});})}>+ 사람</button>:null}</div>
    <div className="flex flex-wrap items-center gap-2"><span className="text-xs text-muted">단계</span>{it.steps.map((s,i)=><span key={s.key} className="inline-flex items-center gap-1"><input className={inp+" w-28"} aria-label="단계 이름" value={s.label} maxLength={20} onChange={e=>edit(x=>{if(x.type==="people")x.steps[i].label=e.target.value;})}/>
     {it.steps.length>1?<button type="button" className={btn+" px-2"} aria-label="단계 삭제" onClick={()=>edit(x=>{if(x.type==="people")x.steps.splice(i,1);})}>✕</button>:null}</span>)}
     {it.steps.length<4?<button type="button" className={add} onClick={()=>edit(x=>{if(x.type==="people")x.steps.push({key:nextKey("s",x.steps.map(q=>q.key)),label:""});})}>+ 단계</button>:null}</div>

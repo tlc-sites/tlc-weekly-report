@@ -22,7 +22,8 @@ const item=z.discriminatedUnion("type",[
   rows:z.array(z.object({id:z.string().regex(/^[A-Za-z0-9_]{1,30}$/),label:text(40)})).min(1).max(12)}),
  z.object({type:z.literal("people"),
   steps:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,8}$/),label:text(20)})).min(1).max(4),
-  people:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,20}$/),label:text(20),field:id.optional(),sub:opt(30).optional()})).min(1).max(12)}),
+  people:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,20}$/),label:text(20),field:id.optional(),sub:opt(30).optional()})).min(1).max(12),
+  caption:opt(20).optional(),inline:z.boolean().optional()}),
 ]);
 const items=z.array(item).max(30);
 

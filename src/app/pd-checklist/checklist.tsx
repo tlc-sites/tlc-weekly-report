@@ -129,12 +129,13 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
    case "locationMatrix":return <table key={i} className="floor"><thead><tr><th scope="col">위치</th>{it.columns.map(c=><th key={c.key} scope="col">{c.label}</th>)}</tr></thead>
     <tbody>{it.rows.map(r=><tr key={r.id}><td>{r.label}</td>{it.columns.map(c=><td key={c.key}>{ck(r.id+c.key,null,{label:`${r.label} ${c.label}`})}</td>)}</tr>)}</tbody></table>;
    // 섬기는 사람 표: 이름 칸은 담당자 칸(roster)과 같은 값. 화면에선 입력, 인쇄에선 이름.
-   case "people":return <div key={i} className="people-wrap"><table className="floor people" style={{"--n":it.people.length} as CSSProperties}><thead><tr><th scope="col"><span className="sr-only">단계</span></th>{it.people.map(p=><th key={p.key} scope="col">
+   case "people":return <div key={i} className="people-wrap"><table className={"floor people"+(it.inline?" inline":"")} style={{"--n":it.people.length} as CSSProperties}><thead><tr><th scope="col">{it.caption?<span className="pp-cap">{it.caption}</span>:<span className="sr-only">단계</span>}</th>{it.people.map(p=><th key={p.key} scope="col">
      <div className="pp-role">{p.label}</div>
      {p.field?<NameInput id={p.field} label={p.label} value={roster[p.field]??""} onChange={setRosterField} onBlur={rosterBlur}/>
       :p.sub?<div className="pp-sub">{p.sub}</div>:null}
     </th>)}</tr></thead>
-    <tbody>{it.steps.map(s=><tr key={s.key}><td>{s.label}</td>{it.people.map(p=><td key={p.key}>{ck(peopleCheckId(p.key,s.key),null,{label:`${p.label} ${s.label}`})}</td>)}</tr>)}</tbody></table></div>;
+    <tbody>{it.inline?<tr className="pp-inline"><td><span className="sr-only">단계</span></td>{it.people.map(p=><td key={p.key}>{it.steps.map(s=>ck(peopleCheckId(p.key,s.key),s.label,{label:`${p.label} ${s.label}`}))}</td>)}</tr>
+     :it.steps.map(s=><tr key={s.key}><td>{s.label}</td>{it.people.map(p=><td key={p.key}>{ck(peopleCheckId(p.key,s.key),null,{label:`${p.label} ${s.label}`})}</td>)}</tr>)}</tbody></table></div>;
   }
  });
 

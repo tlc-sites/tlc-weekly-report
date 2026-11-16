@@ -18,6 +18,10 @@ export type PeopleTable = {
   type: "people";
   steps: { key: string; label: string }[];
   people: { key: string; label: string; field?: string; sub?: string }[];
+  /** 표 왼쪽 위 칸에 보일 묶음 이름(예: '기술팀'). 없으면 비워 둔다. */
+  caption?: string;
+  /** 단계를 줄로 나누지 않고 한 줄에 칸마다 나란히(높이를 줄일 때). */
+  inline?: boolean;
 };
 export const peopleCheckId = (person: string, step: string) => `pp_${person}_${step}`;
 

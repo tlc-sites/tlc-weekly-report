@@ -167,11 +167,16 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .blk.wide .blk-b:has(> .people-wrap) { column-count: 1; }
 .pdc .people-wrap { overflow-x: auto; }
 .pdc table.people { table-layout: fixed; min-width: calc(76px + var(--n) * 108px); }
+.pdc table.people.inline { min-width: calc(76px + var(--n) * 160px); }
 .pdc table.people th { text-align: center; vertical-align: bottom; letter-spacing: 0; }
 .pdc table.people th:first-child { width: 76px; }
 .pdc table.people td { text-align: center; }
 .pdc table.people td:first-child { white-space: nowrap; }
 .pdc table.people .pp-role { white-space: nowrap; }
+.pdc table.people .pp-cap { display: block; text-align: left; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.pdc .people-wrap + .people-wrap { margin-top: 6px; }
+.pdc table.people tr.pp-inline td:not(:first-child) { white-space: nowrap; }
+.pdc table.people tr.pp-inline .ck { display: inline-flex; margin: 0 4px; }
 .pdc table.people .pp-sub { font-weight: 500; color: var(--faint); margin-top: 3px; }
 .pdc table.people th input { display: block; width: 100%; min-width: 0; margin-top: 3px; border: 1px solid var(--line2); border-radius: 6px; background: var(--paper); padding: 3px 5px; font-size: 13px; font-weight: 600; color: var(--ink); text-align: center; }
 .pdc table.people th input:focus { border-color: var(--accent); outline: none; }
@@ -301,7 +306,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc table.floor th, .pdc table.floor td { padding: .6mm 1.6mm; }
   .pdc table.floor th { font-size: 7.6pt; }
   .pdc .people-wrap { overflow: visible; }
-  .pdc table.people { min-width: 0; }
+  .pdc table.people, .pdc table.people.inline { min-width: 0; }
   .pdc table.people th { padding-left: 1mm; padding-right: 1mm; }
   .pdc table.people th:first-child { width: 15mm; }
   .pdc table.people th input { display: none; }
