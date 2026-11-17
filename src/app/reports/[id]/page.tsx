@@ -47,7 +47,7 @@ import { OtherForm, WorshipForm } from "./worship-form";
 const MESSAGES: Record<string, string> = {
   "campus-finance":"부산 헌금·경비 항목을 모두 입력해 주세요. 지출하지 않은 항목은 0, 헌금이 없으면 기타에 없음으로 적어 주세요.",
   conflict: "다른 기기에서 보고서가 변경되었습니다. 입력 내용을 별도로 보관한 뒤 보고서를 다시 열어 주세요.",
-  "attendance-assignment": "교회학교 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 임시저장해 주세요.",
+  "attendance-assignment": "교회학교 출결 보고는 담당 파트 배정 후 제출할 수 있습니다. 작성 내용은 자동저장되어 있습니다.",
   invalid: "입력값이 올바르지 않습니다. 다시 확인해 주세요.",
   missing: "제출에 필요한 항목이 비어 있습니다.",
   consent: "보호자 연락처를 저장하려면 수집 동의를 체크해 주세요.",
@@ -334,7 +334,7 @@ async function ReportContent({ params, searchParams }: PageProps<"/reports/[id]"
       {mentionedNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 보는 부서: {mentionedNames.join(", ")}</p>:null}
       {notify||notifiedMinisterNames.length?<p className="report-mobile-only mb-2 text-sm text-accent">함께 알림: {[notify==="leadership"?"리더십 전체(담임목사님·사모님·교역자)":notify==="clergy"?"교역자 전체":"",...notifiedMinisterNames].filter(Boolean).join(", ")}</p>:null}
       <div className="mb-4 flex flex-col gap-2 empty:hidden">
-        {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 임시저장할 수 있습니다.</p> : null}
+        {editMode && group.type === "education" && !teamWriteRes.data ? <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">출결 명단은 담당 파트 배정 후 사용할 수 있습니다. 작성한 내용은 자동저장됩니다.</p> : null}
         {saved === "submit" && report.status !== "draft" && canEdit ? <SubmissionReceipt returnTo={`/groups/${group.id}?week=${weekOf(report.meeting_date)}`}/> : null}
         {message ? <><ErrorText>{message}</ErrorText><FailureDialog message={message}/></> : null}
         {existing ? <p className="rounded-lg bg-border/60 px-3 py-2 text-sm">이미 작성 중인 같은 보고가 있어서 이어서 엽니다.</p> : null}

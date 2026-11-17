@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Card, buttonClass, inputClass, secondaryButtonClass, selectClass, smallButtonClass, textareaClass } from "@/components/ui";
 import { ISSUE_STATUS_LABEL, REQUEST_CATEGORIES, missingOnSubmit } from "@/lib/report-forms";
 
 import {FieldErrors,FieldHighlight,FailureDialog} from "@/components/form-validation";
 import {useAutosaveContext} from "./autosave-context";
+import {autosaveReport} from "./autosave-actions";
 import {InfoTip} from "@/components/info-tip";
 import {HELP} from "@/lib/help-text";
 
@@ -80,11 +81,36 @@ export function ReportForm({
   const [errorKey,setErrorKey]=useState(0);
   const showError=(message:string)=>{setError(message);setErrorKey(key=>key+1);};
 
-  // 임시저장은 버튼으로만 한다. 버전은 다른 기기에서 바뀐 내용을 덮어쓰지 않도록 확인하는 데 쓴다.
+  // 내 작성 중 보고는 입력을 멈추고 1.2초 뒤(또는 화면을 벗어날 때) 자동으로 저장한다. 버전은 다른 기기에서 바뀐 내용을 덮어쓰지 않도록 확인하는 데 쓴다.
   const sync=useAutosaveContext();
   const serialized=JSON.stringify(payload);
-  const [savedPayload]=useState(serialized);
+  const formRef=useRef<HTMLFormElement>(null);
+  const [version,setVersion]=useState(sync.version);
+  const [savedPayload,setSavedPayload]=useState(serialized);
+  const [saving,setSaving]=useState(false);
+  const [failed,setFailed]=useState<string|null>(null);
+  const [conflict,setConflict]=useState(false);
+  const [savedTime,setSavedTime]=useState("");
+  const [queued,setQueued]=useState<string|null>(null);
   const [manual,setManual]=useState(false);
+  const pending=sync.enabled&&!manual&&!saving&&!conflict&&failed!==serialized&&savedPayload!==serialized;
+  const autosave=useEffectEvent(async()=>{
+    setSaving(true);
+    try{const result=await autosaveReport(reportId,version,JSON.parse(serialized));
+      if(result.ok){setVersion(result.version);setSavedPayload(serialized);setFailed(null);setSavedTime(new Date().toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"}));}
+      else{setFailed(serialized);if(result.reason==="conflict")setConflict(true);}
+    }catch{setFailed(serialized);}finally{setSaving(false);}
+  });
+  useEffect(()=>{
+    if(!pending)return;
+    const timer=setTimeout(()=>void autosave(),1200);
+    // 휴대폰에서 앱을 내리거나 다른 화면으로 갈 때는 기다리지 않고 바로 저장한다
+    const hide=()=>{if(document.visibilityState==="hidden"){clearTimeout(timer);void autosave();}};
+    document.addEventListener("visibilitychange",hide);
+    return ()=>{clearTimeout(timer);document.removeEventListener("visibilitychange",hide);};
+  },[pending,serialized]);
+  // 자동저장 중에 제출을 누르면 저장이 끝난 뒤 이어서 제출한다
+  useEffect(()=>{if(!queued||saving)return;const timer=setTimeout(()=>{const intent=queued;setQueued(null);const button=formRef.current?.querySelector<HTMLButtonElement>('button[value="'+intent+'"]');if(button)formRef.current?.requestSubmit(button);},0);return()=>clearTimeout(timer);},[queued,saving]);
   useEffect(()=>{const guard=(event:BeforeUnloadEvent)=>{if(sync.enabled&&serialized!==savedPayload&&!manual){event.preventDefault();}};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[serialized,savedPayload,sync.enabled,manual]);
 
   async function submitAction(formData:FormData){
@@ -111,14 +137,16 @@ export function ReportForm({
         return;
       }
     }
+    if(conflict){event.preventDefault();showError("다른 기기에서 보고서가 변경되었거나 제출되었습니다. 지금 쓴 내용을 메모장 등에 복사해 두고 보고서를 다시 열어 주세요.");return;}
+    if(saving){event.preventDefault();setQueued(submitter?.value??"submit");return;}
     setManual(true);
     setError(null);
   }
 
   return (
-    <FieldErrors value={issues.filter(issue=>missingOnSubmit(type,payload).includes(issue))}><form action={submitAction} onSubmit={onSubmit} noValidate>
+    <FieldErrors value={issues.filter(issue=>missingOnSubmit(type,payload).includes(issue))}><form ref={formRef} action={submitAction} onSubmit={onSubmit} noValidate>
       <input type="hidden" name="reportId" value={reportId} />
-      <input type="hidden" name="draftVersion" value={sync.enabled?sync.version:""} />
+      <input type="hidden" name="draftVersion" value={sync.enabled?version:""} />
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       {children}
       {error ? (
@@ -126,21 +154,23 @@ export function ReportForm({
           {error}
         </p>
       ) : null}
-      <InfoTip className="mt-3" title={<span className="text-sm font-semibold">임시저장 · 제출</span>} guide={HELP.save.guide}>{HELP.save.body}</InfoTip>
-      {sync.enabled&&savedPayload!==serialized?<p role="status" aria-live="polite" className="my-3 text-sm text-muted">저장하지 않은 변경 내용이 있습니다. 이어서 쓰려면 「임시저장」을 눌러 주세요.</p>:null}
+      <InfoTip className="mt-3" title={<span className="text-sm font-semibold">{sync.enabled?"자동저장 · 제출":"임시저장 · 제출"}</span>} guide={HELP.save.guide}>{HELP.save.body}</InfoTip>
+      {sync.enabled?<p role="status" aria-live="polite" className={`my-3 text-[15px] ${conflict||failed===serialized?"text-danger":"text-muted"}`}>{conflict?"다른 기기에서 보고서가 변경되었거나 제출되었습니다. 지금 쓴 내용을 메모장 등에 복사해 두고 보고서를 다시 열어 주세요.":saving?"저장 중…":failed===serialized?"저장하지 못했습니다. 쓴 내용은 화면에 그대로 있습니다. 인터넷 연결을 확인해 주세요.":savedPayload!==serialized?"쓰는 중…":savedTime?"자동저장됨 · "+savedTime+" · 다른 기기에서 이어 쓸 수 있습니다.":"쓰는 내용은 자동으로 저장됩니다."}{failed===serialized&&!conflict?<button type="button" onClick={()=>setFailed(null)} className="ml-2 inline-flex min-h-11 items-center font-semibold text-accent underline">다시 저장</button>:null}</p>:null}
+      {queued?<p role="status" className="mb-3 text-[15px] text-accent">저장을 마치고 바로 제출합니다.</p>:null}
       {error?<FailureDialog key={errorKey} message={error}/>:null}
-      <SubmitBar />
+      <SubmitBar showDraft={!sync.enabled} />
     </form></FieldErrors>
   );
 }
 
-function SubmitBar() {
+// 내 작성 중 보고는 자동저장되므로 「제출」만 둔다. 제출한 보고를 고치거나 다른 사람 보고를 고칠 때는 자동저장이 없어 「임시저장」을 그대로 둔다.
+function SubmitBar({ showDraft }: { showDraft: boolean }) {
   const { pending } = useFormStatus();
   return (
     <div className="report-submit-bar sticky -mx-4 flex gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
-      <button type="submit" name="intent" value="draft" disabled={pending} className={`${secondaryButtonClass} flex-1`}>
+      {showDraft ? <button type="submit" name="intent" value="draft" disabled={pending} className={`${secondaryButtonClass} flex-1`}>
         임시저장
-      </button>
+      </button> : null}
       <button type="submit" name="intent" value="submit" disabled={pending} className={`${buttonClass} flex-1`}>
         {pending ? "저장 중…" : "제출"}
       </button>
