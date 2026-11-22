@@ -238,3 +238,22 @@ test('예배별 색: 템플릿 색이 있으면 그 색, 없으면 예배 키별
  const {templates}=JSON.parse(readFileSync('docs/pd-checklist/templates-2026-11-06.json','utf8'));
  assert.ok(parseTemplate({...templates[1],color:'#6a4bc2'}).ok);assert.ok(!parseTemplate({...templates[1],color:'url(x)'}).ok);
 });
+
+test('DB61: 이름에 금요가 들어간 예배는 T-30 무렵 블록에 부산 ATEM(주일 1부와 같은 내용)을 붙이고, 다시 돌려도 그대로',async()=>{
+ const {db,as}=await setup();try{
+ const sql=readFileSync('supabase/migrations/20261221000000_pd_friday_atem.sql','utf8');
+ // 편집 화면 복제처럼: 2부(ATEM 없음) 내용으로 금요예배, 이름이 다른 예배는 대상 아님
+ const s2=(await db.query("select content from report.pd_templates where service_key='sun2' order by version desc limit 1")).rows[0].content;
+ for(const [k,name] of [['fri1','금요예배'],['sat1','토요 기도회']])await db.query('insert into report.pd_templates(service_key,version,content) values($1,1,$2)',[k,JSON.stringify({...s2,id:k,name})]);
+ await db.exec(sql);await db.exec(sql);
+ const vs=(await db.query("select service_key,max(version) v from report.pd_templates where service_key in('fri1','sat1') group by 1 order by 1")).rows;
+ assert.deepEqual(vs.map(x=>[x.service_key,x.v]),[['fri1',2],['sat1',1]]);
+ const fri=(await db.query("select content from report.pd_templates where service_key='fri1' and version=2")).rows[0].content;
+ assert.ok(parseTemplate(fri).ok);
+ const blk=fri.page1.rows.flat().find(b=>JSON.stringify(b.items).includes('부산 캠퍼스'));
+ assert.deepEqual([blk.offsetMin,blk.wide,blk.title],[-30,true,'시스템 · 도착 · 부산 ATEM']);
+ const ids=applicableCheckIds(fri,{});for(const k of ['d1','d2','d3','d4','d5v','d5a','d7a'])assert.ok(ids.includes(k),k);
+ assert.ok(ids.includes('c1'));// 원래 시스템 점검은 남는다
+ assert.equal(await latestV(as,'fri1'),2);
+ }finally{await db.close();}
+});
