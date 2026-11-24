@@ -12,8 +12,9 @@ const opt=(max:number)=>z.string().trim().max(max);
 const offset=z.number().int().min(-600).max(600);
 const cond=z.string().nullable().optional();
 
+const check=z.object({type:z.literal("check"),id,text:text(120),emphasis:z.enum(["strong","highlight"]).optional(),teams:z.array(text(20)).max(10).optional(),condition:cond});
 const item=z.discriminatedUnion("type",[
- z.object({type:z.literal("check"),id,text:text(120),emphasis:z.enum(["strong","highlight"]).optional(),teams:z.array(text(20)).max(10).optional(),condition:cond}),
+ check,
  z.object({type:z.literal("heading"),text:text(60)}),
  z.object({type:z.literal("checkGroup"),layout:z.enum(["columns","auto"]),columns:z.number().int().min(1).max(4).nullable().optional(),items:z.array(z.object({id,text:text(40)})).min(1).max(20)}),
  z.object({type:z.literal("note"),parts:z.array(z.object({text:z.string().min(1).max(120),bold:z.boolean()})).min(1).max(10)}),
@@ -24,11 +25,15 @@ const item=z.discriminatedUnion("type",[
   steps:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,8}$/),label:text(20)})).min(1).max(4),
   people:z.array(z.object({key:z.string().regex(/^[a-z0-9]{1,20}$/),label:text(20),field:id.optional(),sub:opt(30).optional()})).min(1).max(12),
   caption:opt(20).optional(),inline:z.boolean().optional()}),
+ // 오늘 섬기는 명단(체크 없음)·큐시트 확인(2026-11 새 양식)
+ z.object({type:z.literal("roster"),
+  lines:z.array(z.object({label:text(20),cols:z.array(z.object({label:text(20),field:id,w:z.number().min(.3).max(4).optional(),two:z.boolean().optional()})).min(1).max(8)})).min(1).max(4)}),
+ z.object({type:z.literal("cueCheck"),id,text:text(60),sub:opt(60).optional()}),
 ]);
 const items=z.array(item).max(30);
 
 const block=z.object({
- id,offsetMin:offset,label:text(20),title:opt(40),style:z.enum(["default","accent","cue","go"]),wide:z.boolean().optional(),
+ id,offsetMin:offset,label:text(20),title:opt(40),style:z.enum(["default","accent","cue","go"]),wide:z.boolean().optional(),aside:opt(80).optional(),
  arrivals:z.array(z.object({offsetMin:offset,text:text(80),place:opt(80).optional()})).max(6).optional(),
  items,
 });
@@ -36,6 +41,8 @@ const block=z.object({
 const flowStep=z.object({
  id,label:text(30),next:opt(60),style:z.enum(["countdown","liveStart","start","default","optional","liveEnd","end"]),
  sub:opt(30).optional(),subWhen:z.record(z.string(),text(30)).optional(),condition:cond,flag:opt(20).nullable().optional(),offsetMin:offset.optional(),
+ cue:id.optional(),
+ focus:z.object({badge:opt(40).optional(),owners:z.array(z.object({field:id.optional(),text:opt(30).optional()})).max(4).optional(),checks:z.array(check).max(6).optional()}).optional(),
 });
 
 export const pdTemplateSchema=z.object({
@@ -57,6 +64,7 @@ export const pdTemplateSchema=z.object({
  page2:z.object({
   title:text(40),banner:opt(80),
   flow:z.array(flowStep).min(1).max(20),
+  focus:z.object({check:z.object({id,text:text(60)}).optional(),endField:id.optional()}).optional(),
   roster:z.array(z.object({group:text(20),sub:opt(30),fields:z.array(z.object({id,label:text(30),span:z.union([z.literal(1),z.literal(2),z.literal(3),z.literal(6)]),multiple:z.boolean()})).min(1).max(12)})).max(8),
   during:z.object({title:text(30),items}),
   after:z.object({title:text(30),items}),
@@ -68,10 +76,11 @@ export const pdTemplateSchema=z.object({
  }),
 });
 
-/** 체크 칸 ID(회차의 checks에 저장되는 키) 모두. 항목·그룹·위치표·FLOW·리포트 분류가 한 이름 공간을 쓴다. */
+/** 체크 칸 ID(회차의 checks에 저장되는 키) 모두. 항목·그룹·위치표·FLOW(집중 칸의 체크 포함)·리포트 분류가 한 이름 공간을 쓴다. */
 export function allCheckIds(t:PdTemplate){
- const of=(list:Item[])=>list.flatMap(i=>i.type==="check"?[i.id]:i.type==="checkGroup"?i.items.map(x=>x.id):i.type==="locationMatrix"?i.rows.flatMap(r=>i.columns.map(c=>r.id+c.key)):i.type==="people"?i.steps.flatMap(s=>i.people.map(p=>peopleCheckId(p.key,s.key))):[]);
- return [...t.page1.rows.flat().flatMap(b=>of(b.items)),...t.page2.flow.map(s=>s.id),...of(t.page2.during.items),...of(t.page2.after.items),...t.page2.report.categories.map(c=>c.id)];
+ const of=(list:Item[])=>list.flatMap(i=>i.type==="check"||i.type==="cueCheck"?[i.id]:i.type==="checkGroup"?i.items.map(x=>x.id):i.type==="locationMatrix"?i.rows.flatMap(r=>i.columns.map(c=>r.id+c.key)):i.type==="people"?i.steps.flatMap(s=>i.people.map(p=>peopleCheckId(p.key,s.key))):[]);
+ return [...t.page1.rows.flat().flatMap(b=>of(b.items)),...t.page2.flow.flatMap(s=>[s.id,...of(s.focus?.checks??[])]),...(t.page2.focus?.check?[t.page2.focus.check.id]:[]),
+  ...of(t.page2.during.items),...of(t.page2.after.items),...t.page2.report.categories.map(c=>c.id)];
 }
 
 const NAMES:Record<string,string>={page1:"1페이지",page2:"2페이지",rows:"줄",items:"항목",arrivals:"도착 시각",flow:"FLOW",roster:"담당자",fields:"칸",during:"예배 진행 중",after:"예배 종료 후",report:"PD REPORT",categories:"문제 분류",conditions:"조건",teams:"팀",parts:"문구",columns:"열",
@@ -106,10 +115,15 @@ export function parseTemplate(raw:unknown):ParseResult{
  uniq("조건",t.conditions.map(c=>c.id));
  const conds=new Set(t.conditions.map(c=>c.id));
  const bad=(c:string|null|undefined)=>!!c&&!conds.has(c);
- const all=[...t.page1.rows.flat().flatMap(b=>b.items),...t.page2.during.items,...t.page2.after.items];
+ const all=[...t.page1.rows.flat().flatMap(b=>b.items),...t.page2.during.items,...t.page2.after.items,...t.page2.flow.flatMap(s=>s.focus?.checks??[])];
  if(all.some(i=>i.type==="check"&&bad(i.condition))||t.page2.flow.some(s=>bad(s.condition)||Object.keys(s.subWhen??{}).some(bad))||t.cue?.rows.some(r=>bad(r.condition)))errors.push("없는 조건을 쓰는 항목이 있습니다");
  const rosterIds=new Set(t.page2.roster.flatMap(g=>g.fields.map(f=>f.id)));
  if(all.some(i=>i.type==="people"&&i.people.some(p=>p.field&&!rosterIds.has(p.field))))errors.push("섬기는 사람 표에 없는 담당자 칸을 쓰는 사람이 있습니다");
+ // 명단·집중 구간 담당은 담당자 칸이나 큐시트 칸(악기·싱어 등)을 읽는다.
+ const known=new Set([...rosterIds,...(t.cue?[...t.cue.rows.flatMap(r=>r.lines.map(l=>l.key)),...t.cue.staff.map(x=>x.key)]:[])]);
+ if(all.some(i=>i.type==="roster"&&i.lines.some(l=>l.cols.some(c=>!known.has(c.field)))))errors.push("명단에 없는 담당자 칸을 쓰는 칸이 있습니다");
+ if(t.page2.flow.some(s=>s.focus?.owners?.some(o=>o.field&&!known.has(o.field)))||(t.page2.focus?.endField&&!known.has(t.page2.focus.endField)))errors.push("집중 구간 담당에 없는 담당자 칸이 있습니다");
+ if(t.page2.flow.some(s=>s.cue&&!t.cue?.rows.some(r=>r.id===s.cue)))errors.push("FLOW에 없는 큐시트 순서를 가리키는 칸이 있습니다");
  if(t.page2.report.fields.some(f=>f.type==="choice"&&(f.options?.length??0)<2))errors.push("PD REPORT의 선택 항목에는 선택지가 두 개 이상 있어야 합니다");
  return errors.length?{ok:false,errors}:{ok:true,data:t};
 }

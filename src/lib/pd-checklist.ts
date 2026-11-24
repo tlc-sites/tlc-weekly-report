@@ -10,7 +10,18 @@ export type Item =
   | { type: "checkGroup"; layout: "columns" | "auto"; columns?: number | null; items: { id: string; text: string }[] }
   | { type: "note"; parts: { text: string; bold: boolean }[] }
   | { type: "locationMatrix"; columns: { key: string; label: string }[]; rows: { id: string; label: string }[] }
-  | PeopleTable;
+  | PeopleTable
+  | RosterItem
+  | CueCheckItem;
+
+/** 오늘 섬기는 명단(체크 없음): 줄(말씀·위원·예배팀·기술팀)마다 역할 칸. 이름은 회차 roster(큐시트와 같은 값)에서 읽는다.
+ *  큐시트에 없는 칸(사진·부산 담당 등)만 여기서 눌러 적는다(cueKeys). w는 칸 너비 비율, two는 이름을 2열로. */
+export type RosterItem = {
+  type: "roster";
+  lines: { label: string; cols: { label: string; field: string; w?: number; two?: boolean }[] }[];
+};
+/** 주일예배 큐시트 확인 체크: 그 회차 큐시트의 빈 칸을 같이 보이고 큐시트로 가는 링크를 둔다. */
+export type CueCheckItem = { type: "cueCheck"; id: string; text: string; sub?: string };
 
 /** 섬기는 사람 표: 사람(열)마다 단계(행: 확인·도착·STANDBY…) 체크. field가 있으면 그 담당자 칸(회차 roster) 이름을 표에서 바로 적고,
  *  그 칸은 2쪽 담당자 칸에서 빠진다. field가 없으면 sub(예: '악기·싱어')만 보인다. 체크 ID는 peopleCheckId. */
@@ -28,15 +39,27 @@ export const BASE_SERVICES=["sun1","sun2","sun3","life"];
 
 export const peopleCheckId = (person: string, step: string) => `pp_${person}_${step}`;
 
-/** 섬기는 사람 표가 이름을 받는 담당자 칸 ID들(2쪽 담당자 칸에서 뺀다) */
+/** 섬기는 사람 표·명단이 이름을 받는 담당자 칸 ID들(2쪽 담당자 칸에서 뺀다) */
 export const peopleFields = (tpl: PdTemplate) =>
-  new Set(tpl.page1.rows.flat().flatMap(b => b.items).flatMap(i => i.type === "people" ? i.people.flatMap(p => p.field ? [p.field] : []) : []));
+  new Set(tpl.page1.rows.flat().flatMap(b => b.items).flatMap(i =>
+    i.type === "people" ? i.people.flatMap(p => p.field ? [p.field] : [])
+    : i.type === "roster" ? i.lines.flatMap(l => l.cols.map(c => c.field)) : []));
+
+/** 큐시트에서 적는 칸(순서 줄·담당). 명단에서 이 칸은 읽기만 하고, 나머지(사진·부산 담당 등)는 체크리스트에서 적는다. */
+export const cueKeys = (tpl: PdTemplate) =>
+  new Set(tpl.cue ? [...tpl.cue.rows.flatMap(r => r.lines.map(l => l.key)), ...tpl.cue.staff.map(s => s.key)] : []);
+
+/** 명단 칸의 이름을 한 사람씩: '/'·쉼표·줄바꿈에서 나누고 괄호는 그대로 둔다. */
+export const splitPeople = (text: string | undefined) =>
+  (text ?? "").split(/\s*(?:\/|,|\r?\n)\s*/).map(x => x.trim()).filter(Boolean);
 
 export type Block = {
   id: string; offsetMin: number; label: string; title: string;
   style: "default" | "accent" | "cue" | "go";
   /** 넓게: 줄에서 두 칸을 차지하고 안쪽을 두 단으로 나눈다(합친 블록처럼 내용이 많을 때). */
   wide?: boolean;
+  /** 머리 오른쪽의 작은 안내 글 */
+  aside?: string;
   arrivals?: { offsetMin: number; text: string; place?: string }[];
   items: Item[];
 };
@@ -45,7 +68,14 @@ export type FlowStep = {
   id: string; label: string; next: string;
   style: "countdown" | "liveStart" | "start" | "default" | "optional" | "liveEnd" | "end";
   sub?: string; subWhen?: Record<string, string>; condition?: string | null; flag?: string | null; offsetMin?: number;
+  /** 큐시트 순서 줄 ID: 있으면 그 줄 시작 시각을 보인다(집중 구간·끝 줄). */
+  cue?: string;
+  /** PD 집중 구간 칸(이어진 칸들이 한 상자). FLOW 체크 칸 대신 이 칸의 체크 항목을 쓴다.
+   *  badge의 {키}는 회차 roster 값으로 바꾼다(예: '헌금송 · {song_off}'). owners는 담당(field면 roster 이름, text면 그 글). */
+  focus?: { badge?: string; owners?: { field?: string; text?: string }[]; checks?: CheckItem[] };
 };
+/** 집중 구간 상자 머리의 체크와, 구간 끝(바로 다음 FLOW 칸) 줄에 보일 담당 칸 */
+export type FocusZone = { check?: { id: string; text: string }; endField?: string };
 
 export type RosterGroup = { group: string; sub: string; fields: { id: string; label: string; span: number; multiple: boolean }[] };
 export type ReportField = { id: string; label: string; type: "text" | "choice"; options?: string[]; placeholder?: string };
@@ -59,7 +89,7 @@ export type PdTemplate = {
   conditions: Condition[]; teams: string[];
   page1: { title: string; rows: Block[][] };
   page2: {
-    title: string; banner: string; flow: FlowStep[]; roster: RosterGroup[];
+    title: string; banner: string; flow: FlowStep[]; roster: RosterGroup[]; focus?: FocusZone;
     during: { title: string; items: Item[] }; after: { title: string; items: Item[] };
     report: { title?: string; categories: { id: string; text: string }[]; fields: ReportField[] };
   };
@@ -92,7 +122,41 @@ export function itemCheckIds(item: Item): string[] {
   if (item.type === "checkGroup") return item.items.map(i => i.id);
   if (item.type === "locationMatrix") return item.rows.flatMap(r => item.columns.map(c => r.id + c.key));
   if (item.type === "people") return item.steps.flatMap(s => item.people.map(p => peopleCheckId(p.key, s.key)));
+  if (item.type === "cueCheck") return [item.id];
   return [];
+}
+
+/** 화면·진행률에 쓰는 조건: 큐시트 광고 칸에 '영상광고: 없음'이 있으면 영상소식(news)은 꺼진 것으로 본다. */
+export function effectiveConditions(tpl: PdTemplate, conds: Conditions, roster: Record<string, string> = {}): Conditions {
+  if (!tpl.conditions.some(c => c.id === "news")) return conds;
+  const ann = Object.entries(roster).filter(([k]) => k === "c_ann" || k.startsWith("c_ann")).map(([, v]) => v).join("\n");
+  return /영상\s*(?:광고|소식)\s*[:：]?\s*없음/.test(ann) ? { ...conds, news: false } : conds;
+}
+
+/** 2쪽 FLOW를 집중 구간 앞(before)·구간(zone)·구간 끝 칸(end)·뒤(after)로 나눈다. 집중 칸이 없으면 zone은 비어 있다. */
+export function flowParts(tpl: PdTemplate) {
+  const f = tpl.page2.flow;
+  const a = f.findIndex(s => s.focus);
+  if (a < 0) return { before: f, zone: [] as FlowStep[], end: null as FlowStep | null, after: [] as FlowStep[] };
+  let b = a;
+  while (b < f.length && f[b].focus) b++;
+  return { before: f.slice(0, a), zone: f.slice(a, b), end: f[b] ?? null, after: f.slice(b) };
+}
+
+/** 큐시트 빈 칸 이름(순서 줄·담당·송리스트). 조건이 꺼진 순서 줄은 뺀다. 큐시트가 없으면 null. */
+export function cueBlanks(tpl: PdTemplate, roster: Record<string, string>, pd: string, conds: Conditions): string[] | null {
+  const cue = tpl.cue;
+  if (!cue) return null;
+  const empty = (k: string) => !(k === "pd" ? pd : roster[k] ?? "").trim();
+  const out: string[] = [];
+  for (const r of cue.rows) {
+    if (!isOn(r.condition, conds)) continue;
+    for (const l of r.lines) if (empty(l.key)) out.push(l.hint && r.lines.length > 1 ? l.hint : r.ko);
+  }
+  for (const s of cue.staff) if (empty(s.key)) out.push(s.ko);
+  const songs = cueSongKeys(cue, conds).filter(empty).length;
+  if (songs) out.push(`송리스트 ${songs}곡`);
+  return [...new Set(out)];
 }
 
 export const visibleFlow = (tpl: PdTemplate, conds: Conditions) => tpl.page2.flow.filter(s => isOn(s.condition, conds));
@@ -102,7 +166,9 @@ export function applicableCheckIds(tpl: PdTemplate, conds: Conditions) {
   const fromItems = (items: Item[]) => items.filter(i => i.type !== "check" || isOn(i.condition, conds)).flatMap(itemCheckIds);
   return [
     ...tpl.page1.rows.flat().flatMap(b => fromItems(b.items)),
-    ...visibleFlow(tpl, conds).map(s => s.id),
+    // 집중 구간 칸은 FLOW 체크 칸 대신 칸 안의 체크 항목(칸이 꺼지면 모두 뺀다)
+    ...visibleFlow(tpl, conds).flatMap(s => s.focus ? fromItems(s.focus.checks ?? []) : [s.id]),
+    ...(tpl.page2.focus?.check && tpl.page2.flow.some(s => s.focus) ? [tpl.page2.focus.check.id] : []),
     ...fromItems(tpl.page2.during.items),
     ...fromItems(tpl.page2.after.items),
   ];

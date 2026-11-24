@@ -3,21 +3,21 @@
 .pdc {
   --bg: #f2f4f7; --paper: #ffffff; --ink: #172235; --muted: #677386; --faint: #98a2b2; --line: #e2e7ee; --line2: #cfd7e2;
   --soft: #f6f8fb; --accent: #2b62c4; --accent-soft: #eaf0fb; --navy: #15284a; --on-strong: #ffffff; --on-strong-2: #b9c9e6;
-  --amber: #a85a17; --amber-soft: #fbf0e3; --box: #b3bfcf;
+  --amber: #a85a17; --amber-soft: #fbf0e3; --box: #b3bfcf; --red: #c62828; --green: #2e7d32; --orange: #e07a1f; --orange-soft: #fff4e8;
   color: var(--ink); font-size: 15px; line-height: 1.5; min-width: 0;
 }
 @media screen {
   :root[data-theme="dark"] .pdc {
     --bg: #0e131b; --paper: #161d28; --ink: #e5ebf3; --muted: #9aa6b8; --faint: #6d7889; --line: #253041; --line2: #334055;
     --soft: #1b2431; --accent: #6b9bf0; --accent-soft: #1d2b44; --navy: #2a4677; --on-strong: #ffffff; --on-strong-2: #c3d2ee;
-    --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d;
+    --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d; --red: #ff8a80; --green: #81c784; --orange: #f3a35a; --orange-soft: #2e2216;
   }
 }
 @media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .pdc {
     --bg: #0e131b; --paper: #161d28; --ink: #e5ebf3; --muted: #9aa6b8; --faint: #6d7889; --line: #253041; --line2: #334055;
     --soft: #1b2431; --accent: #6b9bf0; --accent-soft: #1d2b44; --navy: #2a4677; --on-strong: #ffffff; --on-strong-2: #c3d2ee;
-    --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d;
+    --amber: #f0aa6a; --amber-soft: #33251a; --box: #4a586d; --red: #ff8a80; --green: #81c784; --orange: #f3a35a; --orange-soft: #2e2216;
   }
 }
 /* 예배별 색: 화면 루트나 큐시트 장에 --svc를 주면 강조색(시각·T 표시·큐 블록·FLOW·스위치)이 그 색이 된다. 인쇄에도 그대로. */
@@ -164,7 +164,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc table.floor .ck { justify-content: center; padding: 0; margin: 0; }
 .pdc table.floor .ck:hover { background: transparent; }
 /* 섬기는 사람 표: 사람이 열, 단계(확인·도착·STANDBY)가 행. 넓은 블록 안에서도 두 단으로 나누지 않는다. 휴대폰에선 가로로 밀어 본다. */
-.pdc .blk.wide .blk-b:has(> .people-wrap) { column-count: 1; }
+.pdc .blk.wide .blk-b:has(> .people-wrap), .pdc .blk.wide .blk-b:has(> .rs) { column-count: 1; }
 .pdc .people-wrap { overflow-x: auto; }
 .pdc table.people { table-layout: fixed; min-width: calc(76px + var(--n) * 108px); }
 .pdc table.people.inline { min-width: calc(76px + var(--n) * 160px); }
@@ -180,6 +180,39 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc table.people .pp-sub { font-weight: 500; color: var(--faint); margin-top: 3px; }
 .pdc table.people th input { display: block; width: 100%; min-width: 0; margin-top: 3px; border: 1px solid var(--line2); border-radius: 6px; background: var(--paper); padding: 3px 5px; font-size: 13px; font-weight: 600; color: var(--ink); text-align: center; }
 .pdc table.people th input:focus { border-color: var(--accent); outline: none; }
+
+/* ---------- 새 양식(2026-11): 오늘 섬기는 명단 · 큐시트 확인 · PD 집중 구간 ---------- */
+.pdc .blk-h .aside { margin-left: auto; font-size: 12px; color: var(--faint); }
+.pdc .miss { color: var(--red); font-weight: 600; }
+.pdc .rs { background: var(--paper); border-radius: 10px; padding: 2px 12px; }
+.pdc .rs-line { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.pdc .rs-line:last-child { border-bottom: 0; }
+.pdc .rs-l { font-weight: 700; font-size: 14px; padding-top: 1px; }
+.pdc .rs-cols { display: flex; gap: 12px; min-width: 0; }
+.pdc .rs-c { flex: var(--w, 1) 1 0; min-width: 0; }
+.pdc .rs-k { font-size: 11px; font-weight: 600; color: var(--faint); letter-spacing: .02em; }
+.pdc .rs-n { display: flex; flex-direction: column; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.pdc .rs-c.two .rs-n { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: column; grid-template-rows: repeat(var(--rows, 3), auto); column-gap: 10px; }
+.pdc .rs-n .nm { word-break: keep-all; overflow-wrap: anywhere; }
+.pdc .rs-c input { display: block; width: 100%; min-width: 0; border: 0; border-bottom: 1px dashed var(--line2); background: transparent; padding: 1px 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pdc .rs-c input::placeholder { color: var(--red); opacity: 1; font-weight: 600; }
+.pdc .rs-c input:focus { border-bottom-color: var(--accent); outline: none; }
+.pdc .rs-print { display: none; }
+@media screen and (max-width: 760px) {
+  .pdc .rs-line { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pdc .rs-cols { flex-wrap: wrap; row-gap: 8px; }
+  .pdc .rs-c { flex: 1 1 calc(33% - 12px); min-width: 88px; }
+  .pdc .rs-c.two { flex-basis: 100%; }
+}
+.pdc .cuechk { background: var(--orange-soft); border-radius: 10px; padding: 6px 10px 7px; margin: 0 -4px 6px; }
+.pdc .cuechk .ck { margin: 0; padding: 2px 0; }
+.pdc .cuechk .ck:hover { background: transparent; }
+.pdc .cuechk .sub { font-weight: 500; color: var(--muted); font-size: 13px; }
+.pdc .cuechk-st { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding-left: 28px; font-size: 12.5px; }
+.pdc .cuechk-st .bad { color: var(--red); font-weight: 600; }
+.pdc .cuechk-st .good { color: var(--green); font-weight: 600; }
+.pdc .cuechk-st a { color: var(--accent); font-weight: 600; text-decoration: none; margin-left: auto; white-space: nowrap; }
+.pdc .tg .tg-note { font-size: 11px; color: var(--amber); margin-left: 2px; }
 
 /* ---------- 2페이지 ---------- */
 .pdc .banner { display: flex; align-items: center; justify-content: center; gap: 14px; background: var(--navy); color: var(--on-strong); border-radius: 14px; font-weight: 600; font-size: 20px; padding: 16px 20px; text-align: center; text-wrap: balance; }
@@ -207,6 +240,48 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .fc .ck { padding: 2px; margin: 0; }
 .pdc .fc .ck .box { width: 20px; height: 20px; }
 .pdc .flow .hide { display: none; }
+/* 새 양식: FLOW를 위(작게)·집중 구간(크게)·아래(작게)로 나눈다. 휴대폰에서도 옆으로 밀지 않는다. */
+.pdc .flow-wrap.split { overflow: visible; display: flex; flex-direction: column; gap: 12px; }
+.pdc .flow-wrap.split .flow { min-width: 0; grid-template-columns: 76px repeat(var(--n), minmax(0, 1fr)); }
+.pdc .focus { border: 2px solid var(--orange); background: var(--orange-soft); border-radius: 12px; padding: 10px 12px 0; overflow: hidden; }
+.pdc .fz-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 8px; }
+.pdc .fz-badge { background: var(--orange); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 10px; }
+.pdc .fz-h > b { font-size: 15px; }
+.pdc .fz-sub { font-size: 12.5px; color: var(--muted); }
+.pdc .fz-ck { margin-left: auto; }
+.pdc .fz-ck .ck { margin: 0; }
+.pdc .fz-cells { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 8px; }
+.pdc .fz-c { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px 8px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pdc .fz-c.dim { background: transparent; border: 1.5px dashed var(--line2); opacity: .55; }
+.pdc .fz-c.dim .ck .tx { text-decoration: line-through; }
+.pdc .fz-t { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.pdc .fz-t b { font-size: 17px; font-weight: 700; }
+.pdc .fz-t .num { font-size: 13px; font-weight: 600; color: var(--muted); }
+.pdc .fz-t .flag { font-size: 11px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+.pdc .fz-tag { align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--orange); border: 1px solid var(--orange); border-radius: 999px; padding: 0 7px; }
+.pdc .fz-row { display: flex; flex-direction: column; font-size: 13px; }
+.pdc .fz-row .k { font-size: 10.5px; font-weight: 600; color: var(--faint); letter-spacing: .03em; }
+.pdc .fz-row .v { font-weight: 600; display: flex; flex-wrap: wrap; gap: 0 6px; }
+.pdc .fz-row .own { display: inline-flex; flex-wrap: wrap; gap: 0 4px; }
+.pdc .fz-row .own .nm + .nm::before { content: "· "; color: var(--faint); }
+.pdc .fz-row .own + .own::before { content: "+"; color: var(--faint); font-weight: 500; }
+.pdc .fz-row .nx-t { color: var(--accent); }
+.pdc .fz-cks { border-top: 1px dashed var(--line2); padding-top: 4px; margin-top: 2px; font-size: 13.5px; }
+.pdc .fz-cks .cond-tag { display: none; }
+.pdc .fz-end { margin: 10px -12px 0; background: var(--paper); border-top: 1px solid var(--line); padding: 8px 14px; font-size: 13.5px; }
+.pdc .fz-end b { color: var(--ink); }
+.pdc .fz-end .nm + .nm::before { content: " / "; color: var(--faint); }
+@media screen and (max-width: 760px) {
+  .pdc .flow-wrap.split { padding: 10px 8px; }
+  .pdc .flow-wrap.split .flow { grid-template-columns: 44px repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
+  .pdc .flow-wrap.split .flow .lab { font-size: 10.5px; }
+  .pdc .flow-wrap.split .st { min-height: 60px; padding: 8px 2px; }
+  .pdc .flow-wrap.split .st b { font-size: 11.5px; word-break: normal; overflow-wrap: anywhere; }
+  .pdc .flow-wrap.split .st b.sm { font-size: 9px; letter-spacing: -.02em; }
+  .pdc .flow-wrap.split .nx { font-size: 11px; }
+  .pdc .fz-cells { grid-template-columns: minmax(0, 1fr); }
+  .pdc .fz-ck { margin-left: 0; flex-basis: 100%; }
+}
 
 .pdc .roster { margin-top: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 6px 16px; display: grid; grid-template-columns: 76px repeat(6, minmax(0, 1fr)); column-gap: 14px; }
 .pdc .roster .rl { grid-column: 1; font-weight: 600; font-size: 13px; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
@@ -264,7 +339,7 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc {
     --bg: #ffffff; --paper: #ffffff; --ink: #172235; --muted: #5f6b7e; --faint: #8b95a5; --line: #dfe5ed; --line2: #c7d0dc;
     --soft: #f4f6f9; --accent: #2b62c4; --accent-soft: #e9eff9; --navy: #15284a; --on-strong: #ffffff; --on-strong-2: #c0cfe8;
-    --amber: #a85a17; --amber-soft: #fbefe1; --box: #8f9cb0;
+    --amber: #a85a17; --amber-soft: #fbefe1; --box: #8f9cb0; --red: #c62828; --green: #2e7d32; --orange: #e07a1f; --orange-soft: #fff4e8;
     font-size: 10.2pt; line-height: 1.32;
   }
   .pdc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -348,6 +423,63 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .rp .k { font-size: 8pt; }
   .pdc .rp textarea { display: none; }
   .pdc .rp .pv { display: block; min-height: 1.15em; white-space: pre-wrap; }
+
+  .pdc .blk-h .aside { font-size: 7.4pt; }
+  .pdc .rs { padding: 0 2.4mm; border-radius: 1.8mm; }
+  .pdc .rs-line { grid-template-columns: 17mm minmax(0, 1fr); gap: 2mm; padding: .7mm 0; }
+  .pdc .rs-l { font-size: 9pt; }
+  .pdc .rs-cols { gap: 2.4mm; }
+  .pdc .rs-k { font-size: 7pt; }
+  .pdc .rs-n { font-size: 9pt; line-height: 1.18; }
+  .pdc .rs-c.two .rs-n { column-gap: 2mm; }
+  .pdc .rs-c input { display: none; }
+  .pdc .rs-print { display: flex; }
+  .pdc .cuechk { padding: .5mm 1.6mm .6mm; margin: 0 0 .8mm; border-radius: 1.6mm; }
+  .pdc .cuechk .ck { padding: 0; }
+  .pdc .cuechk .sub { font-size: 8.4pt; }
+  .pdc .cuechk-st { font-size: 8pt; padding-left: 5.8mm; }
+  .pdc .flow-wrap.split { gap: 1.6mm; }
+  .pdc .flow-wrap.split .flow { grid-template-columns: 15mm repeat(var(--n), minmax(0, 1fr)); }
+  .pdc .focus { border-width: .5mm; padding: 1.6mm 2mm 0; border-radius: 2.2mm; }
+  .pdc .fz-h { margin-bottom: 1.2mm; gap: 1mm 2.4mm; }
+  .pdc .fz-badge { font-size: 7.6pt; padding: .2mm 2mm; }
+  .pdc .fz-h > b { font-size: 10pt; }
+  .pdc .fz-sub { font-size: 8pt; }
+  .pdc .fz-cells { gap: 1.6mm; }
+  .pdc .fz-c { padding: 1.4mm 1.8mm 1.2mm; gap: .6mm; border-radius: 1.8mm; }
+  .pdc .fz-t b { font-size: 11pt; }
+  .pdc .fz-t .num { font-size: 8.6pt; }
+  .pdc .fz-t .flag, .pdc .fz-tag { font-size: 7pt; }
+  .pdc .fz-row { font-size: 8.6pt; flex-direction: row; align-items: baseline; gap: 1.4mm; }
+  .pdc .fz-row .k { font-size: 6.8pt; flex: none; }
+  .pdc .fz-c { gap: .4mm; }
+  .pdc .fz-t { line-height: 1.15; }
+  .pdc .fz-tag { line-height: 1.35; }
+  .pdc .flow-wrap.split { padding: 1.6mm 2mm; }
+  .pdc .flow-wrap.split .st { padding: 1.2mm .6mm 1mm; }
+  .pdc .flow-wrap.split .flow { gap: .7mm 1mm; }
+  .pdc .rp-row > div { padding: .35mm .6mm; }
+  .pdc .rp-cats { gap: .7mm; }
+  /* 새 양식 2쪽은 집중 구간이 들어가 PD REPORT 분류를 세 칸으로, 띠·간격을 조금 줄인다 */
+  .pdc .sheet:has(.flow-wrap.split) .rp-cats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .pdc .sheet:has(.flow-wrap.split) .rp-cats .ck { font-size: 8.4pt; padding: .3mm .8mm; }
+  .pdc .sheet:has(.flow-wrap.split) .banner { padding: 1.4mm; font-size: 12pt; }
+  .pdc .sheet:has(.flow-wrap.split) .flow-wrap { margin-top: 1.6mm; }
+  .pdc .sheet:has(.flow-wrap.split) .cols3 { margin-top: 1.6mm; }
+  .pdc .flow-wrap.split { gap: 1.2mm; }
+  /* 나눈 FLOW의 왼쪽 이름 칸은 한 줄(영문 보조 글자는 뺌), 긴 예배 이름은 두 줄까지 */
+  .pdc .flow-wrap.split .lab { font-size: 7.6pt; line-height: 1.15; }
+  .pdc .flow-wrap.split .lab small { display: none; }
+  .pdc .flow-wrap.split .flow > .lab:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; align-self: center; }
+  .pdc .flow-wrap.split .fc .ck .box { width: 4mm; height: 4mm; }
+  .pdc .fz-end { padding: .9mm 2.4mm; }
+  .pdc .cols3 .blk-h { padding-top: 1.4mm; padding-bottom: .6mm; }
+  .pdc .fz-cks { font-size: 8.8pt; padding-top: .6mm; }
+  .pdc .fz-end { margin: 1.6mm -2mm 0; padding: 1.2mm 2.4mm; font-size: 8.8pt; }
+  /* 집중 구간의 흐린 칸(영상소식 없음)은 작성본에서도 흐리게 보인다. */
+  .pdc:not(.is-blank) .fz-c.dim .off { display: flex !important; }
+  .pdc.is-blank .rs-n, .pdc.is-blank .fz-row .v .own, .pdc.is-blank .fz-end .nm, .pdc.is-blank .fz-end .miss, .pdc.is-blank .cuechk-st, .pdc.is-blank .fz-row .miss { visibility: hidden; }
+  .pdc.is-blank .fz-c.dim { opacity: 1; border-style: solid; border-width: 1px; background: var(--paper); }
 
   /* 작성본: 꺼진 조건 항목은 숨긴다. 빈 양식(코팅용): 모든 항목과 태그를 보이고 체크·입력값은 비운다. */
   .pdc:not(.is-blank) .off, .pdc:not(.is-blank) .flow .hide { display: none !important; }

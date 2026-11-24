@@ -4,6 +4,7 @@ import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {BASE_SERVICES,clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
 import {allCheckIds,parseTemplate} from "@/lib/pd-template-schema";
+import {hasFocusLayout,toFocusLayout} from "@/lib/pd-focus-layout";
 import {savePdTemplate,setPdServiceRemoved} from "./actions";
 import {PdChecklist} from "./checklist";
 
@@ -99,6 +100,11 @@ export function PdTemplateEditor({services,service,version,template,history,sund
 
   {tab==="preview"?<div className="-mx-4"><PdChecklist preview services={[]} service={service} date={sunday} defaultDate={sunday} template={draft} version={version} latestVersion={version} initialRun={null}/></div>:<>
   <p className="text-sm text-muted">저장하면 새 버전이 되고, 오늘과 앞으로의 회차에 바로 보입니다(이미 적은 체크·담당자 값은 그대로). 지난 회차는 그때 내용으로 남습니다. 시각은 <b>시작 시각 기준 분</b>(예: -30 = 30분 전)으로 적으면 자동 계산됩니다.</p>
+
+  <Section title="새 양식 (명단 · 큐시트 확인 · PD 집중 구간)" hint="1쪽 섬기는 사람 표를 체크 없는 세 줄 명단(이름은 큐시트에서)으로, T-45에 큐시트 확인을, 2쪽 FLOW 가운데에 PD 집중 구간을 만듭니다. 바꾼 뒤 미리보기로 확인하고 저장하면 새 버전이 됩니다. 예전 양식은 아래 '지난 버전'에서 언제든 다시 불러올 수 있습니다.">
+   {hasFocusLayout(draft)?<p className="text-sm text-muted">이 예배는 이미 새 양식입니다.</p>
+   :<button type="button" className={btn} onClick={()=>{const r=toFocusLayout(draft);setDraft(r.template);setMsg({kind:"ok",lines:[...r.notes,"미리보기로 확인한 뒤 「저장 (새 버전)」을 눌러 주세요."]});window.scrollTo({top:0});}}>새 양식으로 바꾸기</button>}
+  </Section>
 
   <Section title="기본">
    <div className="grid gap-3 sm:grid-cols-2">
@@ -231,7 +237,7 @@ function removeCondition(d:T,id:string){
  forEachItem(d,it=>{if(it.type==="check"&&it.condition===id)it.condition=null;});
  for(const s of d.page2.flow){if(s.condition===id)s.condition=null;if(s.subWhen)delete s.subWhen[id];}
 }
-function forEachItem(d:T,fn:(it:Item)=>void){for(const it of [...d.page1.rows.flat().flatMap(b=>b.items),...d.page2.during.items,...d.page2.after.items])fn(it);}
+function forEachItem(d:T,fn:(it:Item)=>void){for(const it of [...d.page1.rows.flat().flatMap(b=>b.items),...d.page2.during.items,...d.page2.after.items,...d.page2.flow.flatMap(s=>s.focus?.checks??[])])fn(it);}
 
 function Section({title,hint,children}:{title:string;hint?:string;children:ReactNode}){
  return <section className="space-y-3 rounded-2xl border border-border bg-surface p-4">
@@ -307,6 +313,16 @@ function FlowEditor({s,i,n,start,conds,condSelect,edit,onMove,onDel}:{s:FlowStep
     <div className="mt-1 space-y-1">{conds.map(c=><label key={c.id} className="flex items-center gap-2"><span className="w-32 text-muted">{c.label}일 때</span><input className={inp+" w-32"} value={s.subWhen?.[c.id]??""} maxLength={30} onChange={e=>edit(x=>{const v=e.target.value;x.subWhen={...x.subWhen};if(v)x.subWhen[c.id]=v;else delete x.subWhen[c.id];if(!Object.keys(x.subWhen).length)delete x.subWhen;})}/></label>)}</div>
    </details>:null}
   </div>
+  {/* PD 집중 구간 칸: FLOW 체크 칸 대신 이 칸의 체크 항목(문구만 고친다. 새 칸은 '새 양식으로 바꾸기'가 만든다) */}
+  {s.focus?<div className="space-y-1 pl-8">
+   <div className="flex flex-wrap items-center gap-2 text-sm"><span className="rounded bg-accent/10 px-1.5 text-xs font-semibold text-accent">집중 구간</span>
+    <input className={inp+" w-48"} aria-label="배지" placeholder="배지(예: 인도자 등단)" value={s.focus.badge??""} maxLength={40} onChange={e=>edit(x=>{x.focus!.badge=e.target.value||undefined;})}/></div>
+   {(s.focus.checks??[]).map((c,ci)=><div key={c.id} className="flex flex-wrap items-center gap-1.5">
+    <input className={inp+" min-w-48 flex-1"} aria-label="집중 구간 체크" value={c.text} maxLength={120} onChange={e=>edit(x=>{x.focus!.checks![ci].text=e.target.value;})}/>
+    {condSelect(c.condition,v=>edit(x=>{x.focus!.checks![ci].condition=v;}))}
+    <button type="button" className={btn+" px-2"} aria-label="체크 삭제" onClick={()=>edit(x=>{x.focus!.checks!.splice(ci,1);})}>✕</button>
+   </div>)}
+  </div>:null}
  </div>;
 }
 
@@ -316,7 +332,7 @@ function ItemsEditor({items,edit,newId,teams,condSelect,rosterFields}:{items:Ite
  const one=(i:number):Edit<Item>=>fn=>edit(list=>fn(list[i]));
  return <div className="space-y-1.5">
   {items.map((it,i)=><div key={i} className="flex flex-wrap items-start gap-2 rounded-lg bg-surface p-1.5">
-   <span className="w-full shrink-0 text-xs text-muted sm:mt-2.5 sm:w-14">{{check:"체크",heading:"소제목",note:"기준 문구",checkGroup:"묶음 체크",locationMatrix:"위치표",people:"섬기는 사람"}[it.type]}</span>
+   <span className="w-full shrink-0 text-xs text-muted sm:mt-2.5 sm:w-14">{{check:"체크",heading:"소제목",note:"기준 문구",checkGroup:"묶음 체크",locationMatrix:"위치표",people:"섬기는 사람",roster:"명단",cueCheck:"큐시트 확인"}[it.type]}</span>
    <div className="min-w-0 flex-1 basis-56 space-y-1.5"><ItemBody it={it} edit={one(i)} newId={newId} teams={teams} condSelect={condSelect} rosterFields={rosterFields??[]}/></div>
    <Tools n={items.length} i={i} onMove={k=>edit(l=>move(l,i,k))} onDel={()=>edit(l=>{l.splice(i,1);})}/>
   </div>)}
@@ -368,6 +384,15 @@ function ItemBody({it,edit,newId,teams,condSelect,rosterFields}:{it:Item;edit:Ed
     {it.rows.length>1?<button type="button" className={btn+" px-2"} aria-label="위치 삭제" onClick={()=>edit(x=>{if(x.type==="locationMatrix")x.rows.splice(i,1);})}>✕</button>:null}</span>)}
     <button type="button" className={add} onClick={()=>edit(x=>{if(x.type==="locationMatrix")x.rows.push({id:newId("m"),label:""});})}>+ 위치</button></div>
   </>;
+  // 명단은 '새 양식으로 바꾸기'가 만든다. 칸 이름만 고칠 수 있다(이름은 큐시트·담당자 칸 값).
+  case "roster":return <div className="space-y-1">{it.lines.map((l,li)=><div key={li} className="flex flex-wrap items-center gap-1.5 text-sm">
+   <b className="w-20 shrink-0">{l.label}</b>
+   {l.cols.map((c,ci)=><input key={ci} className={inp+" w-24"} aria-label={`${l.label} 칸 이름`} value={c.label} maxLength={20} onChange={e=>edit(x=>{if(x.type==="roster")x.lines[li].cols[ci].label=e.target.value;})}/>)}
+  </div>)}</div>;
+  case "cueCheck":return <div className="flex flex-wrap gap-1.5">
+   <input className={inp+" min-w-40 flex-1"} aria-label="문구" value={it.text} maxLength={60} onChange={e=>edit(x=>{if(x.type==="cueCheck")x.text=e.target.value;})}/>
+   <input className={inp+" min-w-40 flex-1"} aria-label="작은 글" placeholder="작은 글(선택)" value={it.sub??""} maxLength={60} onChange={e=>edit(x=>{if(x.type==="cueCheck")x.sub=e.target.value||undefined;})}/>
+  </div>;
   // 사람 키·단계 키는 체크 ID(pp_사람_단계)라 한 번 정하면 바꾸지 않는다. 이름 칸을 고르면 2쪽 담당자 칸에서 그 칸이 빠지고 여기서 적는다.
   case "people":{
    const nextKey=(p:string,keys:string[])=>{let k=1;while(keys.includes(p+k))k++;return p+k;};

@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,useSyncExternalStore,type CSSPrope
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {COMM_SONG,peopleCheckId,peopleFields,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,type Block,type Conditions,type Item,type PdRun,type PdTemplate} from "@/lib/pd-checklist";
+import {COMM_SONG,peopleCheckId,peopleFields,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,cueKeys,cueBlanks,effectiveConditions,flowParts,splitPeople,type Block,type Conditions,type FlowStep,type Item,type PdRun,type PdTemplate,type RosterItem} from "@/lib/pd-checklist";
 import {NameList} from "@/components/name-list";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
@@ -107,14 +107,18 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
 
  const go=(next:{service?:string;date?:string})=>{flush();router.push(`/pd-checklist?service=${next.service??service}&date=${next.date??date}`);};
 
- const p=progress(t,conds,checks);
+ // 큐시트 광고 칸에 '영상광고: 없음'이 있으면 영상소식은 꺼진 것으로 그리고 센다.
+ const eff=effectiveConditions(t,conds,roster);
+ const p=progress(t,eff,checks);
  const condTag=Object.fromEntries(t.conditions.map(c=>[c.id,c.tag]));
  const flowLabel=t.flowType==="sunday"?"주일예배":t.name;
- const shown=t.page2.flow.filter(s=>isOn(s.condition,conds)).length;
+ const parts=flowParts(t);
+ const focusOn=parts.zone.length>0;
+ const inCue=cueKeys(t);
 
  // ---------- 그리기 ----------
  const ck=(id:string,text:ReactNode,o:{cls?:string;cond?:string|null;teams?:string[];label?:string}={})=>
-  <label key={id} className={"ck"+(o.cls?" "+o.cls:"")+(isOn(o.cond,conds)?"":" off")}>
+  <label key={id} className={"ck"+(o.cls?" "+o.cls:"")+(isOn(o.cond,eff)?"":" off")}>
    <input type="checkbox" checked={!!checks[id]} onChange={e=>toggle(id,e.target.checked)} aria-label={o.label}/>
    <span className="box" aria-hidden="true"/>
    {text!==null?<span className="tx">{text}{o.teams?.map(tm=><span key={tm} className="chip">{tm}</span>)}{o.cond?<span className="cond-tag">{condTag[o.cond]??o.cond}</span>:null}</span>:null}
@@ -136,11 +140,19 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     </th>)}</tr></thead>
     <tbody>{it.inline?<tr className="pp-inline"><td><span className="sr-only">단계</span></td>{it.people.map(p=><td key={p.key}>{it.steps.map(s=>ck(peopleCheckId(p.key,s.key),s.label,{label:`${p.label} ${s.label}`}))}</td>)}</tr>
      :it.steps.map(s=><tr key={s.key}><td>{s.label}</td>{it.people.map(p=><td key={p.key}>{ck(peopleCheckId(p.key,s.key),null,{label:`${p.label} ${s.label}`})}</td>)}</tr>)}</tbody></table></div>;
+   case "roster":return <RosterLines key={i} it={it} roster={roster} editable={k=>!inCue.has(k)} onChange={setRosterField} onBlur={rosterBlur}/>;
+   case "cueCheck":{
+    const blanks=cueBlanks(t,roster,pd,eff);
+    return <div key={i} className="cuechk">
+     {ck(it.id,<><b>{it.text}</b>{it.sub?<span className="sub"> — {it.sub}</span>:null}</>,{cls:"strong"})}
+     {blanks?<div className="cuechk-st">{blanks.length?<span className="bad">빈 칸: {blanks.join(", ")}</span>:<span className="good">빈 칸 없음</span>}
+      {preview?null:<Link href={`/cue-sheet?date=${date}#cue-${service}`} onClick={()=>flush()} data-print-hide>큐시트 열기 ›</Link>}</div>:null}
+    </div>;}
   }
  });
 
  const block=(b:Block)=><div key={b.id} className={"blk"+(b.style==="default"?"":" "+b.style)+(b.wide?" wide":"")}>
-  <div className="blk-h"><span className="tm num">{clockAt(t.start,b.offsetMin)}</span><span className="tt">{b.label}</span>{b.title?<span className="ti">{b.title}</span>:null}</div>
+  <div className="blk-h"><span className="tm num">{clockAt(t.start,b.offsetMin)}</span><span className="tt">{b.label}</span>{b.title?<span className="ti">{b.title}</span>:null}{b.aside?<span className="aside">{b.aside}</span>:null}</div>
   <div className="blk-b">
    {b.arrivals?.length?<div className="arr">{b.arrivals.map((a,i)=><div key={i}><b className="num">{clockAt(t.start,a.offsetMin)}</b><span>{a.text}{a.place?<span className="at"> @{a.place}</span>:null}</span></div>)}</div>:null}
    {items(b.items)}
@@ -186,7 +198,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}</>}
     <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" readOnly={readOnly} onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
     <div className="toggles" role="group" aria-label="이번 주 예배 조건">
-     {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} disabled={readOnly} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}</label>)}
+     {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} disabled={readOnly} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}{conds[c.id]&&!eff[c.id]?<small className="tg-note">· 큐시트에 없음</small>:null}</label>)}
     </div>
     <div className="progress" aria-live="polite"><span className="meter"><i style={{width:`${p.total?Math.round(p.done/p.total*100):0}%`}}/></span><span><b className="num">{p.done}</b> / <span className="num">{p.total}</span></span></div>
     <div className="actions">
@@ -214,21 +226,17 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   <section className="sheet" aria-label={t.page2.title}>
    {head(t.page2.title)}
    <div className="banner"><small>NOW → NEXT</small>{t.page2.banner}</div>
-   <div className="flow-wrap"><div className="flow" style={{"--n":shown,"--n-all":t.page2.flow.length} as CSSProperties}>
-    <div className="lab">{flowLabel}<small>FLOW</small></div>
-    {t.page2.flow.map(s=>{const hide=isOn(s.condition,conds)?"":" hide";const sub=flowSub(s,conds,t.start);
-     return <div key={s.id} className={"st st-"+s.style+hide}><b className={s.style==="countdown"?"sm":undefined}>{s.label}</b>{sub?<small>{sub}</small>:null}{s.flag?<span className="flag">{s.flag}</span>:null}</div>;})}
-    <div className="lab">이때 준비<small>NEXT</small></div>
-    {t.page2.flow.map(s=><div key={s.id} className={"nx"+(isOn(s.condition,conds)?"":" hide")}>{s.next}</div>)}
-    <div className="lab">체크</div>
-    {t.page2.flow.map(s=><div key={s.id} className={"fc"+(isOn(s.condition,conds)?"":" hide")}>{ck(s.id,null,{label:s.label})}</div>)}
-   </div></div>
+   {focusOn?<div className="flow-wrap split">
+    <FlowGrid steps={parts.before} label={flowLabel} t={t} conds={eff} ck={ck}/>
+    <FocusZoneView t={t} parts={parts} conds={eff} roster={roster} ck={ck}/>
+    <FlowGrid steps={parts.after} t={t} conds={eff} ck={ck}/>
+   </div>:<div className="flow-wrap"><FlowGrid steps={t.page2.flow} label={flowLabel} t={t} conds={eff} ck={ck}/></div>}
 
    {rosterGroups.length?<div className="roster">{rosterGroups.map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>:null}
 
    <div className="cols3">
     <div className="stack">
-     {simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items))}
+     {t.page2.during.items.length?simple(t.page2.during.title,"NOW → NEXT",items(t.page2.during.items)):null}
      {simple(t.page2.after.title,"",items(t.page2.after.items))}
     </div>
     {songs?simple(songs.group,"큐시트와 같은 값",<div className="pd-songs">{songFields.map(f=><div key={f.id} className={"song-row"+(f.id===COMM_SONG.id?" opt":"")}>
@@ -241,6 +249,69 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   </section>
   </fieldset>
  </div>;
+}
+
+type Ck=(id:string,text:ReactNode,o?:{cls?:string;cond?:string|null;teams?:string[];label?:string})=>ReactNode;
+
+// FLOW 한 덩어리: 단계 / 이때 준비 / 체크 세 줄. 꺼진 조건의 칸은 숨긴다(빈 양식 인쇄에선 보인다).
+function FlowGrid({steps,label,t,conds,ck}:{steps:FlowStep[];label?:string;t:PdTemplate;conds:Conditions;ck:Ck}){
+ if(!steps.length)return null;
+ const shown=steps.filter(s=>isOn(s.condition,conds)).length;
+ return <div className="flow" style={{"--n":shown,"--n-all":steps.length} as CSSProperties}>
+  <div className="lab">{label??""}<small>FLOW</small></div>
+  {steps.map(s=>{const hide=isOn(s.condition,conds)?"":" hide";const sub=flowSub(s,conds,t.start);
+   return <div key={s.id} className={"st st-"+s.style+hide}><b className={s.style==="countdown"?"sm":undefined}>{s.label}</b>{sub?<small>{sub}</small>:null}{s.flag?<span className="flag">{s.flag}</span>:null}</div>;})}
+  <div className="lab">이때 준비<small>NEXT</small></div>
+  {steps.map(s=><div key={s.id} className={"nx"+(isOn(s.condition,conds)?"":" hide")}>{s.next}</div>)}
+  <div className="lab">체크</div>
+  {steps.map(s=><div key={s.id} className={"fc"+(isOn(s.condition,conds)?"":" hide")}>{ck(s.id,null,{label:s.label})}</div>)}
+ </div>;
+}
+
+// 이름 여러 명을 한 사람씩. 비어 있으면 빨간 '미입력'.
+function People({text}:{text?:string}){const ns=splitPeople(text);return ns.length?<>{ns.map((n,i)=><span key={i} className="nm">{n}</span>)}</>:<span className="miss">미입력</span>;}
+
+// PD 집중 구간: 이어진 집중 칸을 한 상자에. 칸마다 순서·시각 / 배지 / 담당 / 이때 준비 / 체크 항목. 아래 띠는 구간 끝(다음 칸) 담당 등단.
+function FocusZoneView({t,parts,conds,roster,ck}:{t:PdTemplate;parts:ReturnType<typeof flowParts>;conds:Conditions;roster:Record<string,string>;ck:Ck}){
+ const z=t.page2.focus;
+ const cueAt=(s?:FlowStep|null)=>{const r=s?.cue?t.cue?.rows.find(x=>x.id===s.cue):undefined;return r?clockAt(t.start,r.from):"";};
+ const fill=(x:string)=>x.replace(/\{(\w+)\}/g,(_,k:string)=>roster[k]?.trim()||"—");
+ // 성찬처럼 선택 순서(optional)는 꺼지면 숨기고, 다른 칸(영상소식)은 흐리게 둔다.
+ const cells=parts.zone.filter(s=>s.style!=="optional"||isOn(s.condition,conds));
+ const first=cells[0];
+ const t1=cueAt(first),t2=cueAt(parts.end);
+ return <div className="focus" style={{"--n":cells.length} as CSSProperties}>
+  <div className="fz-h">
+   <span className="fz-badge">PD 집중 구간</span>
+   <b>{first?.label} → {parts.end?parts.end.label+" 전":"끝"}</b>
+   <span className="fz-sub">{t1||t2?<span className="num">{t1}{t1&&t2?" – ":""}{t2} · </span>:null}다음 순서 담당자 위치를 미리 파악</span>
+   {z?.check?<span className="fz-ck">{ck(z.check.id,z.check.text,{cls:"strong"})}</span>:null}
+  </div>
+  <div className="fz-cells">{cells.map(s=>{const on=isOn(s.condition,conds);const at=cueAt(s);const f=s.focus!;
+   return <div key={s.id} className={"fz-c"+(on?"":" dim")}>
+    <div className="fz-t"><b>{s.label}</b>{at?<span className="num">{at}</span>:s.flag?<span className="flag">{s.flag}</span>:null}</div>
+    {f.badge?<span className="fz-tag">{fill(f.badge)}</span>:null}
+    {f.owners?.length?<div className="fz-row"><span className="k">담당</span><span className="v">{f.owners.map((o,i)=><span key={i} className="own">{o.field?<People text={roster[o.field]}/>:<span className="nm">{o.text}</span>}</span>)}</span></div>:null}
+    {s.next?<div className="fz-row"><span className="k">이때 준비 · NEXT</span><span className="v nx-t">{s.next}</span></div>:null}
+    {f.checks?.length?<div className="fz-cks">{f.checks.map(c=>ck(c.id,c.text,{cls:c.emphasis==="strong"?"strong":c.emphasis==="highlight"?"hl":"",cond:on?c.condition:(c.condition??s.condition),teams:c.teams}))}</div>:null}
+   </div>;})}</div>
+  {parts.end?<div className="fz-end"><b><span className="num">{cueAt(parts.end)}</span> {parts.end.label} →</b> {z?.endField?<><People text={roster[z.endField]}/> 등단 · </>:null}여기까지 넘어가면 집중 구간 끝</div>:null}
+ </div>;
+}
+
+// 오늘 섬기는 명단: 줄마다 역할 칸, 이름은 한 사람씩. 큐시트에 없는 칸만 여기서 적는다(나머지는 큐시트에서).
+function RosterLines({it,roster,editable,onChange,onBlur}:{it:RosterItem;roster:Record<string,string>;editable:(k:string)=>boolean;onChange:(id:string,v:string)=>void;onBlur:(id:string)=>void}){
+ // 2열 칸(악기·싱어)은 위→아래, 왼→오른 순서라 줄 수를 정해 준다.
+ const rows=(c:RosterItem["lines"][number]["cols"][number])=>c.two?{"--rows":Math.max(1,Math.ceil(splitPeople(roster[c.field]).length/2))} as CSSProperties:undefined;
+ return <div className="rs">{it.lines.map(l=><div key={l.label} className="rs-line">
+  <div className="rs-l">{l.label}</div>
+  <div className="rs-cols">{l.cols.map(c=><div key={c.field} className={"rs-c"+(c.two?" two":"")} style={{"--w":c.w??1} as CSSProperties}>
+   <div className="rs-k">{c.label}</div>
+   {editable(c.field)?<><input type="text" maxLength={1000} autoComplete="off" aria-label={c.label+" 이름"} placeholder="미입력" value={roster[c.field]??""} onChange={e=>onChange(c.field,e.target.value)} onBlur={()=>onBlur(c.field)}/>
+    <div className="rs-n rs-print" style={rows(c)}><People text={roster[c.field]}/></div></>
+   :<div className="rs-n" style={rows(c)}><People text={roster[c.field]}/></div>}
+  </div>)}</div>
+ </div>)}</div>;
 }
 
 // 섬기는 사람 표의 이름 칸: 화면에선 입력, 인쇄에선 이름(NameList).

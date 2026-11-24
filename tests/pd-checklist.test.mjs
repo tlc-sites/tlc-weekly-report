@@ -6,6 +6,8 @@ import {randomUUID} from 'node:crypto';
 import {SUPABASE_STUB} from './stub.mjs';
 import {applicableCheckIds,progress,clockAt,flowSub,visibleFlow,defaultConditions,cueTime,cueTitle,cueSongKeys,serviceColor,splitNames,serviceNameEn,keepPhrase,peopleFields} from '../src/lib/pd-checklist.ts';
 import {parseTemplate} from '../src/lib/pd-template-schema.ts';
+import {toFocusLayout,hasFocusLayout} from '../src/lib/pd-focus-layout.ts';
+import {effectiveConditions,cueBlanks,flowParts} from '../src/lib/pd-checklist.ts';
 
 async function setup(){
  const db=new PGlite();
@@ -275,5 +277,59 @@ test('DB62: 관리자는 잘못 만든 예배를 지우고 되살린다. 기본 
  assert.equal((await db.query("select count(*)::int n from report.pd_templates where service_key='sabc'")).rows[0].n,1);
  assert.equal((await db.query("select pd_name from report.pd_runs where service_key='sabc'")).rows[0].pd_name,'홍PD');
  await rm('admin','sabc',false);assert.deepEqual(await list('pd'),[]);
+ }finally{await db.close();}
+});
+
+test('새 양식(명단·큐시트 확인·집중 구간): 변환·진행 숫자·큐시트 빈 칸·영상광고 없음', async()=>{
+ const {db}=await setup();try{
+ const latest=k=>db.query("select content from report.pd_templates where service_key=$1 order by version desc limit 1",[k]).then(x=>x.rows[0].content);
+ const s1=await latest('sun1');
+ // 운영 1부처럼 '예배 진행 중' 5개
+ s1.page2.during.items=[{type:'check',id:'j2',text:'다음 순서 담당자 위치 파악'},{type:'check',id:'j3',text:'마지막 곡 때 영상소식 순서 준비',condition:'news'},{type:'check',id:'j4',text:'모든 기술팀 영상소식 전환 준비',condition:'news'},{type:'check',id:'j5',text:'헌금 진행 시 성전 전체 공조 OFF'},{type:'check',id:'j_micpos',text:'목사님, 사모님 설교 등단 전 마이크 포지션 확인'}];
+ const {template:t}=toFocusLayout(s1);
+ assert.ok(parseTemplate(t).ok);assert.ok(hasFocusLayout(t));assert.ok(!hasFocusLayout(s1));
+ // 1쪽: 체크 없는 세 줄 명단, 예배 인도는 예배팀 줄의 '인도'로만
+ const pb=t.page1.rows[0][0];assert.equal(pb.title,'오늘 섬기는 명단');assert.equal(pb.items.length,1);
+ const ros=pb.items[0];assert.equal(ros.type,'roster');
+ assert.deepEqual(ros.lines.map(l=>[l.label,l.cols.map(c=>c.label+':'+c.field).join()]),[
+  ['말씀·위원','설교:r2,헌금 메시지:r3,말씀 합독:r4,헌금위원:r7,안내위원:r8'],
+  ['예배팀','인도:r1,악기:r18,싱어:r9'],
+  ['기술팀','음향:r10,영상:r11,자막:r13,조명:r14,사진:r12,부산 담당:r15']]);
+ // T-45 맨 위 큐시트 확인
+ const t45=t.page1.rows.flat().find(b=>b.label==='T-45');assert.equal(t45.items[0].type,'cueCheck');
+ // 2쪽: 집중 구간 = 영상소식~말씀 합독(성찬 포함), 끝은 설교. '진행 중'은 모두 옮겨 비었다
+ const parts=flowParts(t);
+ assert.deepEqual(parts.zone.map(s=>s.label),['영상소식','헌금 메시지','헌금','성찬','말씀 합독']);
+ assert.deepEqual([parts.before.map(s=>s.label).join(),parts.end.label,parts.after.map(s=>s.label).join()],['COUNTDOWN,유튜브 LIVE,START,찬양과 경배','설교','설교,마침 기도,유튜브 LIVE 종료,MP3 전환']);
+ assert.equal(t.page2.during.items.length,0);assert.equal(t.page2.focus.check.id,'j2');assert.equal(t.page2.focus.endField,'r2');
+ const cks=k=>parts.zone.find(s=>s.label===k).focus.checks.map(c=>c.text);
+ assert.deepEqual(cks('영상소식'),['마지막 곡 때 영상소식 순서 준비','모든 기술팀 영상소식 전환 준비']);
+ assert.deepEqual(cks('헌금 메시지'),['헌금위원 위치 확인']);
+ assert.deepEqual(cks('헌금'),['헌금 진행 시 성전 전체 공조 OFF','말씀 합독위원 대기']);
+ assert.deepEqual(cks('말씀 합독'),['목사님, 사모님 설교 등단 전 마이크 포지션 확인']);
+ assert.deepEqual(parts.zone.map(s=>s.cue??''),['ann','offlead','','','scripture']);
+ // 진행 숫자: 섬기는 사람 체크·집중 칸 FLOW 체크는 빠지고, 큐시트 확인·헌금위원 위치·합독위원 대기가 더해진다
+ const on={communion:false,news:true,changes:false};
+ const before=applicableCheckIds(s1,on),after=applicableCheckIds(t,on);
+ const pp=before.filter(x=>x.startsWith('pp_')).length;
+ assert.equal(after.length,before.length-pp-4+3);
+ assert.ok(!after.some(x=>x.startsWith('pp_'))&&!after.includes('s5')&&after.includes('s4')&&after.includes('j2'));
+ // 영상소식 없음: 큐시트 광고에 '영상광고: 없음'이면 꺼진 것으로 보고 영상소식 체크 2개가 빠진다
+ const eff=effectiveConditions(t,on,{c_ann:'영상광고: 없음'});assert.equal(eff.news,false);
+ assert.equal(applicableCheckIds(t,eff).length,after.length-2-1);// 영상소식 체크 2 + T-45 영상소식 테스트 1
+ assert.equal(effectiveConditions(t,on,{c_ann:'영상광고: 성탄 준비'}).news,true);
+ // 큐시트 빈 칸: 순서 줄·담당·송리스트
+ const full={c_worship:'예배팀',c_ann:'광고',r3:'이흥배',c_offsong:'예배팀',r4:'김충열',r2:'스캇',c_sermon:'제목',r1:'이희준',r18:'김소은',r9:'김연지',r10:'김승희',r11:'홍규화',r14:'문경모',r13:'노재용',r8:'김보영',r7:'김말숙',song1:'a',song2:'b',song3:'c',song4:'d',song_off:'e'};
+ assert.deepEqual(cueBlanks(t,full,'홍PD',on),[]);
+ const {r2,song3,song4,...miss}=full;void r2;void song3;void song4;
+ assert.deepEqual(cueBlanks(t,miss,'',on),['설교자','PD','송리스트 2곡']);
+ // 명단·집중 구간은 없는 칸을 가리키면 저장을 막는다
+ const bad=structuredClone(t);bad.page1.rows[0][0].items[0].lines[0].cols[0].field='nope';assert.ok(!parseTemplate(bad).ok);
+ // 다시 눌러도 그대로(이미 새 양식)
+ assert.deepEqual(toFocusLayout(t).template,t);
+ // 라이프라인: 찬양 다음 헌금 메시지·헌금, 끝은 설교. 옮기지 못한 '적용 기도' 항목은 진행 중 카드에 남는다
+ const lt=toFocusLayout(await latest('life')).template;assert.ok(parseTemplate(lt).ok);
+ const lp=flowParts(lt);assert.deepEqual([lp.zone.map(s=>s.label).join(),lp.end.label],['헌금 메시지,헌금','설교']);
+ assert.deepEqual(lt.page2.during.items.map(i=>i.text),['적용 기도 첫 기도제목 후 LIVE 종료 큐']);
  }finally{await db.close();}
 });

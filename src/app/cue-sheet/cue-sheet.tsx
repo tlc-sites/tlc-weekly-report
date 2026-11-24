@@ -145,7 +145,8 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
   <colgroup><col className="c-role"/><col/></colgroup>
   <thead><tr><th scope="col" colSpan={2}>Staffs</th></tr></thead>
   <tbody>{s.cue.staff.map(st=><tr key={st.key}><th scope="row">{en?st.en:st.ko}</th><td className="in">{cell(st.key,st.ko,undefined,true)}</td></tr>)}</tbody></table></div>;
- return <section className="sheet cue-sheet svc" style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
+ // 화면 장에는 id를 둬 PD 체크리스트의 「큐시트 열기」가 그 예배로 바로 온다(인쇄용 장은 id 없음).
+ return <section id={onChange?"cue-"+s.key:undefined} className="sheet cue-sheet svc" style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
   <div className="sheet-head">
    <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
