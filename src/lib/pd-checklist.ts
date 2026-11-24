@@ -23,6 +23,9 @@ export type PeopleTable = {
   /** 단계를 줄로 나누지 않고 한 줄에 칸마다 나란히(높이를 줄일 때). */
   inline?: boolean;
 };
+/** 지울 수 없는 기본 예배(마이그레이션이 만든 것). 나머지는 관리자가 목록에서 지우고 되살릴 수 있다(DB 62). */
+export const BASE_SERVICES=["sun1","sun2","sun3","life"];
+
 export const peopleCheckId = (person: string, step: string) => `pp_${person}_${step}`;
 
 /** 섬기는 사람 표가 이름을 받는 담당자 칸 ID들(2쪽 담당자 칸에서 뺀다) */

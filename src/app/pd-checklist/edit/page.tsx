@@ -17,13 +17,20 @@ async function Content({searchParams}:PageProps<"/pd-checklist/edit">){
  if(!(await canSeePdChecklist(supabase,profile)))redirect("/");
  if(!canManage(profile))redirect("/pd-checklist");
  const q=await searchParams;
- const {data:rows,error}=await supabase.from("pd_templates").select("service_key,version,content->name,content->start").order("version",{ascending:false});
- const latest=new Map<string,{name:string;start:string}>();
- for(const r of (rows??[]) as {service_key:string;name:string;start:string}[])if(!latest.has(r.service_key))latest.set(r.service_key,{name:r.name,start:r.start});
+ const [{data:rows,error},{data:removed}]=await Promise.all([
+  supabase.from("pd_templates").select("service_key,version,content->name,content->start").order("version",{ascending:false}),
+  supabase.from("pd_service_removed").select("service_key,removed_at"),
+ ]);
+ // 지운 예배(DB 62)는 고를 수 없고, 아래 '지운 예배'에서 되살린다
+ const goneAt=new Map((removed??[]).map(r=>[r.service_key as string,r.removed_at as string]));
+ const all=new Map<string,{name:string;start:string}>();
+ for(const r of (rows??[]) as {service_key:string;name:string;start:string}[])if(!all.has(r.service_key))all.set(r.service_key,{name:r.name,start:r.start});
+ const latest=new Map([...all].filter(([k])=>!goneAt.has(k)));
+ const gone=[...goneAt].filter(([k])=>all.has(k)).map(([key,at])=>({key,...all.get(key)!,removedAt:at})).sort((a,b)=>b.removedAt.localeCompare(a.removedAt));
  if(error||!latest.size)return <><PageTitle>체크리스트 편집</PageTitle><Card><p>템플릿을 불러오지 못했습니다.</p></Card></>;
  const services=[...latest.entries()].map(([key,t])=>({key,...t})).sort((a,b)=>a.start.localeCompare(b.start));
  const service=typeof q.service==="string"&&latest.has(q.service)?q.service:services[0].key;
  const {data:versions}=await supabase.from("pd_templates").select("version,content,created_at").eq("service_key",service).order("version",{ascending:false}).limit(20);
  const list=(versions??[]) as {version:number;content:PdTemplate;created_at:string}[];
- return <><span className="page-wide" hidden/><PdTemplateEditor key={service+":"+list[0].version} services={services} service={service} version={list[0].version} template={list[0].content} history={list.map(v=>({version:v.version,created_at:v.created_at,content:v.content}))} sunday={upcomingSunday(todayKST())} saved={typeof q.saved==="string"&&Number(q.saved)===list[0].version?list[0].version:undefined}/></>;
+ return <><span className="page-wide" hidden/><PdTemplateEditor key={service+":"+list[0].version} services={services} service={service} version={list[0].version} template={list[0].content} history={list.map(v=>({version:v.version,created_at:v.created_at,content:v.content}))} sunday={upcomingSunday(todayKST())} removed={gone} saved={typeof q.saved==="string"&&Number(q.saved)===list[0].version?list[0].version:undefined}/></>;
 }

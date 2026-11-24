@@ -2,9 +2,9 @@
 import {useEffect,useMemo,useState,useTransition,type ReactNode} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
+import {BASE_SERVICES,clockAt,SERVICE_COLORS,serviceColor,type Block,type FlowStep,type Item,type PdTemplate} from "@/lib/pd-checklist";
 import {allCheckIds,parseTemplate} from "@/lib/pd-template-schema";
-import {savePdTemplate} from "./actions";
+import {savePdTemplate,setPdServiceRemoved} from "./actions";
 import {PdChecklist} from "./checklist";
 
 type T=PdTemplate;
@@ -27,9 +27,10 @@ function usedIds(t:T){
  return [...allCheckIds(t),...matrixRows,...t.page1.rows.flat().map(b=>b.id),...t.page2.roster.flatMap(g=>g.fields.map(f=>f.id)),...t.page2.report.fields.map(f=>f.id),...t.conditions.map(c=>c.id)];
 }
 
-export function PdTemplateEditor({services,service,version,template,history,sunday,saved}:{
+export function PdTemplateEditor({services,service,version,template,history,sunday,saved,removed=[]}:{
  services:{key:string;name:string;start:string}[];service:string;version:number;template:T;
  history:{version:number;created_at:string;content:T}[];sunday:string;saved?:number;
+ removed?:{key:string;name:string;start:string;removedAt:string}[];
 }){
  const router=useRouter();
  const [draft,setDraft]=useState<T>(()=>clone(template));
@@ -57,6 +58,18 @@ export function PdTemplateEditor({services,service,version,template,history,sund
    const r=await savePdTemplate({service,baseVersion:version,content:p.data,asNew:!!asNew});
    if(!r.ok){setMsg({kind:"error",lines:r.errors});window.scrollTo({top:0});return;}
    router.replace(`/pd-checklist/edit?service=${r.service}&saved=${r.version}`);
+  });
+ };
+ // 지우기는 두 번 눌러야(한 번 누르면 확인 버튼이 나온다). 지운 예배는 아래 '지운 예배'에서 되살린다.
+ const [confirmRemove,setConfirmRemove]=useState(false);
+ const setRemoved=(key:string,remove:boolean)=>{
+  if(remove&&dirty&&!window.confirm("저장하지 않은 수정이 있습니다. 그래도 이 예배를 지울까요?"))return;
+  startSave(async()=>{
+   const r=await setPdServiceRemoved({service:key,remove});
+   if(!r.ok){setMsg({kind:"error",lines:r.errors});window.scrollTo({top:0});return;}
+   setConfirmRemove(false);
+   if(remove)router.replace("/pd-checklist/edit");else router.replace(`/pd-checklist/edit?service=${key}`);
+   router.refresh();
   });
  };
  const switchTo=(key:string)=>{if(dirty&&!window.confirm("저장하지 않은 수정이 있습니다. 다른 예배로 옮길까요?"))return;router.push(`/pd-checklist/edit?service=${key}`);};
@@ -187,6 +200,21 @@ export function PdTemplateEditor({services,service,version,template,history,sund
    </div>
    {services.some(s=>s.name===copy.name.trim())?<p className="text-sm text-danger">같은 이름의 예배가 이미 있습니다.</p>:null}
   </Section>
+
+  {!BASE_SERVICES.includes(service)?<Section title="이 예배 지우기" hint="잘못 만든 예배를 예배 목록·큐시트에서 뺍니다. 체크리스트 내용과 지난 기록은 남아 있어 아래 '지운 예배'에서 되살릴 수 있습니다.">
+   {confirmRemove?<div className="flex flex-wrap items-center gap-2">
+    <span className="text-sm text-danger">‘{template.name}’을(를) 지울까요?</span>
+    <button type="button" className={btn+" border-danger text-danger"} disabled={busy} onClick={()=>setRemoved(service,true)}>{busy?"지우는 중…":"지우기"}</button>
+    <button type="button" className={btn} disabled={busy} onClick={()=>setConfirmRemove(false)}>취소</button>
+   </div>:<button type="button" className={btn+" text-danger"} disabled={busy} onClick={()=>setConfirmRemove(true)}>이 예배 지우기…</button>}
+  </Section>:null}
+
+  {removed.length?<Section title="지운 예배" hint="되살리면 예배 목록·큐시트에 다시 보입니다.">
+   <ul className="divide-y divide-border/60">{removed.map(r=><li key={r.key} className="flex items-center gap-3 py-2 text-sm">
+    <b>{r.name}</b><span className="text-muted">{r.start} · {timeOf(r.removedAt)} 지움</span>
+    <button type="button" className={btn+" ml-auto"} disabled={busy||services.some(s=>s.name===r.name)} title={services.some(s=>s.name===r.name)?"같은 이름의 예배가 이미 있습니다":undefined} onClick={()=>setRemoved(r.key,false)}>되살리기</button>
+   </li>)}</ul>
+  </Section>:null}
 
   <Section title="지난 버전" hint="불러온 뒤 저장하면 그 내용이 새 버전이 됩니다(되돌리기).">
    <ul className="divide-y divide-border/60">{history.map(h=><li key={h.version} className="flex items-center gap-3 py-2 text-sm">

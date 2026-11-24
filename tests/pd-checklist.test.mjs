@@ -257,3 +257,23 @@ test('DB61: 이름에 금요가 들어간 예배는 T-30 무렵 블록에 부산
  assert.equal(await latestV(as,'fri1'),2);
  }finally{await db.close();}
 });
+
+test('DB62: 관리자는 잘못 만든 예배를 지우고 되살린다. 기본 네 예배·없는 예배는 막고, 다른 사람은 못 하며 기록은 남는다',async()=>{
+ const {db,as}=await setup();try{
+ const s2=(await db.query("select content from report.pd_templates where service_key='sun2' order by version desc limit 1")).rows[0].content;
+ await as('admin','select report.pd_template_save($1,0,$2)',['sabc',JSON.stringify({...s2,name:'금요예배 잘못'})]);
+ await as('pd',"select report.pd_run_save('sabc','2026-11-29',$1)",[JSON.stringify({pd:'홍PD'})]);
+ const rm=(n,k,b)=>as(n,'select report.pd_service_set_removed($1,$2)',[k,b]);
+ await assert.rejects(rm('pd','sabc',true),/admin required/);
+ await assert.rejects(rm('admin','sun1',true),/base service/);
+ await assert.rejects(rm('admin','nope',true),/no service/);
+ await rm('admin','sabc',true);await rm('admin','sabc',true);// 두 번 눌러도 그대로
+ const list=n=>as(n,'select service_key from report.pd_service_removed').then(x=>x.rows.map(r=>r.service_key));
+ assert.deepEqual(await list('pd'),['sabc']);
+ await assert.rejects(as('admin',"insert into report.pd_service_removed(service_key) values('sun2')"),/permission denied/);
+ // 템플릿·회차 기록은 그대로
+ assert.equal((await db.query("select count(*)::int n from report.pd_templates where service_key='sabc'")).rows[0].n,1);
+ assert.equal((await db.query("select pd_name from report.pd_runs where service_key='sabc'")).rows[0].pd_name,'홍PD');
+ await rm('admin','sabc',false);assert.deepEqual(await list('pd'),[]);
+ }finally{await db.close();}
+});

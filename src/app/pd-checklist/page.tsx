@@ -16,9 +16,14 @@ async function Content({searchParams}:PageProps<"/pd-checklist">){
  const {supabase,profile}=await requireActive();
  if(!(await canSeePdChecklist(supabase,profile)))redirect("/");
  const q=await searchParams;
- const {data:rows,error}=await supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false});
+ const [{data:rows,error},{data:removed}]=await Promise.all([
+  supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false}),
+  // 관리자가 지운 예배(DB 62)는 목록에서 뺀다. DB 적용 전이면 오류라 빈 목록
+  supabase.from("pd_service_removed").select("service_key"),
+ ]);
+ const gone=new Set((removed??[]).map(r=>r.service_key as string));
  const latest=new Map<string,{version:number;content:PdTemplate}>();
- for(const r of rows??[])if(!latest.has(r.service_key))latest.set(r.service_key,{version:r.version,content:r.content as PdTemplate});
+ for(const r of rows??[])if(!gone.has(r.service_key)&&!latest.has(r.service_key))latest.set(r.service_key,{version:r.version,content:r.content as PdTemplate});
  if(error||!latest.size)return <><PageTitle>예배 PD 체크리스트</PageTitle><Card><p>체크리스트를 불러오지 못했습니다.</p><p className="mt-1 text-sm text-muted">{error?"DB 적용 전이거나 연결 오류입니다. 관리자에게 알려 주세요.":"등록된 예배 템플릿이 없습니다."}</p></Card></>;
 
  // 예배 선택 목록은 시작 시각 순서(1부 → 2부 → 3부 → 라이프라인)

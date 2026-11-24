@@ -18,17 +18,20 @@ async function Content({searchParams}:PageProps<"/cue-sheet">){
  const q=await searchParams;
  const picked=typeof q.date==="string"&&isIsoDate(q.date)?q.date:todayKST();
  const date=weekdayOf(picked)===0?picked:addDays(picked,(7-weekdayOf(picked))%7);
- const [{data:rows,error},{data:runs},cueOk,pdOk]=await Promise.all([
+ const [{data:rows,error},{data:runs},cueOk,pdOk,{data:removed}]=await Promise.all([
   supabase.from("pd_templates").select("service_key,version,content").order("version",{ascending:false}),
   supabase.from("pd_runs").select("service_key,run_date,template_version,pd_name,conditions,checks,roster,report,updated_at").eq("run_date",date),
   // 작성자 지정(DB48): 큐시트 칸은 큐시트 또는 PD 체크리스트 작성자가 고친다. 아니면 보기 전용.
   supabase.rpc("can_write_worship_doc",{kind:"cue"}),
   supabase.rpc("can_write_worship_doc",{kind:"pd"}),
+  // 관리자가 지운 예배(DB 62)는 뺀다
+  supabase.from("pd_service_removed").select("service_key"),
  ]);
+ const gone=new Set((removed??[]).map(r=>r.service_key as string));
  const showPd=await canSeePdChecklist(supabase,profile);
  const canWrite=Boolean(cueOk.data||pdOk.data);
  const latest=new Map<string,PdTemplate>();
- for(const r of rows??[])if(!latest.has(r.service_key))latest.set(r.service_key,r.content as PdTemplate);
+ for(const r of rows??[])if(!gone.has(r.service_key)&&!latest.has(r.service_key))latest.set(r.service_key,r.content as PdTemplate);
  const byService=new Map(((runs??[]) as PdRun[]).map(r=>[r.service_key,r]));
  const services:CueService[]=[...latest.entries()].filter(([,t])=>t.cue).map(([key,t])=>{const run=byService.get(key);return {key,name:t.name,start:t.start,color:serviceColor({id:key,color:t.color}),cue:t.cue!,roster:run?.roster??{},pd:run?.pd_name??"",
   conditions:{...defaultConditions(t,date),...run?.conditions},hasCommunion:t.conditions.some(c=>c.id==="communion")};})
