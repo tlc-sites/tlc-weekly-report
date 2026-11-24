@@ -72,7 +72,7 @@ export type FlowStep = {
   cue?: string;
   /** PD 집중 구간 칸(이어진 칸들이 한 상자). FLOW 체크 칸 대신 이 칸의 체크 항목을 쓴다.
    *  badge의 {키}는 회차 roster 값으로 바꾼다(예: '헌금송 · {song_off}'). owners는 담당(field면 roster 이름, text면 그 글). */
-  focus?: { badge?: string; owners?: { field?: string; text?: string }[]; checks?: CheckItem[] };
+  focus?: { badge?: string; owners?: { field?: string; text?: string; label?: string }[]; checks?: CheckItem[] };
 };
 /** 집중 구간 상자 머리의 체크와, 구간 끝(바로 다음 FLOW 칸) 줄에 보일 담당 칸 */
 export type FocusZone = { check?: { id: string; text: string }; endField?: string };

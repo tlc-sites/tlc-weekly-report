@@ -42,7 +42,7 @@ const flowStep=z.object({
  id,label:text(30),next:opt(60),style:z.enum(["countdown","liveStart","start","default","optional","liveEnd","end"]),
  sub:opt(30).optional(),subWhen:z.record(z.string(),text(30)).optional(),condition:cond,flag:opt(20).nullable().optional(),offsetMin:offset.optional(),
  cue:id.optional(),
- focus:z.object({badge:opt(40).optional(),owners:z.array(z.object({field:id.optional(),text:opt(30).optional()})).max(4).optional(),checks:z.array(check).max(6).optional()}).optional(),
+ focus:z.object({badge:opt(40).optional(),owners:z.array(z.object({field:id.optional(),text:opt(30).optional(),label:opt(20).optional()})).max(4).optional(),checks:z.array(check).max(6).optional()}).optional(),
 });
 
 export const pdTemplateSchema=z.object({

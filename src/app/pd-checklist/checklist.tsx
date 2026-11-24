@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
 import {COMM_SONG,peopleCheckId,peopleFields,clockAt,keepPhrase,defaultConditions,flowSub,isOn,progress,serviceColor,cueKeys,cueBlanks,effectiveConditions,flowParts,splitPeople,type Block,type Conditions,type FlowStep,type Item,type PdRun,type PdTemplate,type RosterItem} from "@/lib/pd-checklist";
 import {NameList} from "@/components/name-list";
+import {hasFocusLayout} from "@/lib/pd-focus-layout";
 
 type Patch={pd?:string;conditions?:Conditions;checks?:Record<string,boolean>;roster?:Record<string,string>;report?:Record<string,string>};
 type Status={kind:"idle"|"saving"|"saved"|"error";at?:string};
@@ -189,7 +190,8 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
 
  const statusText=status.kind==="saving"?"저장 중…":status.kind==="error"?"저장하지 못했습니다. 연결을 확인하고 다시 눌러 주세요.":status.kind==="saved"&&status.at?`저장됨 ${timeOf(status.at)}`:"아직 기록 없음";
 
- return <div ref={root} className={"pdc svc"+(blank?" is-blank":"")} style={{"--svc":serviceColor({id:service,color:t.color})} as CSSProperties}>
+ // 새 양식(명단·집중 구간)은 A4 세로로 인쇄한다(시안). 예전 양식은 A4 가로 그대로.
+ return <div ref={root} className={"pdc svc"+(blank?" is-blank":"")+(hasFocusLayout(t)?" portrait":"")} style={{"--svc":serviceColor({id:service,color:t.color})} as CSSProperties}>
   <div className="bar" data-print-hide>
    <div className="bar-in">
     {preview?<div className="brand"><b>미리보기</b></div>:<><div className="brand"><b>TLC 예배 PD</b>
@@ -220,7 +222,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   <fieldset disabled={readOnly} className="contents">
   <section className="sheet" aria-label={t.page1.title}>
    {head(t.page1.title)}
-   {t.page1.rows.map((row,i)=><div key={i} className={"row row"+(i+1)} style={{"--cols":row.reduce((n,b)=>n+(b.wide?2:1),0)} as CSSProperties}>{row.map(block)}</div>)}
+   {t.page1.rows.map((row,i)=><div key={i} className={"row row"+(i+1)} style={{"--cols":row.reduce((n,b)=>n+(b.wide?2:1),0),"--tpl":row.map(b=>b.wide?"minmax(0,1.45fr)":"minmax(0,1fr)").join(" ")} as CSSProperties}>{row.map(block)}</div>)}
   </section>
 
   <section className="sheet" aria-label={t.page2.title}>
@@ -229,7 +231,7 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
    {focusOn?<div className="flow-wrap split">
     <FlowGrid steps={parts.before} label={flowLabel} t={t} conds={eff} ck={ck}/>
     <FocusZoneView t={t} parts={parts} conds={eff} roster={roster} ck={ck}/>
-    <FlowGrid steps={parts.after} t={t} conds={eff} ck={ck}/>
+    <FlowGrid steps={parts.after} label={flowLabel} t={t} conds={eff} ck={ck}/>
    </div>:<div className="flow-wrap"><FlowGrid steps={t.page2.flow} label={flowLabel} t={t} conds={eff} ck={ck}/></div>}
 
    {rosterGroups.length?<div className="roster">{rosterGroups.map(g=><RosterGroupView key={g.group} g={g} roster={roster} onChange={setRosterField} onBlur={id=>flush("roster:"+id)}/>)}</div>:null}
@@ -291,11 +293,11 @@ function FocusZoneView({t,parts,conds,roster,ck}:{t:PdTemplate;parts:ReturnType<
    return <div key={s.id} className={"fz-c"+(on?"":" dim")}>
     <div className="fz-t"><b>{s.label}</b>{at?<span className="num">{at}</span>:s.flag?<span className="flag">{s.flag}</span>:null}</div>
     {f.badge?<span className="fz-tag">{fill(f.badge)}</span>:null}
-    {f.owners?.length?<div className="fz-row"><span className="k">담당</span><span className="v">{f.owners.map((o,i)=><span key={i} className="own">{o.field?<People text={roster[o.field]}/>:<span className="nm">{o.text}</span>}</span>)}</span></div>:null}
+    {f.owners?.length?<div className="fz-row"><span className="k">담당</span><span className="v">{f.owners.map((o,i)=><span key={i} className="own">{o.label?<span className="own-l">{o.label}</span>:null}{o.field?<People text={roster[o.field]}/>:<span className="nm">{o.text}</span>}</span>)}</span></div>:null}
     {s.next?<div className="fz-row"><span className="k">이때 준비 · NEXT</span><span className="v nx-t">{s.next}</span></div>:null}
     {f.checks?.length?<div className="fz-cks">{f.checks.map(c=>ck(c.id,c.text,{cls:c.emphasis==="strong"?"strong":c.emphasis==="highlight"?"hl":"",cond:on?c.condition:(c.condition??s.condition),teams:c.teams}))}</div>:null}
    </div>;})}</div>
-  {parts.end?<div className="fz-end"><b><span className="num">{cueAt(parts.end)}</span> {parts.end.label} →</b> {z?.endField?<><People text={roster[z.endField]}/> 등단 · </>:null}여기까지 넘어가면 집중 구간 끝</div>:null}
+  {parts.end?<div className="fz-end"><b><span className="num">{cueAt(parts.end)}</span> {parts.end.label} →</b> {z?.endField?<><People text={roster[z.endField]}/> 등단</>:null}<span className="fz-end-r">여기까지 넘어가면 집중 구간 끝</span></div>:null}
  </div>;
 }
 

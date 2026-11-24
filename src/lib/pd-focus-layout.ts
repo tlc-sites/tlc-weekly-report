@@ -74,7 +74,7 @@ export function toFocusLayout(src:PdTemplate):LayoutResult{
      s.focus={badge:"인도자 등단",owners:known("r3")?[{field:"r3"}]:[],checks:[...take(/헌금\s*메시지\s*준비/),add("헌금위원 위치 확인")]};
     }else if(/^헌금$/.test(l)){
      const song=t.page2.roster.some(g=>g.fields.some(x=>x.id==="song_off"))||!!t.cue;
-     s.focus={badge:song?"헌금송 · {song_off}":undefined,owners:[...(known("r7")?[{field:"r7"}]:[]),{text:"헌금송 예배팀"}],
+     s.focus={badge:song?"헌금송 · {song_off}":undefined,owners:[...(known("r7")?[{field:"r7",label:"헌금위원"}]:[]),{text:"헌금송 예배팀"}],
       checks:[...take(/공조\s*OFF/i),...(/말씀합독/.test(nextL)?[add("말씀 합독위원 대기")]:[])]};
     }else if(/말씀합독/.test(l)){
      s.cue??=cueRow(/^말씀봉독/);

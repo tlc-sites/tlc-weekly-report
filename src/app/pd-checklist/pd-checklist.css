@@ -192,7 +192,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .rs-c { flex: var(--w, 1) 1 0; min-width: 0; }
 .pdc .rs-k { font-size: 11px; font-weight: 600; color: var(--faint); letter-spacing: .02em; }
 .pdc .rs-n { display: flex; flex-direction: column; font-size: 14px; font-weight: 600; line-height: 1.35; }
-.pdc .rs-c.two .rs-n { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: column; grid-template-rows: repeat(var(--rows, 3), auto); column-gap: 10px; }
+/* 2열 칸(악기·싱어): 시안처럼 왼→오른, 그다음 아랫줄 */
+.pdc .rs-c.two .rs-n { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; }
 .pdc .rs-n .nm { word-break: keep-all; overflow-wrap: anywhere; }
 .pdc .rs-c input { display: block; width: 100%; min-width: 0; border: 0; border-bottom: 1px dashed var(--line2); background: transparent; padding: 1px 0; font-size: 14px; font-weight: 600; color: var(--ink); }
 .pdc .rs-c input::placeholder { color: var(--red); opacity: 1; font-weight: 600; }
@@ -258,17 +259,18 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .fz-t b { font-size: 17px; font-weight: 700; }
 .pdc .fz-t .num { font-size: 13px; font-weight: 600; color: var(--muted); }
 .pdc .fz-t .flag { font-size: 11px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
-.pdc .fz-tag { align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--orange); border: 1px solid var(--orange); border-radius: 999px; padding: 0 7px; }
+.pdc .fz-tag { align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--amber); background: color-mix(in srgb, var(--orange) 18%, var(--paper)); border-radius: 6px; padding: 1px 7px; }
 .pdc .fz-row { display: flex; flex-direction: column; font-size: 13px; }
 .pdc .fz-row .k { font-size: 10.5px; font-weight: 600; color: var(--faint); letter-spacing: .03em; }
-.pdc .fz-row .v { font-weight: 600; display: flex; flex-wrap: wrap; gap: 0 6px; }
-.pdc .fz-row .own { display: inline-flex; flex-wrap: wrap; gap: 0 4px; }
+.pdc .fz-row .v { font-weight: 600; display: flex; flex-direction: column; }
+.pdc .fz-row .own { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.pdc .fz-row .own-l { margin-right: 2px; }
 .pdc .fz-row .own .nm + .nm::before { content: "· "; color: var(--faint); }
-.pdc .fz-row .own + .own::before { content: "+"; color: var(--faint); font-weight: 500; }
 .pdc .fz-row .nx-t { color: var(--accent); }
 .pdc .fz-cks { border-top: 1px dashed var(--line2); padding-top: 4px; margin-top: 2px; font-size: 13.5px; }
 .pdc .fz-cks .cond-tag { display: none; }
-.pdc .fz-end { margin: 10px -12px 0; background: var(--paper); border-top: 1px solid var(--line); padding: 8px 14px; font-size: 13.5px; }
+.pdc .fz-end { margin: 10px -12px 0; background: var(--paper); border-top: 1px solid var(--line); padding: 8px 14px; font-size: 13.5px; display: flex; flex-wrap: wrap; gap: 0 6px; align-items: baseline; }
+.pdc .fz-end-r { margin-left: auto; color: var(--amber); font-size: 12.5px; }
 .pdc .fz-end b { color: var(--ink); }
 .pdc .fz-end .nm + .nm::before { content: " / "; color: var(--faint); }
 @media screen and (max-width: 760px) {
@@ -335,6 +337,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 
 /* ---------- 인쇄: A4 가로 정확히 2페이지. 다른 화면의 인쇄 설정(@page A4 세로)을 건드리지 않도록 이름 붙인 페이지를 쓴다. ---------- */
 @page pdc { size: A4 landscape; margin: 7mm 8mm; }
+/* 새 양식(.portrait)은 A4 세로 두 장 */
+@page pdcv { size: A4 portrait; margin: 8mm 9mm; }
 @media print {
   .pdc {
     --bg: #ffffff; --paper: #ffffff; --ink: #172235; --muted: #5f6b7e; --faint: #8b95a5; --line: #dfe5ed; --line2: #c7d0dc;
@@ -480,6 +484,50 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc:not(.is-blank) .fz-c.dim .off { display: flex !important; }
   .pdc.is-blank .rs-n, .pdc.is-blank .fz-row .v .own, .pdc.is-blank .fz-end .nm, .pdc.is-blank .fz-end .miss, .pdc.is-blank .cuechk-st, .pdc.is-blank .fz-row .miss { visibility: hidden; }
   .pdc.is-blank .fz-c.dim { opacity: 1; border-style: solid; border-width: 1px; background: var(--paper); }
+
+  /* ---- 새 양식 세로 인쇄(시안): 1쪽 블록은 줄마다 블록 수만큼 같은 폭(넓은 블록도 한 칸, 안쪽 2단) ---- */
+  .pdc.portrait .sheet { page: pdcv; }
+  .pdc.portrait { font-size: 9.6pt; }
+  .pdc.portrait .sheet:first-of-type { font-size: 9.8pt; }
+  .pdc.portrait .row { grid-template-columns: var(--tpl); gap: 3mm; }
+  .pdc.portrait .row + .row { margin-top: 3mm; }
+  .pdc.portrait .blk.wide { grid-column: auto; }
+  .pdc.portrait .blk.wide .blk-b { column-gap: 2.4mm; }
+  .pdc.portrait .blk-h .tm { font-size: 15pt; }
+  .pdc.portrait .sheet:first-of-type .grid .ck, .pdc.portrait .grid .ck { font-size: 8.8pt; }
+  .pdc.portrait .grid.flexy .ck { white-space: normal; }
+  /* 넓은 블록(부산 ATEM 등)은 세로 인쇄에서 한 칸 반 폭, 안쪽 묶음은 두 칸씩 */
+  .pdc.portrait .blk.wide .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .8mm; }
+  .pdc.portrait .blk.wide .grid .ck { font-size: 8.2pt; padding: .4mm .8mm; gap: 1.2mm; white-space: normal; word-break: keep-all; }
+  .pdc.portrait .blk.wide .grid .ck .box { width: 3.4mm; height: 3.4mm; }
+  .pdc.portrait .blk.wide table.floor { font-size: 7.8pt; }
+  .pdc.portrait .blk.wide table.floor th, .pdc.portrait .blk.wide table.floor td { padding: .5mm .8mm; white-space: nowrap; }
+  .pdc.portrait .blk.wide table.floor td:first-child { white-space: normal; word-break: keep-all; }
+  .pdc.portrait .blk.wide .arr { font-size: 8pt; }
+  .pdc.portrait .blk.wide .shd { white-space: normal; }
+  .pdc.portrait table.floor { font-size: 8.4pt; }
+  .pdc.portrait .rs { padding: .6mm 3mm; }
+  .pdc.portrait .rs-line { grid-template-columns: 18mm minmax(0, 1fr); padding: 1.6mm 0; }
+  .pdc.portrait .rs-k { border-bottom: 1px solid var(--line2); padding-bottom: .4mm; margin-bottom: .8mm; }
+  .pdc.portrait .rs-n { font-size: 9.6pt; line-height: 1.4; }
+  .pdc.portrait .cuechk { padding: 1.2mm 2mm; margin-bottom: 1.2mm; }
+  .pdc.portrait .sheet:has(.flow-wrap.split) .banner { padding: 2.4mm; font-size: 12.5pt; }
+  .pdc.portrait .sheet:has(.flow-wrap.split) .flow-wrap { margin-top: 3mm; }
+  .pdc.portrait .flow-wrap.split { padding: 2.4mm 2.6mm; gap: 2.4mm; }
+  .pdc.portrait .flow-wrap.split .st { padding: 2mm .6mm 1.8mm; }
+  .pdc.portrait .flow-wrap.split .flow { grid-template-columns: 16mm repeat(var(--n), minmax(0, 1fr)); gap: 1.2mm 1.4mm; }
+  .pdc.portrait .flow-wrap.split .lab small { display: block; }
+  .pdc.portrait .focus { padding: 2.4mm 2.6mm 0; }
+  .pdc.portrait .fz-h { margin-bottom: 2mm; }
+  .pdc.portrait .fz-cells { gap: 2mm; }
+  .pdc.portrait .fz-c { padding: 2mm 2.2mm; gap: 1mm; }
+  .pdc.portrait .fz-row { flex-direction: column; gap: 0; font-size: 9pt; }
+  .pdc.portrait .fz-cks { font-size: 8.8pt; }
+  .pdc.portrait .fz-end { margin: 2.4mm -2.6mm 0; padding: 1.8mm 3mm; font-size: 9pt; }
+  .pdc.portrait .sheet:has(.flow-wrap.split) .cols3 { margin-top: 3mm; gap: 3mm; }
+  .pdc.portrait .sheet:has(.flow-wrap.split) .rp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .pdc.portrait .rp-row > div { padding: 1.2mm .6mm; }
+  .pdc.portrait .song-row { min-height: 8mm; }
 
   /* 작성본: 꺼진 조건 항목은 숨긴다. 빈 양식(코팅용): 모든 항목과 태그를 보이고 체크·입력값은 비운다. */
   .pdc:not(.is-blank) .off, .pdc:not(.is-blank) .flow .hide { display: none !important; }
