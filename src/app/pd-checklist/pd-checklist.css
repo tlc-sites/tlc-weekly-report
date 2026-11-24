@@ -76,6 +76,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .btn.primary { background: var(--navy); border-color: var(--navy); color: var(--on-strong); font-weight: 600; }
 .pdc .btn.danger-armed { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); font-weight: 600; }
 .pdc .hint { font-size: 12px; color: var(--faint); }
+/* 고른 날짜가 그 예배 요일이 아니라 옮겼을 때 한 줄 안내(줄 전체 차지) */
+.pdc .date-note { flex-basis: 100%; margin: -4px 0 0; font-size: 12px; color: var(--muted); }
 .pdc .save-status { flex-basis: 100%; margin: -4px 0 0; font-size: 12px; color: var(--faint); }
 .pdc .save-status.is-error { color: var(--amber); font-weight: 600; }
 

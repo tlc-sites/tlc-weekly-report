@@ -57,3 +57,7 @@
   .cue .cue-t td.time { font-size: 10.5pt; }
   .cue .pv { display: block; font-size: 11.5pt; line-height: 1.25; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
 }
+
+/* 고른 날짜에 예배가 없을 때 */
+.pdc.cue .cue-empty { max-width: 1100px; margin: 24px auto; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pdc.cue .cue-empty p { margin: 0; }

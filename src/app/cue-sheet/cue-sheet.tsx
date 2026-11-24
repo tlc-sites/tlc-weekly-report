@@ -22,7 +22,8 @@ const printLang={
 // 'pd'는 회차의 PD 이름, 나머지는 roster 키. 영어 값은 '키_en'(비우면 한글 값을 쓴다).
 const valuesOf=(s:{roster:Record<string,string>;pd:string})=>({...s.roster,pd:s.pd});
 
-export function CueSheet({date,defaultDate,services,readOnly=false,showPd=true}:{date:string;defaultDate:string;services:CueService[];readOnly?:boolean;showPd?:boolean}){
+export type DayName={ko:string;en:string};
+export function CueSheet({date,quick,dayName,next,services,readOnly=false,showPd=true}:{date:string;quick:{label:string;date:string}[];dayName:DayName;next:string;services:CueService[];readOnly?:boolean;showPd?:boolean}){
  const router=useRouter();
  const [supabase]=useState(createClient);
  const [vals,setVals]=useState<Values>(()=>Object.fromEntries(services.map(s=>[s.key,valuesOf(s)])));
@@ -86,9 +87,9 @@ export function CueSheet({date,defaultDate,services,readOnly=false,showPd=true}:
  return <div ref={root} className="pdc cue">
   <div className="bar">
    <div className="bar-in">
-    <div className="brand"><b>주일예배 큐시트</b></div>
+    <div className="brand"><b>예배 큐시트</b></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go(e.target.value)}/></label>
-    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go(defaultDate)}>돌아오는 주일</button>:null}
+    {quick.filter(q=>q.date!==date).map(q=><button key={q.label} type="button" className="btn" onClick={()=>go(q.date)}>{q.label}</button>)}
     {services.some(s=>s.hasCommunion)?<div className="toggles"><label className="tg"><input type="checkbox" checked={communionOn} disabled={readOnly} onChange={e=>setCommunion(e.target.checked)}/><span className="sw"/>성찬주간 (1주차)</label></div>:null}
     <div className="seg" role="group" aria-label="작성 언어">
      <button type="button" aria-pressed={lang==="ko"} onClick={()=>setLang("ko")}>한글</button>
@@ -107,15 +108,16 @@ export function CueSheet({date,defaultDate,services,readOnly=false,showPd=true}:
    </div>
   </div>
 
-  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} readOnly={readOnly} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={showPd?()=>flush():undefined}/>)}</div>
+  {services.length?null:<div className="cue-empty" role="status"><p>이 날짜에는 예배가 없습니다.</p>{next!==date?<button type="button" className="btn" onClick={()=>go(next)}>다음 예배 날로 가기 ›</button>:null}</div>}
+  <div className="cue-screen">{services.map(s=><Sheet key={s.key} s={s} date={date} day={dayName} lang={lang} v={vals[s.key]??{}} conds={conds[s.key]??{}} readOnly={readOnly} onChange={(k,val)=>set(s.key,k,val)} onBlur={k=>flush(s.key+":"+k)} onLeave={showPd?()=>flush():undefined}/>)}</div>
   {/* 인쇄: 한 쪽(A4 가로)에 예배 하나. 한글판 1부·2부·3부·라이프라인, 그다음 영어판 같은 순서(양면이면 언어마다 2장). */}
-  <div className="cue-print">{printLangs.flatMap(l=>services.map(s=><Sheet key={l+s.key} s={s} date={date} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
+  <div className="cue-print">{printLangs.flatMap(l=>services.map(s=><Sheet key={l+s.key} s={s} date={date} day={dayName} lang={l} v={vals[s.key]??{}} conds={conds[s.key]??{}}/>))}</div>
  </div>;
 }
 
 // 예배 한 개의 큐시트. onChange가 있으면 칸에 바로 적는다(화면), 없으면 값만 보인다(인쇄).
 // 화면·인쇄 모두 예배마다 한 장(.sheet, 인쇄는 A4 가로 한 쪽).
-function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:CueService;date:string;lang:Lang;v:Record<string,string>;conds:Conditions;readOnly?:boolean;
+function Sheet({s,date,day,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:CueService;date:string;day:DayName;lang:Lang;v:Record<string,string>;conds:Conditions;readOnly?:boolean;
  onChange?:(key:string,value:string)=>void;onBlur?:(key:string)=>void;onLeave?:()=>void}){
  const en=lang==="en";
  const rows=s.cue.rows.filter(r=>isOn(r.condition,conds));
@@ -148,7 +150,7 @@ function Sheet({s,date,lang,v,conds,readOnly=false,onChange,onBlur,onLeave}:{s:C
  // 화면 장에는 id를 둬 PD 체크리스트의 「큐시트 열기」가 그 예배로 바로 온다(인쇄용 장은 id 없음).
  return <section id={onChange?"cue-"+s.key:undefined} className="sheet cue-sheet svc" style={{"--svc":s.color} as CSSProperties} lang={en?"en":"ko"} aria-label={`${s.name} ${en?"English":"한글"}`}>
   <div className="sheet-head">
-   <div><div className="eyebrow">TLC {en?"Sunday Service Cue Sheet":"주일예배 큐시트"}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
+   <div><div className="eyebrow">TLC {en?`${day.en} Cue Sheet`:`${day.ko} 큐시트`}</div><h2>{cueTitle(date,s.cue.label,s.start)}</h2></div>
    <div className="right">
     {onLeave?<Link className="btn" href={`/pd-checklist?service=${s.key}&date=${date}`} onClick={onLeave} data-print-hide>PD 체크리스트 ›</Link>:null}
     <div className="lockup"><small>{en?serviceNameEn(s.cue.label):s.name}</small><b className="num">{s.start}</b></div>

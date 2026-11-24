@@ -22,8 +22,8 @@ const fmtDate=(d:string)=>{const [,m,day]=d.split("-").map(Number);return `${m}/
 const timeOf=(iso:string)=>new Date(iso).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour:"numeric",minute:"2-digit"});
 
 // preview: 편집 화면의 미리보기. 아무것도 저장하지 않고 화면에서만 눌러 본다.
-export function PdChecklist({services,service,date,defaultDate,template:t,version,latestVersion,initialRun,canEdit=false,preview=false,readOnly=false}:{
- services:{key:string;name:string;start:string}[];service:string;date:string;defaultDate:string;
+export function PdChecklist({services,service,date,defaultDate,defaultLabel="돌아오는 주일",dateNote,template:t,version,latestVersion,initialRun,canEdit=false,preview=false,readOnly=false}:{
+ services:{key:string;name:string;start:string}[];service:string;date:string;defaultDate:string;defaultLabel?:string;dateNote?:string;
  template:PdTemplate;version:number;latestVersion:number;initialRun:PdRun|null;canEdit?:boolean;preview?:boolean;readOnly?:boolean;
 }){
  const router=useRouter();
@@ -106,7 +106,8 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
   if(row?.service_key){if(row.template_version!==version)router.refresh();else apply(row);setStatus({kind:"saved",at:row.updated_at});}else setStatus({kind:"idle"});
  };
 
- const go=(next:{service?:string;date?:string})=>{flush();router.push(`/pd-checklist?service=${next.service??service}&date=${next.date??date}`);};
+ // 예배를 바꾸면 날짜를 넘기지 않아 그 예배의 가장 가까운 날로 열린다(수요예배 → 다가오는 수요일).
+ const go=(next:{service?:string;date?:string})=>{flush();router.push(next.service?`/pd-checklist?service=${next.service}`:`/pd-checklist?service=${service}&date=${next.date??date}`);};
 
  // 큐시트 광고 칸에 '영상광고: 없음'이 있으면 영상소식은 꺼진 것으로 그리고 센다.
  const eff=effectiveConditions(t,conds,roster);
@@ -197,7 +198,8 @@ export function PdChecklist({services,service,date,defaultDate,template:t,versio
     {preview?<div className="brand"><b>미리보기</b></div>:<><div className="brand"><b>TLC 예배 PD</b>
      <select aria-label="예배 선택" value={service} onChange={e=>go({service:e.target.value})}>{services.map(s=><option key={s.key} value={s.key}>{s.name} {s.start}</option>)}</select></div>
     <label className="field">날짜 <input type="date" value={date} onChange={e=>e.target.value&&go({date:e.target.value})}/></label>
-    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>돌아오는 주일</button>:null}</>}
+    {date!==defaultDate?<button type="button" className="btn" onClick={()=>go({date:defaultDate})}>{defaultLabel}</button>:null}
+    {dateNote?<p className="date-note" role="status">{dateNote}</p>:null}</>}
     <label className="field">PD <input type="text" value={pd} maxLength={40} placeholder="이름" autoComplete="off" readOnly={readOnly} onChange={e=>setPdName(e.target.value)} onBlur={()=>flush("pd")}/></label>
     <div className="toggles" role="group" aria-label="이번 주 예배 조건">
      {t.conditions.map(c=><label key={c.id} className="tg"><input type="checkbox" checked={!!conds[c.id]} disabled={readOnly} onChange={e=>setCond(c.id,e.target.checked)}/><span className="sw"/>{c.label}{conds[c.id]&&!eff[c.id]?<small className="tg-note">· 큐시트에 없음</small>:null}</label>)}
