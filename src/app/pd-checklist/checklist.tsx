@@ -305,11 +305,12 @@ function FocusZoneView({t,parts,conds,roster,ck}:{t:PdTemplate;parts:ReturnType<
 
 // 오늘 섬기는 명단: 줄마다 역할 칸, 이름은 한 사람씩. 큐시트에 없는 칸만 여기서 적는다(나머지는 큐시트에서).
 function RosterLines({it,roster,editable,onChange,onBlur}:{it:RosterItem;roster:Record<string,string>;editable:(k:string)=>boolean;onChange:(id:string,v:string)=>void;onBlur:(id:string)=>void}){
- // 2열 칸(악기·싱어)은 위→아래, 왼→오른 순서라 줄 수를 정해 준다.
- const rows=(c:RosterItem["lines"][number]["cols"][number])=>c.two?{"--rows":Math.max(1,Math.ceil(splitPeople(roster[c.field]).length/2))} as CSSProperties:undefined;
+ // 2열 칸(악기·싱어)은 위→아래, 왼→오른 순서라 줄 수를 정해 준다. 5명 이상이면 3열(악기).
+ const cols=(c:RosterItem["lines"][number]["cols"][number])=>splitPeople(roster[c.field]).length>=5?3:2;
+ const rows=(c:RosterItem["lines"][number]["cols"][number])=>c.two?{"--rows":Math.max(1,Math.ceil(splitPeople(roster[c.field]).length/cols(c)))} as CSSProperties:undefined;
  return <div className="rs">{it.lines.map(l=><div key={l.label} className="rs-line">
   <div className="rs-l">{l.label}</div>
-  <div className="rs-cols">{l.cols.map(c=><div key={c.field} className={"rs-c"+(c.two?" two":"")} style={{"--w":c.w??1} as CSSProperties}>
+  <div className="rs-cols">{l.cols.map(c=><div key={c.field} className={"rs-c"+(c.two?" two":"")+(c.two&&cols(c)===3?" three":"")} style={{"--w":c.w??1} as CSSProperties}>
    <div className="rs-k">{c.label}</div>
    {editable(c.field)?<><input type="text" maxLength={1000} autoComplete="off" aria-label={c.label+" 이름"} placeholder="미입력" value={roster[c.field]??""} onChange={e=>onChange(c.field,e.target.value)} onBlur={()=>onBlur(c.field)}/>
     <div className="rs-n rs-print" style={rows(c)}><People text={roster[c.field]}/></div></>

@@ -8,6 +8,7 @@ import {Card,Loading,PageTitle} from "@/components/ui";
 import {CueSheet,type CueService} from "./cue-sheet";
 import "../pd-checklist/pd-checklist.css";
 import "./cue-sheet.css";
+import "../pd-checklist/pd-plain.css";
 
 export default function Page(props:PageProps<"/cue-sheet">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
 

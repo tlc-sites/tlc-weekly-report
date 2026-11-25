@@ -8,6 +8,7 @@ import type {PdRun,PdTemplate} from "@/lib/pd-checklist";
 import {Card,Loading,PageTitle} from "@/components/ui";
 import {PdChecklist} from "./checklist";
 import "./pd-checklist.css";
+import "./pd-plain.css";
 
 export default function Page(props:PageProps<"/pd-checklist">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
 

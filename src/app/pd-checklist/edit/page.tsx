@@ -8,6 +8,7 @@ import {upcomingSunday} from "@/lib/sunday-notice";
 import {Card,Loading,PageTitle} from "@/components/ui";
 import {PdTemplateEditor} from "../editor";
 import "../pd-checklist.css";
+import "../pd-plain.css";
 
 export default function Page(props:PageProps<"/pd-checklist/edit">){return <Suspense fallback={<Loading/>}><Content {...props}/></Suspense>;}
 

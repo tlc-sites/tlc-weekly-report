@@ -1,0 +1,153 @@
+/* 담백한 화면 (2026-11 작업지시서 2-B, 시안 PD체크리스트_시안_담백.pdf).
+   PD 체크리스트·큐시트(.pdc)의 색·배경·굵은 글씨를 빼고, 검정·회색과 글자 굵기·자간·선으로만 위계를 만든다.
+   pd-checklist.css·cue-sheet.css 뒤에 불러 같은 선택자를 덮는다(배치·크기·인쇄 쪽수는 그대로).
+   위쪽 조작 바(예배 선택·저장 상태·버튼)는 앱 화면이라 손대지 않는다. 오류 문구 색도 그대로 둔다. */
+
+/* ---------- 색: 무채색만. 예배별 색(--svc)과 강조색을 모두 글자색으로 ---------- */
+.pdc {
+  --bg: #f4f4f4; --paper: #ffffff; --ink: #111111; --muted: #666666; --faint: #8a8a8a; --line: #e2e2e2; --line2: #cccccc;
+  --soft: #f5f5f5; --box: #999999; --navy: var(--ink); --on-strong: var(--paper); --on-strong-2: var(--muted);
+  --accent: var(--ink); --accent-soft: var(--soft); --dim: #bbbbbb;
+  word-break: keep-all; overflow-wrap: break-word; letter-spacing: -0.01em;
+}
+.pdc.svc, .pdc .svc { --accent: var(--ink); --accent-soft: var(--soft); }
+@media screen {
+  :root[data-theme="dark"] .pdc {
+    --bg: #0f0f0f; --paper: #171717; --ink: #ededed; --muted: #a3a3a3; --faint: #858585; --line: #2b2b2b; --line2: #3d3d3d;
+    --soft: #1f1f1f; --box: #6e6e6e; --dim: #5c5c5c;
+  }
+  :root[data-theme="dark"] .pdc.svc, :root[data-theme="dark"] .pdc .svc { --accent: var(--ink); --accent-soft: var(--soft); }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pdc {
+    --bg: #0f0f0f; --paper: #171717; --ink: #ededed; --muted: #a3a3a3; --faint: #858585; --line: #2b2b2b; --line2: #3d3d3d;
+    --soft: #1f1f1f; --box: #6e6e6e; --dim: #5c5c5c;
+  }
+  :root:not([data-theme="light"]) .pdc.svc, :root:not([data-theme="light"]) .pdc .svc { --accent: var(--ink); --accent-soft: var(--soft); }
+}
+@media print {
+  .pdc { --bg: #ffffff; --paper: #ffffff; --ink: #111111; --muted: #5e5e5e; --faint: #7a7a7a; --line: #dddddd; --line2: #c4c4c4; --soft: #ffffff; --box: #8a8a8a; --dim: #b0b0b0; }
+}
+
+/* ---------- 굵기: 가장 굵은 것이 500. 제목·시각·순서 이름·줄 이름만 500, 나머지는 400 ---------- */
+.pdc .sheet-head h2, .pdc .lockup b, .pdc .blk-h .tm, .pdc .cols3 .blk-h .tm, .pdc .rs-l, .pdc .roster .rl,
+.pdc .st b, .pdc .fz-t b, .pdc .fz-h > b, .pdc .banner, .pdc .fz-badge, .pdc .sheet-head .eyebrow,
+.pdc table.people .pp-cap, .pdc .rp-cats .ck input:checked ~ .tx, .pdc .rp .ck input:checked ~ .tx { font-weight: 500; }
+.pdc .arr b, .pdc .banner small, .pdc .blk-h .tt, .pdc .chip, .pdc .cond-tag, .pdc .ck.hl .tx, .pdc .ck.strong .tx,
+.pdc .cuechk-st .bad, .pdc .cuechk-st .good, .pdc .cuechk-st a, .pdc .flow .lab, .pdc .flow .lab small,
+.pdc .fz-row .k, .pdc .fz-row .v, .pdc .fz-t .flag, .pdc .fz-t .num, .pdc .fz-tag, .pdc .lockup small, .pdc .miss,
+.pdc .note b, .pdc .rp .k, .pdc .rs-c input, .pdc .rs-c input::placeholder, .pdc .rs-k, .pdc .rs-n, .pdc .shd,
+.pdc .sheet-head .meta span, .pdc .slot label, .pdc .song-row .k, .pdc .st .flag, .pdc table.floor th,
+.pdc table.floor td:first-child, .pdc table.people th .pv, .pdc table.people th input,
+.cue .cue-t tbody th, .cue .cue-t td.time, .cue .cue-t thead th, .pdc .cuechk .sub { font-weight: 400; }
+
+/* ---------- 머리 ---------- */
+.pdc.svc .sheet-head, .pdc .svc .sheet-head { border-bottom: 1px solid var(--ink); }
+.pdc .sheet-head h2 { letter-spacing: -0.02em; }
+.pdc .sheet-head .eyebrow { color: var(--faint); letter-spacing: .14em; }
+.pdc.svc .lockup b, .pdc .svc .lockup b { color: var(--ink); }
+.pdc.svc .lockup small, .pdc .svc .lockup small { color: var(--muted); letter-spacing: .02em; }
+.pdc .lockup b, .pdc .blk-h .tm, .pdc .cols3 .blk-h .tm { letter-spacing: -0.01em; }
+
+/* ---------- 카드: 흰 바탕 + 얇은 회색 선. 강조는 START만 검은 선 ---------- */
+.pdc .blk { border-color: var(--line); }
+.pdc .blk.accent { background: var(--paper); border-color: var(--line); }
+.pdc .blk.accent .blk-h .tm, .pdc .blk.cue .blk-h .tm { color: var(--ink); }
+.pdc .blk.cue { border: 1px solid var(--line); }
+.pdc .blk.go { background: var(--paper); border-color: var(--ink); color: var(--ink); }
+.pdc .blk.go .blk-h .ti { color: var(--muted); }
+.pdc .blk.go .ck .box { border-color: var(--box); background: var(--paper); }
+.pdc .blk.go .ck:hover { background: var(--soft); }
+.pdc .blk.go .ck.strong .tx { color: var(--ink); }
+.pdc .blk.go .ck input:checked ~ .tx { color: var(--faint); }
+/* T-60 같은 표시는 배지 대신 작은 회색 글씨 */
+.pdc .blk-h .tt, .pdc .blk.accent .blk-h .tt, .pdc .blk.cue .blk-h .tt, .pdc .blk.go .blk-h .tt { background: none; color: var(--faint); padding: 0; letter-spacing: .04em; }
+.pdc .blk-h .ti { color: var(--muted); }
+/* 기도 시각 묶음: 회색 상자 대신 글 줄 */
+.pdc .arr, .pdc .blk.accent .arr { background: none; padding: 0; border-radius: 0; color: var(--muted); }
+.pdc .arr b { color: var(--ink); }
+/* 체크: 누르면 검정 칸 + 흰 체크 */
+.pdc .ck input:checked + .box { background: var(--ink); border-color: var(--ink); }
+.pdc .ck input:checked + .box::after { border-color: var(--paper); }
+.pdc .ck.hl .tx::before { background: var(--ink); }
+/* 태그(자막·음향, 조건): 배지 대신 항목 뒤 작은 회색 글씨 */
+.pdc .chip, .pdc .cond-tag { background: none; color: var(--faint); padding: 0; margin-left: 4px; font-size: .82em; letter-spacing: 0; }
+/* 각 파트 이상 유무 같은 칸 묶음: 회색 칩 대신 맨 글 */
+.pdc .grid .ck, .pdc .blk.accent .grid .ck { background: none; }
+.pdc .grid .ck:hover { background: var(--soft); }
+.pdc .shd { color: var(--faint); letter-spacing: .04em; }
+.pdc .note { border-top-style: solid; border-top-color: var(--line); }
+.pdc table.floor th { color: var(--faint); }
+.pdc table.people .pp-cap { color: var(--ink); }
+
+/* ---------- 1쪽 명단 ---------- */
+.pdc .rs { background: none; padding-inline: 0; }
+.pdc .rs-k { color: var(--faint); letter-spacing: .02em; border-bottom: 1px solid var(--line); padding-bottom: 3px; margin-bottom: 4px; }
+.pdc .rs-n { line-height: 1.6; }
+.pdc .miss { color: var(--dim); }
+.pdc .rs-c input::placeholder { color: var(--dim); }
+/* 이름이 많은 칸(악기 5명 이상)은 3열 */
+.pdc .rs-c.three .rs-n { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media screen and (max-width: 760px) { .pdc .rs-c.three .rs-n { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* 큐시트 확인 */
+.pdc .cuechk { background: none; padding-inline: 0; margin-inline: 0; }
+.pdc .cuechk-st .bad { color: var(--ink); }
+.pdc .cuechk-st .good { color: var(--muted); }
+.pdc .cuechk-st a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- 2쪽: NOW → NEXT 띠는 구역 제목 한 줄로 ---------- */
+.pdc .banner { background: none; color: var(--ink); justify-content: flex-start; gap: 12px; font-size: 15px; padding: 0 0 8px; border-radius: 0; border-bottom: 1px solid var(--ink); text-align: left; }
+.pdc .banner small { color: var(--faint); letter-spacing: .12em; }
+.pdc .flow-wrap { border-color: var(--line); }
+.pdc .flow .lab small { display: none; }
+.pdc .flow .lab { color: var(--muted); }
+/* FLOW 칸: 모두 흰 칸 + 얇은 선(카운트다운·LIVE·START도 같은 모양) */
+.pdc .st { background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.pdc .st-countdown, .pdc .st-liveStart, .pdc .st-liveEnd, .pdc .st-start, .pdc .st-end { background: var(--paper); }
+.pdc .st-countdown b, .pdc .st-liveStart b, .pdc .st-liveEnd b, .pdc .st-start b, .pdc .st-end b { color: var(--ink); }
+.pdc .st-countdown small, .pdc .st-liveStart small, .pdc .st-liveEnd small, .pdc .st-start small { color: var(--muted); }
+.pdc .st-optional { box-shadow: inset 0 0 0 1px var(--line2); }
+.pdc .st-optional::before { border-color: var(--line2); opacity: 1; }
+.pdc .st .flag { background: none; color: var(--faint); padding: 0; }
+.pdc .nx { color: var(--muted); font-weight: 400; }
+/* PD 집중 구간: 검은 1px 테두리 하나, 칸은 세로 옅은 선으로만 나눈다 */
+.pdc .focus { border: 1px solid var(--ink); background: var(--paper); }
+.pdc .fz-badge { background: none; color: var(--ink); padding: 0; font-size: 15px; }
+.pdc .fz-h { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.pdc .fz-cells { gap: 0; }
+.pdc .fz-c { background: none; border: 0; border-left: 1px solid var(--line); border-radius: 0; padding: 8px 12px; }
+.pdc .fz-c:first-child { border-left: 0; padding-left: 0; }
+.pdc .fz-c.dim { background: none; border: 0; border-left: 1px solid var(--line); opacity: .45; }
+.pdc .fz-c.dim:first-child { border-left: 0; }
+.pdc .fz-t .num { color: var(--muted); }
+.pdc .fz-t .flag, .pdc .fz-tag { background: none; color: var(--faint); padding: 0; }
+.pdc .fz-row .k { color: var(--faint); }
+.pdc .fz-row .nx-t { color: var(--muted); }
+.pdc .fz-cks { border-top: 1px solid var(--line); }
+.pdc .fz-end { background: none; border-top: 1px solid var(--line); }
+.pdc .fz-end-r { color: var(--faint); }
+@media screen and (max-width: 760px) {
+  .pdc .fz-c, .pdc .fz-c.dim { border-left: 0; border-top: 1px solid var(--line); padding: 10px 0; }
+  .pdc .fz-c:first-child { border-top: 0; }
+}
+.pdc .song-row.opt .k { color: var(--muted); }
+
+/* ---------- 큐시트 ---------- */
+.cue .cue-t tbody th { background: none; }
+.cue .cue-t td.time { background: none; color: var(--ink); }
+.cue .cue-t tr.opt th { color: var(--muted); }
+.cue .cue-t thead th { color: var(--faint); letter-spacing: .08em; }
+
+@media print {
+  .pdc .banner { padding: 0 0 1.4mm; font-size: 11pt; border-radius: 0; }
+  .pdc .sheet:has(.flow-wrap.split) .banner, .pdc.portrait .sheet:has(.flow-wrap.split) .banner { padding: 0 0 1.4mm; font-size: 11pt; }
+  .pdc.svc .sheet-head, .pdc .svc .sheet-head { border-bottom: .3mm solid var(--ink); }
+  .pdc .focus { border-width: .3mm; }
+  .pdc .fz-badge { font-size: 10pt; padding: 0; }
+  .pdc .fz-c { padding: 1.4mm 2mm; }
+  .pdc.portrait .fz-c { padding: 1.8mm 2.4mm; }
+  .pdc .fz-c:first-child { padding-left: 0; }
+  .pdc .chip, .pdc .cond-tag { padding: 0; }
+  .pdc.is-blank .fz-c.dim { border-style: solid; border-width: 0 0 0 1px; }
+  .pdc.is-blank .fz-c.dim:first-child { border-width: 0; }
+}
