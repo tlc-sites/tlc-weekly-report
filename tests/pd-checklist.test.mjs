@@ -180,9 +180,10 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  // 성찬은 헌금 다음, 같은 시간대, 성찬주간 조건일 때만(담당은 PD 체크리스트 '성찬 담당' r6). 라이프라인에는 없다
  assert.deepEqual(s1.cue.rows.map(r=>r.id).slice(2,5),['offlead','offsong','communion']);assert.deepEqual([s1.cue.rows[4].condition,s1.cue.rows[4].lines[0].key],['communion','r6']);
  // DB50: 순서에서 헌금 줄을 빼고 헌금위원(r7)은 담당으로(안내 다음, PD 앞). DB51: 헌금송은 순서에 다시(헌금인도 다음), 중계 믹싱(r20)은 담당에서 뺀다
+ // DB63: 음향팀을 PA·녹음/모니터링(r19)·중계 믹스(r20)로 다시 나눈다(PA 바로 뒤)
  for(const t of Object.values(by)){assert.ok(!t.cue.rows.some(r=>r.id==='offering'),t.id);assert.deepEqual(t.cue.staff.map(x=>x.key).slice(-3),['r8','r7','pd'],t.id);}
  assert.deepEqual(['offlead','offsong'].map(id=>cueTime(life.start,life.cue.rows.find(r=>r.id===id))),['18:50 - 18:55','18:55 - 19:05']);
- for(const t of Object.values(by)){assert.ok(!t.cue.staff.some(x=>x.key==='r20'),t.id);assert.deepEqual(t.cue.rows.find(r=>r.id==='offsong').lines,[{key:'c_offsong'}],t.id);}
+ for(const t of Object.values(by)){const k=t.cue.staff.map(x=>x.key);assert.deepEqual(k.slice(k.indexOf('r10'),k.indexOf('r10')+3),['r10','r19','r20'],t.id);assert.deepEqual(t.cue.rows.find(r=>r.id==='offsong').lines,[{key:'c_offsong'}],t.id);}
  assert.ok(!life.cue.rows.some(r=>r.id==='communion'));
  assert.equal(cueTime(by.sun2.start,by.sun2.cue.rows.at(-1)),'11:20 - 12:40');
  assert.equal(cueTime(life.start,life.cue.rows.at(-1)),'19:05 -');
@@ -191,12 +192,13 @@ test('큐시트: 예배별 양식이 새 버전에 들어가고, 큐시트 값�
  assert.equal(cueTitle('2026-11-08',s1.cue.label,s1.start),'2026.11.8 1st. (08:20)');
  assert.equal(cueTitle('2026-11-08',by.sun3.cue.label,by.sun3.start),'2026.11.8 3rd. (13:00)');
  assert.equal(cueTitle('2026-11-08',by.life.cue.label,by.life.start),'2026.11.8 LIFELINE (18:00)');
- assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r11']);
+ assert.deepEqual(s1.cue.staff.map(x=>x.key).slice(3,5),['r10','r19']);// DB63에서 녹음·모니터링이 다시
  // DB52: 1부 담당에서 녹음팀(r19)을 뺐다
- for(const t of Object.values(by))assert.ok(!t.cue.staff.some(x=>x.key==='r19'),t.id);
+ // (DB63에서 녹음·모니터링 r19로 다시 넣는다)
+ for(const t of Object.values(by))assert.equal(t.cue.staff.find(x=>x.key==='r19')?.ko,'녹음·모니터링',t.id);
  // DB55: 부산 ATEM 블록은 바로 앞 T-30 블록에 합쳐 '넓게'(두 칸)로, 시스템 점검의 '부산' 칸은 뺀다. 1부엔 마이크·의전 음료·마이크 위치 항목
  for(const t of Object.values(by)){const bl=t.page1.rows.flat();assert.ok(!bl.some(b=>b.label==='부산 ATEM'),t.id);const atem=bl.find(b=>JSON.stringify(b.items).includes('층별 송출'));if(atem){assert.ok(atem.wide&&atem.title.endsWith('부산 ATEM'),t.id);assert.ok(!JSON.stringify(atem.items).includes('"text":"부산"'),t.id);}}
- {const ids=JSON.stringify(s1);for(const k of ['e_mic','e_drink','j_micpos'])assert.ok(ids.includes('"'+k+'"'),k);}assert.equal(by.sun2.cue.staff[4].en,'Video');
+ {const ids=JSON.stringify(s1);for(const k of ['e_mic','e_drink','j_micpos'])assert.ok(ids.includes('"'+k+'"'),k);}assert.equal(by.sun2.cue.staff.find(x=>x.key==='r11').en,'Video');
  // DB57: 1부 1쪽 맨 위 '섬기는 사람' 표. 이름은 담당자 칸(r1…r8)과 같은 값이라 2쪽 담당자 칸에서는 빠지고(기술팀은 남는다), 흩어진 사람 체크는 표로 옮겼다
  {const pb=s1.page1.rows[0][0];const pp=pb.items[0];assert.deepEqual([pb.label,pb.wide,s1.page1.rows[0].length,pp.type],['섬기는 사람',true,1,'people']);
   assert.deepEqual(pp.people.map(p=>p.field??p.key),['r1','r2','r3','r4','r7','r8','wt']);assert.deepEqual(pp.steps.map(x=>x.label),['확인','도착','STANDBY']);
@@ -288,13 +290,14 @@ test('새 양식(명단·큐시트 확인·집중 구간): 변환·진행 숫자
  s1.page2.during.items=[{type:'check',id:'j2',text:'다음 순서 담당자 위치 파악'},{type:'check',id:'j3',text:'마지막 곡 때 영상소식 순서 준비',condition:'news'},{type:'check',id:'j4',text:'모든 기술팀 영상소식 전환 준비',condition:'news'},{type:'check',id:'j5',text:'헌금 진행 시 성전 전체 공조 OFF'},{type:'check',id:'j_micpos',text:'목사님, 사모님 설교 등단 전 마이크 포지션 확인'}];
  const {template:t}=toFocusLayout(s1);
  assert.ok(parseTemplate(t).ok);assert.ok(hasFocusLayout(t));assert.ok(!hasFocusLayout(s1));
- // 1쪽: 체크 없는 세 줄 명단, 예배 인도는 예배팀 줄의 '인도'로만
+ // 1쪽: 체크 없는 네 줄 명단(음향팀 줄 따로), 예배 인도는 예배팀 줄의 '인도'로만
  const pb=t.page1.rows[0][0];assert.equal(pb.title,'오늘 섬기는 명단');assert.equal(pb.items.length,1);
  const ros=pb.items[0];assert.equal(ros.type,'roster');
  assert.deepEqual(ros.lines.map(l=>[l.label,l.cols.map(c=>c.label+':'+c.field).join()]),[
   ['말씀·위원','설교:r2,헌금 메시지:r3,말씀 합독:r4,헌금위원:r7,안내위원:r8'],
   ['예배팀','인도:r1,악기:r18,싱어:r9'],
-  ['기술팀','음향:r10,영상:r11,자막:r13,조명:r14,사진:r12,부산 담당:r15']]);
+  ['음향팀','PA:r10,녹음·모니터링:r19,중계 믹스:r20'],
+  ['기술팀','영상:r11,자막:r13,조명:r14,사진:r12,부산 교역자:r15,부산 음향:r21']]);
  // T-45 맨 위 큐시트 확인
  const t45=t.page1.rows.flat().find(b=>b.label==='T-45');assert.equal(t45.items[0].type,'cueCheck');
  // 2쪽: 집중 구간 = 영상소식~말씀 합독(성찬 포함), 끝은 설교. '진행 중'은 모두 옮겨 비었다
@@ -319,7 +322,7 @@ test('새 양식(명단·큐시트 확인·집중 구간): 변환·진행 숫자
  assert.equal(applicableCheckIds(t,eff).length,after.length-2-1);// 영상소식 체크 2 + T-45 영상소식 테스트 1
  assert.equal(effectiveConditions(t,on,{c_ann:'영상광고: 성탄 준비'}).news,true);
  // 큐시트 빈 칸: 순서 줄·담당·송리스트
- const full={c_worship:'예배팀',c_ann:'광고',r3:'이흥배',c_offsong:'예배팀',r4:'김충열',r2:'스캇',c_sermon:'제목',r1:'이희준',r18:'김소은',r9:'김연지',r10:'김승희',r11:'홍규화',r14:'문경모',r13:'노재용',r8:'김보영',r7:'김말숙',song1:'a',song2:'b',song3:'c',song4:'d',song_off:'e'};
+ const full={c_worship:'예배팀',c_ann:'광고',r3:'이흥배',c_offsong:'예배팀',r4:'김충열',r2:'스캇',c_sermon:'제목',r1:'이희준',r18:'김소은',r9:'김연지',r10:'김승희',r19:'김혜영',r20:'유건희',r11:'홍규화',r12:'사진',r15:'부산',r21:'부산음향',r14:'문경모',r13:'노재용',r8:'김보영',r7:'김말숙',song1:'a',song2:'b',song3:'c',song4:'d',song_off:'e'};
  assert.deepEqual(cueBlanks(t,full,'홍PD',on),[]);
  const {r2,song3,song4,...miss}=full;void r2;void song3;void song4;
  assert.deepEqual(cueBlanks(t,miss,'',on),['설교자','PD','송리스트 2곡']);
@@ -331,5 +334,36 @@ test('새 양식(명단·큐시트 확인·집중 구간): 변환·진행 숫자
  const lt=toFocusLayout(await latest('life')).template;assert.ok(parseTemplate(lt).ok);
  const lp=flowParts(lt);assert.deepEqual([lp.zone.map(s=>s.label).join(),lp.end.label],['헌금 메시지,헌금','설교']);
  assert.deepEqual(lt.page2.during.items.map(i=>i.text),['적용 기도 첫 기도제목 후 LIVE 종료 큐']);
+ }finally{await db.close();}
+});
+
+test('DB63: 큐시트 담당은 음향팀을 PA·녹음/모니터링·중계 믹스로 나누고 사진·부산 교역자·부산 음향을 더한다. 새 양식 명단도 같이, 다시 돌려도 그대로',async()=>{
+ const {db,as}=await setup();try{
+ const sql=readFileSync('supabase/migrations/20261223000000_pd_sound_split.sql','utf8');
+ const latest=async k=>(await db.query("select version,content from report.pd_templates where service_key=$1 order by version desc limit 1",[k])).rows[0];
+ // 마이그레이션 전 모양(DB63 이전 담당 칸 + 이전 변환의 기술팀 줄)으로 되돌린 2부를 새 버전으로
+ const s2=(await latest('sun2')).content;
+ const old={...s2,cue:{...s2.cue,staff:s2.cue.staff.filter(x=>!['r19','r12','r15','r21'].includes(x.key)).map(x=>x.key==='r10'?{...x,ko:'음향팀',en:'Sound'}:x)}};
+ const conv=toFocusLayout(old).template;
+ const rs=conv.page1.rows.flat().flatMap(b=>b.items).find(i=>i.type==='roster');
+ rs.lines=[...rs.lines.filter(l=>l.label!=='음향팀'&&l.label!=='기술팀'),{label:'기술팀',cols:[{label:'음향',field:'r10',w:1.4},{label:'영상',field:'r11'},{label:'사진',field:'r12'},{label:'부산 담당',field:'r15'}]}];
+ const v0=(await latest('sun2')).version;
+ await db.query('insert into report.pd_templates(service_key,version,content) values($1,$2,$3)',['sun2',v0+1,JSON.stringify(conv)]);
+ await db.exec(sql);await db.exec(sql);
+ const after=await latest('sun2');
+ assert.equal(after.version,v0+2);
+ const t=after.content;assert.ok(parseTemplate(t).ok,JSON.stringify(parseTemplate(t).errors));
+ assert.deepEqual(t.cue.staff.map(x=>x.ko).filter(k=>k!=='헌금위원'),['예배인도','악기','싱어','PA','녹음·모니터링','중계 믹스','영상팀','사진팀','조명팀','자막팀','부산 교역자','부산 음향','안내','PD']);
+ const lines=t.page1.rows.flat().flatMap(b=>b.items).find(i=>i.type==='roster').lines;
+ assert.deepEqual(lines.slice(-2).map(l=>[l.label,l.cols.map(c=>c.label+':'+c.field).join(' ')]),[
+  ['음향팀','PA:r10 녹음·모니터링:r19 중계 믹스:r20'],['기술팀','영상:r11 사진:r12 부산 교역자:r15 부산 음향:r21']]);
+ // 다른 예배(새 양식 아님)는 큐시트 담당만 바뀐다
+ const s1=(await latest('sun1')).content;
+ assert.deepEqual(s1.cue.staff.filter(x=>['r10','r19','r20'].includes(x.key)).map(x=>x.ko),['PA','녹음·모니터링','중계 믹스']);
+ assert.ok(parseTemplate(s1).ok);
+ // 이전 변환을 거치지 않은 예배를 지금 바꾸면 같은 명단
+ const neu=toFocusLayout(s1).template.page1.rows.flat().flatMap(b=>b.items).find(i=>i.type==='roster').lines;
+ assert.deepEqual(neu.map(l=>l.label),['말씀·위원','예배팀','음향팀','기술팀']);
+ assert.equal(await latestV(as,'sun2'),v0+2);
  }finally{await db.close();}
 });

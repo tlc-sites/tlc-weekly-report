@@ -7,7 +7,9 @@ const clone=<X,>(x:X):X=>JSON.parse(JSON.stringify(x));
 
 /** 명단에 둘 칸: [줄 이름, [칸 이름, roster 키, 너비, 2열]...]. 말씀·위원 줄은 지금 섬기는 사람 표의 칸(예배 인도 제외)을 그대로 쓴다. */
 const WORSHIP:[string,string,number,boolean][]=[["인도","r1",.7,false],["악기","r18",2,true],["싱어","r9",1.5,true]];
-const TECH:[string,string,number,boolean][]=[["음향","r10",1.4,false],["영상","r11",1,false],["자막","r13",1,false],["조명","r14",1,false],["사진","r12",1,false],["부산 담당","r15",1,false]];
+// 음향팀은 PA·녹음/모니터링·중계 믹스로 나눠 한 줄(2026-11-25 요청). 큐시트에 녹음·중계 칸이 없는 예배(금요 등)는 기술팀 줄에 '음향' 한 칸.
+const SOUND:[string,string,number,boolean][]=[["PA","r10",1.4,false],["녹음·모니터링","r19",1,false],["중계 믹스","r20",1,false]];
+const TECH:[string,string,number,boolean][]=[["영상","r11",1,false],["자막","r13",1,false],["조명","r14",1,false],["사진","r12",1,false],["부산 교역자","r15",1,false],["부산 음향","r21",1,false]];
 
 const hasText=(it:Item,re:RegExp)=>it.type==="check"&&re.test(it.text);
 const label=(s:FlowStep)=>s.label.replace(/\s/g,"");
@@ -28,12 +30,14 @@ export function toFocusLayout(src:PdTemplate):LayoutResult{
  const pb=blocks.find(b=>b.items.some(i=>i.type==="people"));
  if(pb&&!pb.items.some(i=>i.type==="roster")){
   const people=pb.items.flatMap(i=>i.type==="people"?i.people:[]);
-  const words=people.filter(p=>p.field&&p.field!=="r1"&&!TECH.some(x=>x[1]===p.field)).map(p=>({label:p.field==="r2"?"설교":p.label,field:p.field!}));
+  const words=people.filter(p=>p.field&&p.field!=="r1"&&![...TECH,...SOUND].some(x=>x[1]===p.field)).map(p=>({label:p.field==="r2"?"설교":p.label,field:p.field!}));
   const line=(rows:[string,string,number,boolean][])=>rows.filter(([,k])=>known(k)).map(([l,k,w,two])=>({label:l,field:k,...(w!==1?{w}:{}),...(two?{two}:{})}));
+  const sound=line(SOUND);const split=sound.length>1;
   const roster:RosterItem={type:"roster",lines:[
    {label:"말씀·위원",cols:words},
    {label:"예배팀",cols:line(WORSHIP)},
-   {label:"기술팀",cols:line(TECH)},
+   ...(split?[{label:"음향팀",cols:sound}]:[]),
+   {label:"기술팀",cols:[...(split?[]:sound.map(c=>({...c,label:"음향"}))),...line(TECH)]},
   ].filter(l=>l.cols.length)};
   pb.items=[roster];pb.title="오늘 섬기는 명단";pb.aside=t.cue?"이름은 모두 주일예배 큐시트에서 자동으로 채워집니다":"큐시트에 없는 칸은 눌러서 적습니다";
   notes.push("1쪽 섬기는 사람 표를 세 줄 명단으로 바꾸고 확인·도착·STANDBY 체크를 뺐습니다.");

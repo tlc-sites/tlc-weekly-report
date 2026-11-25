@@ -93,7 +93,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
 .pdc .lockup small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
 .pdc .lockup b { font-size: 32px; font-weight: 600; letter-spacing: -.01em; }
 
-.pdc .row { display: grid; gap: 14px; align-items: start; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
+/* 한 줄에 놓인 상자는 높이를 맞춘다(아래 선이 한 줄로). 2쪽 아래 세 칸도 같고, 묶음(.stack)은 마지막 상자가 남은 높이를 채운다. */
+.pdc .row { display: grid; gap: 14px; align-items: stretch; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
 .pdc .row + .row { margin-top: 14px; }
 @media screen and (max-width: 1100px) { .pdc .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media screen and (max-width: 640px) { .pdc .row { grid-template-columns: minmax(0, 1fr); } }
@@ -313,7 +314,8 @@ main:has(.pdc), main:has(.pdc-editor) { max-width: none; }
   .pdc .slots-n { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
-.pdc .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
+.pdc .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; align-items: stretch; }
+.pdc .cols3 .stack > :last-child { flex: 1 1 auto; }
 @media screen and (max-width: 900px) { .pdc .cols3 { grid-template-columns: minmax(0, 1fr); } }
 .pdc .cols3 .blk-h .tm { font-size: 17px; font-weight: 600; letter-spacing: 0; }
 .pdc .cols3 .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
