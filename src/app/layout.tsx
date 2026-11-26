@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { AccountNotifications } from "@/components/account-notifications";
 import Link from "@/components/pending-link";
-import { MenuIcon } from "@/components/menu-heading";
 import {TranslationLanguage,LanguageSwitch} from "@/components/translation-language";
 import {BottomNavigation} from "@/components/bottom-navigation";
 import {DesktopSidebar} from "@/components/desktop-sidebar";
 import {NotificationSeen} from "@/components/notification-seen";
 import {THEME_SCRIPT} from "@/components/theme-switch";
 import "./globals.css";
+import "./fonts-serif.css";
 
 export const metadata: Metadata = {
   title: "TLC 교회 보고서",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#692d2d",
+  themeColor: "#6b2c2c",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -31,11 +31,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full"><TranslationLanguage>
         <Suspense fallback={null}><DesktopSidebar/></Suspense>
         <Suspense fallback={null}><NotificationSeen/></Suspense>
-        <header data-print-hide className="app-header border-b border-border/70 bg-background">
+        <header data-print-hide className="app-header">
           <div className="mx-auto flex min-h-16 w-full max-w-2xl items-center gap-2 px-4 sm:px-5">
-            <Link href="/" className="app-brand inline-flex min-w-0 flex-1 items-center gap-2 text-sm sm:text-base text-accent">
-              <span className="shrink-0"><MenuIcon name="report" small /></span><span className="min-w-0 break-keep">TLC 교회 보고서</span>
-            </Link><LanguageSwitch/><Suspense fallback={null}><AccountNotifications /></Suspense>
+            {/* 교회 로고(앱 아이콘에서 뽑은 원본, 흰색) */}
+            <Link href="/" className="app-brand inline-flex min-w-0 flex-1 items-center gap-2.5" aria-label="TLC 교회 보고서 홈">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/church-logo-white.png" alt="" width={40} height={36} className="app-brand-mark" />
+              <span className="app-brand-name"><b>교회 보고서</b><small>THE LORD&apos;S CHURCH</small></span>
+            </Link><span className="app-header-tools flex shrink-0 items-center"><LanguageSwitch/><Suspense fallback={null}><AccountNotifications /></Suspense></span>
           </div>
         </header>
         <main className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-2xl min-w-0 flex-col px-4 py-6 sm:px-5 sm:py-7">{children}</main>

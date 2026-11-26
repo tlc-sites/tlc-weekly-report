@@ -2,6 +2,7 @@ import { groupDisplayName } from "@/lib/group-display";
 import { SundayNoticePopup } from "@/components/sunday-notice-popup";
 import { upcomingSunday } from "@/lib/sunday-notice";
 import { HomePartCards, type CardReport } from "@/components/home-part-cards";
+import { partCardState } from "@/lib/home-parts";
 import { Suspense } from "react";
 import Link from "@/components/pending-link";
 import { buttonClass, Card, listRowClass, Loading, PageTitle, smallButtonClass, StatusChip } from "@/components/ui";
@@ -57,6 +58,11 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
   const drafting = scopeReports.filter((r) => r.status === "draft").length;
   const reviewedCount = scopeReports.filter((r) => r.status === "reviewed").length;
   const emptyParts = scopeParts.filter((g) => g.type !== "worship" && g.schedule === "weekly" && !scopeNoMeeting.includes(g.id) && !scopeReports.some((r) => r.group_id === g.id && r.status !== "draft")).length;
+  // 작성자 첫 카드(교역자·관리자는 확인 요약 카드가 첫 카드): 내 작성 중 보고 → 이어 쓰기, 쓸 파트 → 보고 쓰기
+  const myDraft = reports.find((r) => r.author_id === profile.id && r.status === "draft");
+  const myDraftGroup = myDraft ? groups.find((g) => g.id === myDraft.group_id) : undefined;
+  const toWrite = myParts.filter((g) => partCardState(g, reports, noMeeting, profile.id, week).action === "쓰기").length;
+  const deadlineText = `${formatDate(addDays(week, 5))} 오후 5시`;
   const listHref = (status: string) => (adminStatus ? `/admin/submissions?week=${week}&status=${status}` : `/reports?week=${week}&status=${status}`);
 
   // 보고서에서 '확인'을 누르고 돌아오면 알림을 띄운다
@@ -65,7 +71,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
   const news = (
     <section aria-labelledby="home-news" className="mb-6">
-      <h2 id="home-news" className="mb-2 text-xl font-semibold">소식</h2>
+      <h2 id="home-news" className="home-sec-title">소식</h2>
       <Card>
         <ul className="divide-y divide-border">
           {(notices.data ?? []).map((n) => (
@@ -82,41 +88,54 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
   return (
     <>
-      {reviewed ? <p role="status" aria-live="polite" className="mb-4 rounded-lg bg-accent/10 px-3 py-2 text-[15px] text-accent">{reviewed.author_name} · {reviewedGroup ? groupDisplayName(reviewedGroup.name) : "파트"} 보고를 확인 처리했습니다. {waiting ? `이 주에 확인 대기 중인 보고가 ${waiting}건 남았습니다.` : "이 주에 확인 대기 중인 보고가 없습니다."} <Link href={`/reports/${reviewed.id}`} className="underline underline-offset-2">방금 확인한 보고 보기</Link></p> : null}
-      <PageTitle sub={<>{week === currentWeek ? "이번 주" : "선택한 주"} {formatWeek(week)} · {formatDate(addDays(week, 5))} 오후 5시 전달</>}>{profile.real_name}님, 안녕하세요</PageTitle>
+      <div className="home-band">
+        <PageTitle sub={<>{week === currentWeek ? "이번 주" : "선택한 주"} {formatWeek(week)} · {deadlineText} 전달</>}>{profile.real_name}님, 안녕하세요</PageTitle>
+        <nav aria-label="주차 이동" className="home-week flex flex-wrap gap-2">
+          <Link href={`/?week=${addDays(week, -7)}`} className={smallButtonClass}>← 지난 주</Link>
+          {week < currentWeek ? <><Link href={`/?week=${addDays(week, 7)}`} className={smallButtonClass}>다음 주 →</Link><Link href="/" className={smallButtonClass}>이번 주</Link></> : null}
+        </nav>
+      </div>
       {sundayNotice ? <SundayNoticePopup sunday={sundayNotice.sunday} label={formatDate(sundayNotice.sunday)} body={sundayNotice.body} version={sundayNotice.updated_at} canWrite={isClergy(profile) || profile.is_admin} /> : null}
-      <PushBanner />
-      <nav aria-label="주차 이동" className="-mt-3 mb-4 flex flex-wrap gap-2">
-        <Link href={`/?week=${addDays(week, -7)}`} className={smallButtonClass}>← 지난 주</Link>
-        {week < currentWeek ? <><Link href={`/?week=${addDays(week, 7)}`} className={smallButtonClass}>다음 주 →</Link><Link href="/" className={smallButtonClass}>이번 주</Link></> : null}
-      </nav>
-      {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-[15px] text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
-
-      <div className="home-cols"><div className="home-col-main">
+      <div className="home-cols home-lift"><div className="home-col-main">
         {staff ? (
-          <Card className="mb-6">
+          <Card className="home-hero mb-4">
             {failed && !adminStatus ? <p role="alert" className="text-danger">현황을 불러오지 못했습니다. 새로고침해 주세요.</p> : <>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div><p className="text-[15px] text-muted">확인을 기다리는 보고</p><p className="text-2xl font-semibold tabular-nums">{waiting}<span className="ml-1 text-[15px] font-normal">건</span></p></div>
-                <Link href={listHref("submitted")} className={buttonClass}>확인하러 가기</Link>
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="home-label">확인을 기다리는 보고</p>
+                <p className="home-hero-num">{waiting}<span className="ml-1 text-[15px] font-normal text-muted">건</span></p>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Link href={listHref("draft")} className="st-draft rounded-xl px-3 py-2 font-semibold">작성 중 {drafting}건</Link>
-                <Link href={listHref("reviewed")} className="st-done rounded-xl px-3 py-2 font-semibold">확인 완료 {reviewedCount}건</Link>
-              </div>
-              <Link href={adminStatus ? `/admin/submissions?week=${week}` : "#my-parts"} className={`${listRowClass} mt-2 border-t border-border`}>
-                <span>아직 보고가 없는 파트 <b className={emptyParts && new Date() > reportDeadline(week) ? "text-danger" : ""}>{emptyParts}곳</b>{adminStatus ? <span className="block text-[15px] text-muted">전체 제출현황에서 파트별로 볼 수 있습니다</span> : null}</span>
-                <span aria-hidden className="text-accent">›</span>
-              </Link>
+              <ul className="mt-1 divide-y divide-border">
+                <li><Link href={listHref("draft")} className={listRowClass}><span>작성 중</span><span className="flex items-center gap-2"><span className="tabular-nums text-muted">{drafting}건</span><span aria-hidden className="text-muted">›</span></span></Link></li>
+                <li><Link href={listHref("reviewed")} className={listRowClass}><span>확인 완료</span><span className="flex items-center gap-2"><span className="tabular-nums text-muted">{reviewedCount}건</span><span aria-hidden className="text-muted">›</span></span></Link></li>
+                <li><Link href={adminStatus ? `/admin/submissions?week=${week}` : "#my-parts"} className={listRowClass}>
+                  <span>아직 보고가 없는 파트{adminStatus ? <span className="block text-[15px] text-muted">전체 제출현황에서 파트별로 볼 수 있습니다</span> : null}</span>
+                  <span className="flex items-center gap-2"><b className={"tabular-nums " + (emptyParts && new Date() > reportDeadline(week) ? "text-danger" : "font-normal text-muted")}>{emptyParts}곳</b><span aria-hidden className="text-muted">›</span></span>
+                </Link></li>
+              </ul>
+              <Link href={listHref("submitted")} className={`${buttonClass} mt-3 w-full`}>확인하러 가기</Link>
             </>}
           </Card>
+        ) : !isSenior(profile) && myParts.length ? (
+          <Card className="home-hero mb-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="home-label">이번 주 보고</p>
+              {myDraft ? <StatusChip tone="draft">작성 중</StatusChip> : toWrite ? <StatusChip tone="todo">작성 전</StatusChip> : <StatusChip tone="done">모두 냈어요</StatusChip>}
+            </div>
+            <h2 className="mt-2">{myDraft ? <>{myDraftGroup ? groupDisplayName(myDraftGroup.name) : "쓰던"} 보고를<br />이어서 써 주세요</> : toWrite ? <>이번 주 보고를<br />써 주세요</> : <>이번 주 보고를<br />모두 내셨어요</>}</h2>
+            <p className="mt-2 text-[15px] text-muted">전달 {deadlineText}</p>
+            {myDraft ? <Link href={`/reports/${myDraft.id}`} className={`${buttonClass} mt-4 w-full`}>이어서 쓰기</Link>
+              : toWrite ? <Link href="/write" className={`${buttonClass} mt-4 w-full`}>보고 쓰기</Link> : null}
+          </Card>
         ) : null}
+        {reviewed ? <p role="status" aria-live="polite" className="mb-4 rounded-lg bg-accent/10 px-3 py-2 text-[15px] text-accent">{reviewed.author_name} · {reviewedGroup ? groupDisplayName(reviewedGroup.name) : "파트"} 보고를 확인 처리했습니다. {waiting ? `이 주에 확인 대기 중인 보고가 ${waiting}건 남았습니다.` : "이 주에 확인 대기 중인 보고가 없습니다."} <Link href={`/reports/${reviewed.id}`} className="underline underline-offset-2">방금 확인한 보고 보기</Link></p> : null}
+        <PushBanner />
+        {adminStatus?.setup_expires_at ? <Card className="mb-4"><p className="font-semibold">셋업용 일반 보고 열람 중</p><p className="mt-1 text-[15px] text-muted">{new Date(adminStatus.setup_expires_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}에 자동 종료됩니다. 기도제목·비공개 글·보호자 연락처는 포함하지 않습니다.</p></Card> : null}
 
         {/* 담임 목사님·사모님은 맡은 파트가 없으면 이 칸을 감춘다(보고를 쓰지 않고 읽는 분) */}
         {isSenior(profile) && !myParts.length ? null : <section id="my-parts" aria-labelledby="home-parts" className="mb-6 scroll-mt-24">
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="home-parts" className="text-xl font-semibold">내 파트</h2>
-            <Link href={`/reports?week=${week}&author=${profile.id}`} className="inline-flex min-h-11 items-center font-semibold text-accent">내 보고 모두 보기 ›</Link>
+            <h2 id="home-parts" className="home-sec-title !mb-0">내 파트</h2>
+            <Link href={`/reports?week=${week}&author=${profile.id}`} className="inline-flex min-h-11 items-center text-[15px] font-semibold text-accent">내 보고 모두 보기 ›</Link>
           </div>
           {failed ? <Card><p role="alert" className="text-danger">이번 주 상태를 불러오지 못했습니다. 새로고침해 주세요.</p></Card>
             : myParts.length ? <HomePartCards parts={myParts} reports={reports} noMeeting={noMeeting} userId={profile.id} week={week} />
@@ -125,7 +144,7 @@ async function HomeContent({ searchParams }: PageProps<"/">) {
 
         {comments.length ? (
           <section aria-labelledby="home-comments" className="mb-6">
-            <h2 id="home-comments" className="mb-2 text-xl font-semibold">새 코멘트·답글</h2>
+            <h2 id="home-comments" className="home-sec-title">새 코멘트·답글</h2>
             <Card>
               <ul className="divide-y divide-border">
                 {comments.map((n) => <li key={n.id}><Link href={n.url} className={listRowClass}><span className="min-w-0"><span className="block font-medium">{n.title}</span><span className="line-clamp-2 text-[15px] text-muted">{n.body}</span></span><span aria-hidden className="text-accent">›</span></Link></li>)}

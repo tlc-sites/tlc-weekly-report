@@ -1,50 +1,55 @@
 @import "tailwindcss";
 @source "../";
 
+/* 본문 Pretendard(KS X 1001 한글 2,350자 묶음). 제목 명조 Noto Serif KR은 fonts-serif.css */
 @font-face {
-  font-family: "Gowun Batang";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/gowun-batang-700.woff") format("woff");
-}
-
-@font-face {
-  font-family: "IBM Plex Sans KR";
+  font-family: "Pretendard";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-kr-400.woff") format("woff");
+  src: url("/fonts/pretendard/Pretendard-Regular.subset.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "IBM Plex Sans KR";
+  font-family: "Pretendard";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-kr-500.woff") format("woff");
+  src: url("/fonts/pretendard/Pretendard-Medium.subset.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "IBM Plex Sans KR";
+  font-family: "Pretendard";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-kr-600.woff") format("woff");
+  src: url("/fonts/pretendard/Pretendard-SemiBold.subset.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Pretendard";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/pretendard/Pretendard-Bold.subset.woff2") format("woff2");
 }
 
 :root {
   color-scheme: light;
-  --background: #f8f4f0;
-  --surface: #fffdf9;
-  --foreground: #352b2b;
-  --muted: #75605c;
-  --border: #e2d4ce;
+  /* 2026-11 개편: 크림색 대신 밝은 회색 바탕 + 흰 카드, 버건디는 그대로(셀 케어와 같은 틀) */
+  --background: #f4f5f7;
+  --surface: #ffffff;
+  --foreground: #1d1b1e;
+  --muted: #5f6470;
+  --border: #e6e8ec;
   --accent: #6b2c2c;
-  --accent-soft: #f0e2dc;
+  --accent-soft: #f6ecea;
   --focus: #aa6862;
   --accent-foreground: #ffffff;
   --danger: #a0372a;
+  --brand: #6b2c2c;       /* 휴대폰 위쪽 띠 */
+  --brand-fg: #ffffff;
+  --label: #8a4b45;       /* 작은 소제목 */
   /* 보고 상태 색: 누를 수 있는 것(버건디)과 따로. 색과 함께 글자도 늘 표시한다. */
   --st-todo: #5c524c; --st-todo-bg: #efe8e0;
   --st-draft: #7a4300; --st-draft-bg: #fbeed3; --st-draft-dot: #d08a1a;
@@ -70,11 +75,13 @@
   :root { --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 18px; --text-xl: 20px; --text-2xl: 24px; }
 }
 
-.st { display: inline-flex; flex-shrink: 0; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 15px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
-.st-todo { background: var(--st-todo-bg); color: var(--st-todo); }
-.st-draft { background: var(--st-draft-bg); color: var(--st-draft); }
-.st-wait { background: var(--st-wait-bg); color: var(--st-wait); }
-.st-done { background: var(--st-done-bg); color: var(--st-done); }
+/* 상태 표시: 셀 케어와 같은 「점 + 글자」. 바탕을 칠하지 않는다. */
+.st { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 2px 0; font-size: 15px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+.st::before { content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%; background: currentColor; }
+.st-todo { color: var(--st-todo); }
+.st-draft { color: var(--st-draft); }
+.st-wait { color: var(--st-wait); }
+.st-done { color: var(--st-done); }
 .st-text-draft { color: var(--st-draft); } .st-text-wait { color: var(--st-wait); } .st-text-done { color: var(--st-done); }
 
 @theme inline {
@@ -86,8 +93,8 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
-  --font-sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-display: "Gowun Batang", "Noto Serif KR", serif;
+  --font-sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-display: "Noto Serif KR", "Gowun Batang", serif;
 }
 
 body {
@@ -482,7 +489,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   :root[data-theme="dark"] {
     color-scheme: dark;
     --background: #1b1615; --surface: #241d1c; --foreground: #eee3df; --muted: #b5a29d; --border: #3f3432;
-    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f;
+    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f; --brand: #3a1c1c; --label: #d7aaa3;
     --st-todo: #d6cbc3; --st-todo-bg: #3a322e; --st-draft: #f0c87a; --st-draft-bg: #3d2f14; --st-draft-dot: #d9a441; --st-wait: #a9c8f2; --st-wait-bg: #1c2c44; --st-wait-dot: #6f9ee0; --st-done: #a9d4b3; --st-done-bg: #1f3527; --st-done-dot: #6fb283;
   }
 }
@@ -490,7 +497,7 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --background: #1b1615; --surface: #241d1c; --foreground: #eee3df; --muted: #b5a29d; --border: #3f3432;
-    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f;
+    --accent: #e6aaa2; --accent-soft: #3d2826; --focus: #cf8f87; --accent-foreground: #2a1414; --danger: #f2907f; --brand: #3a1c1c; --label: #d7aaa3;
     --st-todo: #d6cbc3; --st-todo-bg: #3a322e; --st-draft: #f0c87a; --st-draft-bg: #3d2f14; --st-draft-dot: #d9a441; --st-wait: #a9c8f2; --st-wait-bg: #1c2c44; --st-wait-dot: #6f9ee0; --st-done: #a9d4b3; --st-done-bg: #1f3527; --st-done-dot: #6fb283;
   }
 }
@@ -562,3 +569,44 @@ input[type="date"], input[type="time"], select, textarea { min-width: 0; max-wid
   :root[data-side="mini"] .app-sidebar-mini { justify-content: center; width: 40px; padding: 0; }
 }
 
+
+/* ===== 2026-11 개편: 교회 브랜드(셀 케어와 같은 틀, 버건디) ===== */
+/* 휴대폰 위쪽: 버건디 머리말 + 교회 로고 */
+.app-header { background: var(--brand); color: var(--brand-fg); border-bottom: 0; }
+.app-header .app-brand { color: var(--brand-fg); font-family: var(--font-sans); }
+.app-brand-mark { display: block; width: 40px; height: auto; flex: none; }
+.app-brand-name { display: flex; min-width: 0; flex-direction: column; line-height: 1.15; }
+.app-brand-name b { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.app-brand-name small { font-family: var(--font-sans); font-size: 11px; font-weight: 500; letter-spacing: .06em; opacity: .7; }
+.app-header .app-header-tools { color: var(--brand-fg); }
+.app-header .app-header-tools :where(a, button) { color: inherit; }
+.app-header .app-header-tools button { border-color: rgb(255 255 255 / .35); }
+.app-header .app-header-tools a:hover, .app-header .app-header-tools button:hover { background: rgb(255 255 255 / .12); }
+/* 홈 인사말 띠: 머리말과 이어지는 버건디, 첫 카드가 띠 위로 겹쳐 올라온다 */
+.home-band { margin: -1.5rem -1rem 0; padding: 1rem 1rem 3.75rem; background: var(--brand); color: var(--brand-fg); }
+.home-band .page-title { margin-bottom: .5rem; }
+.home-band .page-title h1 { color: var(--brand-fg); }
+.home-band .page-title > p { color: color-mix(in srgb, var(--brand-fg) 75%, transparent); }
+.home-band .home-week a { color: var(--brand-fg); border-color: color-mix(in srgb, var(--brand-fg) 35%, transparent); background: transparent; }
+.home-lift { position: relative; z-index: 1; margin-top: -2.75rem; }
+.home-hero { border: 0 !important; box-shadow: 0 10px 28px rgb(40 20 20 / .12); }
+.home-hero-num { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.home-hero h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.4; }
+.home-label { font-size: 15px; font-weight: 600; color: var(--label); }
+.home-sec-title { margin-bottom: .5rem; font-size: 15px; font-weight: 600; color: var(--label); }
+/* 내 파트: 카드 하나에 줄로 */
+.home-part-row + .home-part-row { border-top: 1px solid var(--border); }
+/* 하단 탭: 고른 탭 위에 짧은 선 */
+.app-bottom-nav a[aria-current="page"] { position: relative; }
+.app-bottom-nav a[aria-current="page"]::before { content: ""; position: absolute; top: -4px; left: 50%; width: 28px; height: 2px; border-radius: 2px; background: var(--accent); transform: translateX(-50%); }
+@media (min-width: 640px) { .home-band { margin-left: -1.25rem; margin-right: -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem; margin-top: -1.75rem; } }
+/* PC(왼쪽 메뉴가 있을 때)는 띠 없이 평소 화면 */
+@media (min-width: 900px) {
+  body:has(.app-sidebar) .home-band { margin: 0; padding: 0; background: none; color: inherit; }
+  body:has(.app-sidebar) .home-band .page-title h1 { color: inherit; }
+  body:has(.app-sidebar) .home-band .page-title > p { color: var(--muted); }
+  body:has(.app-sidebar) .home-band .home-week a { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--surface); }
+  body:has(.app-sidebar) .home-lift { margin-top: 0; }
+  body:has(.app-sidebar) .home-hero { box-shadow: none; border: 1px solid var(--border) !important; }
+}
+@media print { .home-band { margin: 0; padding: 0; background: none; color: inherit; } .home-band .page-title h1 { color: inherit; } .home-lift { margin-top: 0; } }
